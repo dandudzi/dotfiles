@@ -26,6 +26,10 @@ sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo Hos
 defaults write com.apple.dock autohide-delay -float 0
 defaults write com.apple.dock autohide-time-modifier -float 0.5
 
+# make cursor running faster
+defaults write -g KeyRepeat -int 1
+defaults write -g InitialKeyRepeat -int 20
+
 # disable smart quotes - converstion from straight to currly quotes -> better for coding
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 
@@ -75,7 +79,7 @@ defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Avoid creating .DS_Store files on network or USB volumes
 defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
-defaults write com.apple.desktopservices DSDontWriteUSBStores -bool trueA
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 echo '🛫 Restarting apps...'
 killall Finder

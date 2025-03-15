@@ -54,7 +54,7 @@ setopt numeric_glob_sort
 ZSH_THEME="spaceship"
 
 #⚠️jira plugins require setup https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jira
-plugins=(fzf mise alias-finder aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab)
+plugins=(chezmoi fzf mise alias-finder aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab)
 
 #🚀 spaceship settings
 SPACESHIP_TIME_SHOW=true
