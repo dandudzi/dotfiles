@@ -1,0 +1,17 @@
+
+[git]
+    email = "20063579+dandudzi@users.noreply.github.com"
+    name = "Daniel Dudziak"
+
+[diff]
+  command = "delta"
+  pager = "delta"
+
+[merge]
+  command = "nvim"
+  args = [
+    "-d",
+    {{ printf "%q" "{{ .Destination }}" }},
+    {{ printf "%q" "{{ .Source }}" }},
+    {{ printf "%q" "{{ .Target }}" }},
+  ]

@@ -1,0 +1,8 @@
+[tools]
+java = "latest"
+node = "22"
+pnpm = "latest"
+maven = "latest"
+gradle = "latest"
+kotlin = "latest"
+rust = "latest"

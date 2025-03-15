@@ -1,0 +1,84 @@
+[user]
+	name = Daniel Dudziak
+	email = 20063579+dandudzi@users.noreply.github.com
+	signingkey = E824E67A49DB6242
+[color]
+	ui = auto
+[interactive]
+	diffFilter = delta --color-only
+[core]
+	excludesFile = $HOME/.gitignore_global
+	untrackedCache = true
+	fsmonitor = true
+	pager = delta
+	# Make `git rebase` safer on macOS.
+	# More info: <http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/>
+	trustctime = false
+	# Treat spaces before tabs and all kinds of trailing whitespace as an error.
+	# [default] trailing-space: looks for spaces at the end of a line
+	# [default] space-before-tab: looks for spaces before tabs at the beginning of a line
+	whitespace = space-before-tab,-indent-with-non-tab,trailing-space
+	# filename normalization issues between macOS and other operating systems like Linux or Windows.
+	precomposeUnicode = true
+	# activates the use of a commit-graph file, which significantly enhances the performance
+	commitGraph = true
+	# Git converts carriage return-line feed (CRLF) line endings to line feed (LF)
+	autocrlf = input
+	# Git performs the conversion but issues a warning if the conversion might be irreversible.
+	safecrlf = warn
+[apply]
+	# Detect whitespace errors when applying a patch.
+	whitespace = fix
+[branch]
+	# Show most recently changed branches first.
+	sort = -committerdate
+	# This approach helps maintain a linear project history by applying your local commits on top of the fetched commits
+	autosetuprebase = always
+[fetch]
+	# removes local references to remote branches that no longer exist on the remote repository
+	prune = true
+	# delete local tags that have been removed from the remote repository
+	pruneTags = true
+	# update the commit-graph file after fetching
+	writeCommitGraph = true
+[pull]
+	# will push the current branch to the remote branch of the same name, but only if they match
+	rebase = true
+[merge]
+	conflictStyle = zdiff3
+[push]
+	# will push the current branch to the remote branch of the same name, but only if they match
+	default = simple
+	# create a new branch, Git automatically sets up a tracking relationship with the remote repository 
+	autoSetupRemote = true
+[diff]
+	algorithm = histogram
+	# Use new diff algorithm to make e.g. function diffs look better.
+	compactionheuristic = true
+	# Activating this option allows Git to detect renames during diff operations
+	renames = true
+[gc]
+	# Write commit graph to speed up some repositories when GC
+	writeCommitGraph = true
+[protocol]
+	# Use Git v2 protocol for better performance
+	version = 2
+[help]
+	# Automatically correct and execute mistyped commands.
+	autocorrect = 1
+[include]
+	path = ~/.config/git/catppuccin.gitconfig
+[delta]
+	navigate = true    # use n and N to move between diff sections
+	dark = true
+	line-numbers = true
+	side-by-side = true
+	true-color = always
+	colorMoved = default
+	hyperlinks = true
+	decorations = true
+	features = catppuccin-macchiato
+[commit]
+	gpgsign = true
+[tag]
+	gpgSign = true

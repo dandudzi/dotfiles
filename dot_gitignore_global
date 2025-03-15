@@ -1,0 +1,24 @@
+.DS_STORE
+.idea/
+.yarn-integrity
+mise.local.toml
+.dotfiles
+node_modules
+.tmux/plugins
+.vscode/*
+
+# cache directories
+Caches
+.CACHES
+.cache
+.yarn-cache
+.sass-cache
+.npm
+.eslintcache
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
