@@ -15,11 +15,9 @@
 
 #📺 Tmux bindings
 # <prefix> ?		# list all commands
-# <prefix> w       	# go thourhg all windows
 # <prefix> x       	# close pane
-# <prefix> &       	# close window
-# <prefix> d       	# detach from seesion
-# <prefix> |       	# split horizonatly
+# <prefix> d       	# close current seesion
+# <prefix> |       	# split horizonatlyk
 # <prefix> -       	# split verticaly
 # <prefix> [ -> shift-v -> y  #copy to clipboard
 # <prefix> ]		# paste between panes
@@ -67,7 +65,7 @@ alias rgf="rg --fixed-strings"          # search fixed string
 #🪛 tools aliases
 alias tree=pstree
 alias cat=bat
-alias lals="cat ~/.zshrc_als"
+alias lals="cat ~/.config/zsh/alias.zsh"
 alias vi="nvim"
 alias vim="nvim"
 alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 
@@ -154,9 +152,9 @@ alias dotap="chezmoi -v apply"
 alias dota="chezmoi add"
 alias dotat="chezmoi add --template"
 alias dote="chezmoi edit"
-alias ez="dot ~/.config/zsh/zshrc"
-alias ezals="dot ~/.config/zsh/alias.zshrc"
-alias envim="dot ~/.config/nvim/"
+alias ez="dote ~/.config/zsh"
+alias ezals="dote ~/.config/zsh/alias.zsh"
+alias envim="dote ~/.config/nvim/"
 
 # Dirs
 alias ..="cd .."
