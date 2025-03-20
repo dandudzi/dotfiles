@@ -7,6 +7,7 @@
 # shift + cmd + x -> 🖼️ take screenshot
 # y -> file manager
 # gitstat -> summary of the git repository
+# cd - -> previous directory
 
 #🔍 bindings
 # <c-r> # Search command history
@@ -155,6 +156,7 @@ alias dote="chezmoi edit"
 alias ez="dote ~/.config/zsh"
 alias ezals="dote ~/.config/zsh/alias.zsh"
 alias envim="dote ~/.config/nvim/"
+alias dots="dot status"
 
 # Dirs
 alias ..="cd .."

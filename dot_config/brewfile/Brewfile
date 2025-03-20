@@ -1,117 +1,74 @@
-
-# tap repositories and their packages
-
-tap homebrew/core
-brew bat
-brew ca-certificates
-brew chezmoi
-brew coreutils
-brew eza
-brew fd
-brew fzf
-brew gettext
-brew git-delta
-brew git-open
-brew gmp
-brew gnupg
-brew gnutls
-brew htop
-brew jq
-brew lazygit
-brew libarchive
-brew libassuan
-brew libb2
-brew libevent
-brew libgcrypt
-brew libgit2
-brew libgpg-error
-brew libidn2
-brew libksba
-brew liblinear
-brew libnghttp2
-brew libssh2
-brew libtasn1
-brew libunistring
-brew libusb
-brew libuv
-brew libvterm
-brew libzip
-brew lnav
-brew lpeg
-brew lua
-brew luajit
-brew luarocks
-brew luv
-brew lz4
-brew mas
-brew mise
-brew msgpack
-brew ncurses
-brew neovim
-brew nettle
-brew nmap
-brew npth
-brew onefetch
-brew oniguruma
-brew openssl@3
-brew p11-kit
-brew pcre2
-brew pinentry
-brew pinentry-mac
-brew pstree
-brew readline
-brew ripgrep
-brew sqlite
-brew tldr
-brew tmux
-brew tree-sitter
-brew unbound
-brew unibilium
-brew usage
-brew utf8proc
-brew wget
-brew xz
-brew yazi --HEAD
-brew zoxide
-brew zsh-autosuggestions
-brew zsh-syntax-highlighting
-brew zstd
-
-tap homebrew/cask
-cask bitwarden
-cask caffeine
-cask clipy
-cask devtoys
-cask discord
-cask docker
-cask flameshot
-cask font-blex-mono-nerd-font
-cask font-jetbrains-mono-nerd-font
-cask google-chrome
-cask homerow
-cask intellij-idea-ce
-cask kitty
-cask rectangle
-cask skype
-cask spotify
-cask stats
-cask steam
-cask stretchly
-cask sublime-text
-cask visual-studio-code
-cask wezterm
-
-tap rcmdnk/file
-brew brew-file
-
-# App Store applications
-appstore 302584613 Amazon Kindle (7.25.1)
-appstore 682658836 GarageBand (10.4.12)
-appstore 1444383602 Goodnotes (6.6.16)
-appstore 1474276998 HP Smart (18.0.1)
-appstore 408981434 iMovie (10.4.3)
-appstore 409183694 Keynote (14.3)
-appstore 462058435 Microsoft Excel (16.94)
-appstore 462054704 Microsoft Word (16.94)
-appstore 409203825 Numbers (14.3)
-appstore 409201541 Pages (14.3)
+tap "homebrew/bundle"
+tap "rcmdnk/file"
+brew "bat"
+brew "chezmoi"
+brew "coreutils"
+brew "eza"
+brew "fd"
+brew "fzf"
+brew "git-delta"
+brew "git-open"
+brew "gnupg"
+brew "htop"
+brew "jq"
+brew "lazygit"
+brew "sqlite"
+brew "lnav"
+brew "luarocks"
+brew "mas"
+brew "mise"
+brew "neovim"
+brew "nmap"
+brew "onefetch"
+brew "pinentry-mac"
+brew "pstree"
+brew "ripgrep"
+brew "tldr"
+brew "tmux"
+brew "wget"
+brew "yazi", args: ["HEAD"]
+brew "zoxide"
+brew "zsh-autosuggestions"
+brew "zsh-syntax-highlighting"
+cask "bitwarden"
+cask "caffeine"
+cask "clipy"
+cask "devtoys"
+cask "discord"
+cask "docker"
+cask "flameshot"
+cask "font-blex-mono-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "google-chrome"
+cask "homerow"
+cask "intellij-idea-ce"
+cask "rectangle"
+cask "skype"
+cask "spotify"
+cask "stats"
+cask "steam"
+cask "stretchly"
+cask "sublime-text"
+cask "visual-studio-code"
+cask "wezterm"
+mas "GarageBand", id: 682658836
+mas "Goodnotes", id: 1444383602
+mas "HP Smart", id: 1474276998
+mas "iMovie", id: 408981434
+mas "Keynote", id: 409183694
+mas "Kindle", id: 302584613
+mas "Microsoft Excel", id: 462058435
+mas "Microsoft Word", id: 462054704
+mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
+vscode "dbaeumer.vscode-eslint"
+vscode "donjayamanne.githistory"
+vscode "eamodio.gitlens"
+vscode "flowtype.flow-for-vscode"
+vscode "formulahendry.auto-close-tag"
+vscode "github.copilot"
+vscode "github.copilot-chat"
+vscode "github.vscode-github-actions"
+vscode "k--kato.intellij-idea-keybindings"
+vscode "ms-azuretools.vscode-docker"
+vscode "roscop.activefileinstatusbar"

@@ -6,8 +6,4 @@ if [ ! -f "$BREW_UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$BREW_UPDATE_FILE
     brew update && brew upgrade && brew cleanup
     date +%s > "$BREW_UPDATE_FILE"  # Save current timestamp
 fi
-
-# eneale brew file to be regenerated when brew install or uninstall happened
-if [ -f $(brew --prefix)/etc/brew-wrap ];then
-  source $(brew --prefix)/etc/brew-wrap
-fi
+ 

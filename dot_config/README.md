@@ -28,6 +28,6 @@
     1. Stretchly
     1. Caffeine
 
-# Issues
+## Issues
 
 - [flameshot if cannot open on mac](https://github.com/flameshot-org/flameshot/issues/3572#issuecomment-2089076723)

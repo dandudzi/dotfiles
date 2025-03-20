@@ -6,11 +6,13 @@ export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
 setopt prompt_subst
 # allows zsh to use bash like completion scripts
-autoload bashcompinit && bashcompinit
+#autoload bashcompinit && bashcompinit
 # initilize zshrc completion system
-autoload -Uz compinit
+autoload -U compinit
 # initilize autocomolete
+zmodload zsh/complist
 compinit
+_comp_options+=(globdots)
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -36,7 +38,13 @@ setopt HIST_IGNORE_ALL_DUPS
 setopt HIST_REDUCE_BLANKS
 # Remove command lines beginning with a space from history
 setopt hist_ignore_space
+# dont execute Immediately command grabbed from history
+setopt HIST_VERIFY
 
+# allows in interactive mode to use # commands
+setopt interactivecomments
+# allow to do something like this echo 'Don''t'
+setopt RC_QUOTES
 # Disables the audible beep when list ambiguous completions
 setopt NO_LIST_BEEP
 # Activates spelling correction for commands.
@@ -44,11 +52,29 @@ setopt CORRECT
 # sort files in a numerically logical order instead of pure lexicographical
 setopt numeric_glob_sort
 
+# automatically pushes old directory on directory stack
+setopt autopushd
+# make sure that there are no duplication in directory stack
+setopt pushdignoredups
+# allow to use pushd without argument as going to HOME directory
+setopt PUSHD_TO_HOME
+
+# can use ** as grabbing all files in directories recursively
+setopt globstarshort
+
+# when symlink is set cd to directory to avoid confusion
+setopt chaselinks
+
 #🖥️ zsh settings
 ZSH_THEME="spaceship"
 
 #⚠️jira plugins require setup https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jira
 plugins=(chezmoi fzf mise alias-finder aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab fzf-tab-source)
+# enable alias finder for all coommands 
+zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
+zstyle ':omz:plugins:alias-finder' longer yes # disabled by default
+zstyle ':omz:plugins:alias-finder' exact yes # disabled by default
+zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
 
 #🚀 spaceship settings
 SPACESHIP_TIME_SHOW=true
@@ -92,6 +118,6 @@ source $CONFIG_HOME/zsh/command.zsh
 #🌈 sytnax higlight setup 
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
+export LESSOPEN="| /usr/local/bin/lesspipe.sh %s"
 eval "$(zoxide init zsh)"
 eval "$(mise activate zsh)"
