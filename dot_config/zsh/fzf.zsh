@@ -8,7 +8,7 @@ bindkey '^e' fzf-cd-widget
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 # making sure that hidden directories and files will be matched
-#setopt globdots
+setopt globdots
 #🐱 set cattpuccin
 # cannot use --tmux because it breaking everything
 export FZF_DEFAULT_OPTS=" --ansi \
@@ -36,9 +36,17 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons
 # minimal bottom padding fot tmux
 zstyle ':fzf-tab:complete:cd:*' popup-pad 40 15
 # apply to all command
-zstyle ':fzf-tab:*' popup-min-size 20 8
+zstyle ':fzf-tab:*' popup-min-size 40 8
 # use fzf use-fzf-default-opts for all commands do not use ⚠ --tmux
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
   
 # make it working with tmux
 zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+
+# additional git functions powered by fzf
+source ~/.config/zsh/fzf-git.sh
+
+# brew installing lesspipe in strange place so this is why it is here
+# ** in case version will change
+export LESSOPEN="|/opt/homebrew/Cellar/lesspipe/**/bin/lesspipe.sh %s"
+

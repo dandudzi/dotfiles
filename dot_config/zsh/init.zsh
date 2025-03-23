@@ -115,9 +115,11 @@ source $CONFIG_HOME/zsh/brew.zsh
 #🎖️ Command used in command line
 source $CONFIG_HOME/zsh/command.zsh
 
+# make sure that special-dirs like './' or '../' are not listed in completion
+zstyle ':completion:*' special-dirs false
+
 #🌈 sytnax higlight setup 
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-export LESSOPEN="| /usr/local/bin/lesspipe.sh %s"
 eval "$(zoxide init zsh)"
 eval "$(mise activate zsh)"
