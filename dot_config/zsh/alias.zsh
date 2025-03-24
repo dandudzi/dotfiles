@@ -8,6 +8,7 @@
 # y -> file manager
 # gitstat -> summary of the git repository
 # cd - -> previous directory
+# z foo<SPACE><TAB>  # show interactive completions
 
 #🔍 bindings
 # <c-r> # Search command history
@@ -159,6 +160,7 @@ alias envim="dote ~/.config/nvim/"
 alias dots="dot status"
 
 # Dirs
+alias cd="z"
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."

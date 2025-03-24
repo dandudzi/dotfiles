@@ -13,6 +13,8 @@ autoload -U compinit
 zmodload zsh/complist
 compinit
 _comp_options+=(globdots)
+# making sure that hidden directories and files will be matched
+setopt globdots
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -119,7 +121,8 @@ source $CONFIG_HOME/zsh/command.zsh
 zstyle ':completion:*' special-dirs false
 
 #🌈 sytnax higlight setup 
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+#📢 zsh autosuggestiontions
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(zoxide init zsh)"
 eval "$(mise activate zsh)"

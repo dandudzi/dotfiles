@@ -6,9 +6,12 @@ bindkey '^e' fzf-cd-widget
 
 # making sure that fd is used with fzf
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-# making sure that hidden directories and files will be matched
-setopt globdots
+export FZF_CTRL_T_OPTS="
+  --walker-skip .git,node_modules,target
+  --preview 'bat -n --color=always {}'
+  --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+export FZF_ALT_C_OPTS="--preview 'eza -1 --all --color=always --icons {}'"
+
 #🐱 set cattpuccin
 # cannot use --tmux because it breaking everything
 export FZF_DEFAULT_OPTS=" --ansi \
@@ -16,8 +19,13 @@ export FZF_DEFAULT_OPTS=" --ansi \
 	--color=fg:#cad3f5,header:#ed8796,info:#c6a0f6,pointer:#f4dbd6 \
 	--color=marker:#b7bdf8,fg+:#cad3f5,prompt:#c6a0f6,hl+:#ed8796 \
 	--color=selected-bg:#494d64 \
-	--color=border:#363a4f,label:#cad3f5
-  --preview 'bat -n --color=always {}'"
+	--color=border:#363a4f,label:#cad3f5"
+
+# make sure that fzf-preview for completion uses less
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
+# brew installing lesspipe in strange place so this is why it is here
+# ** in case version will change
+export LESSOPEN="|/opt/homebrew/Cellar/lesspipe/**/bin/lesspipe.sh %s"
 # make completion case insestive
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 # disable sort when completing `git checkout`
@@ -34,10 +42,14 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons $realpath'
 
 # minimal bottom padding fot tmux
-zstyle ':fzf-tab:complete:cd:*' popup-pad 40 15
+zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
 # apply to all command
-zstyle ':fzf-tab:*' popup-min-size 40 8
+zstyle ':fzf-tab:*' popup-min-size 50 8
+# display header and colorfull prefix
+zstyle ':fzf-tab:*' single-group prefix color header
+
 # use fzf use-fzf-default-opts for all commands do not use ⚠ --tmux
+zstyle ':fzf-tab:*' prefix ''
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
   
 # make it working with tmux
@@ -45,8 +57,3 @@ zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
 # additional git functions powered by fzf
 source ~/.config/zsh/fzf-git.sh
-
-# brew installing lesspipe in strange place so this is why it is here
-# ** in case version will change
-export LESSOPEN="|/opt/homebrew/Cellar/lesspipe/**/bin/lesspipe.sh %s"
-
