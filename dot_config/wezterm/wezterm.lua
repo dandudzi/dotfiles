@@ -1,0 +1,81 @@
+-- Pull in the wezterm API
+local wezterm = require("wezterm")
+-- This will hold the ration.
+local config = {
+
+	-- setting up background
+	color_scheme = "catppuccin-macchiato",
+	window_background_opacity = 0.8,
+	macos_window_background_blur = 20,
+
+	-- performance boost
+	front_end = "WebGpu",
+	max_fps = 120,
+	webgpu_power_preference = "HighPerformance",
+
+	-- font settings
+	font_size = 16,
+	line_height = 1.2,
+	font = wezterm.font_with_fallback({
+		"CommitMono",
+		-- fallback font for Nerd Font icons
+		{ family = "Symbols Nerd Font Mono" },
+	}),
+
+	set_environment_variables = {
+		LC_ALL = "en_US.UTF-8",
+	},
+	adjust_window_size_when_changing_font_size = false, --When set to true, this option adjusts the window size to fit the new font size whenever the font size is changed-
+	enable_tab_bar = false, --disables the tab bar at the top of the WezTerm window
+	native_macos_fullscreen_mode = false,
+	window_close_confirmation = "NeverPrompt",
+	window_decorations = "RESIZE", --disable the title bar but enable the resizable border
+	use_dead_keys = false,
+	default_cursor_style = "BlinkingBar",
+	cursor_blink_rate = 500,
+
+	-- problem with urls in markdown file https://github.com/wez/wezterm/issues/3803#issuecomment-1608954312
+	hyperlink_rules = {
+		-- Matches: a URL in parens: (URL)
+		{
+			regex = "\\((\\w+://\\S+)\\)",
+			format = "$1",
+			highlight = 1,
+		},
+		-- Matches: a URL in brackets: [URL]
+		{
+			regex = "\\[(\\w+://\\S+)\\]",
+			format = "$1",
+			highlight = 1,
+		},
+		-- Matches: a URL in curly braces: {URL}
+		{
+			regex = "\\{(\\w+://\\S+)\\}",
+			format = "$1",
+			highlight = 1,
+		},
+		-- Matches: a URL in angle brackets: <URL>
+		{
+			regex = "<(\\w+://\\S+)>",
+			format = "$1",
+			highlight = 1,
+		},
+		-- Then handle URLs not wrapped in brackets
+		{
+			-- Before
+			--regex = '\\b\\w+://\\S+[)/a-zA-Z0-9-]+',
+			--format = '$0',
+			-- After
+			regex = "[^(]\\b(\\w+://\\S+[)/a-zA-Z0-9-]+)",
+			format = "$1",
+			highlight = 1,
+		},
+		-- implicit mailto link
+		{
+			regex = "\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b",
+			format = "mailto:$0",
+		},
+	},
+}
+-- and finally, return the ration to wezterm
+return config
