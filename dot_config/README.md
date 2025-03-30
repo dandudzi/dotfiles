@@ -8,7 +8,6 @@
 1. Run `./.dotfilesCheckout.sh`
 1. Run `chmod u+x .setUpMac.sh install-mysetup.sh`
 1. Run `./install-mysetup.sh`
-1. Change terminal font to "JetBrains Mono Nerd Font Mono"
 1. Set up Github [gpg](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key)
 1. Install dev tools with `mise` -> more in `.zshrc` how to mange it
 1. Apply in vivaldi theme
