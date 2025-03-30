@@ -19,5 +19,5 @@ elif [ "$category" = image ]; then
 elif [ "$category" = text ]; then
   bat --color=always "$1"
 else
-  bat --color=alawys "$1"
+  bat --color=always "$1"
 fi
