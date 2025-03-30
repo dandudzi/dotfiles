@@ -1,8 +1,6 @@
 # Step by step insatllation process
 
 1. Loggin to AppStore so we can download apps from it
-1. Copy iterm2 recent profile settings from other machine
-1. In case iterm don't copy colors, theme can be found in `~/.themes/iterm`
     1. Navigate to the Colors tab
     1. Click on Color Presets
     1. Click on Import
