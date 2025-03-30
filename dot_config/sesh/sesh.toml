@@ -12,4 +12,4 @@ startup_command = "yazi"
 [[session]]
 name = "Config 🔧"
 path = "~/.config"
-startup_command = "nvim ."
+startup_command = "econfig ."
