@@ -19,6 +19,7 @@
 # 🌐 vivaldi
 # alt + c -> copy link 
 # ctrl + p -> toggle UI
+# ctrl + shift + <1-9>  #pick workspace
 
 #🔍 bindings
 # <c-r> # Search command history

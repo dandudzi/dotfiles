@@ -7,7 +7,6 @@
     1. Click on Color Presets
     1. Click on Import
 1. Copy IntelliJ profile setting from other machine
-1. Download [iterm2](https://iterm2.com)
 1. Apply iterm2 profile settings
 1. Create new ssh key based on github mail [link](https://github.com/flameshot-org/flameshot/issues/3572#issuecomment-2167705873)
 1. Download raw script that will checkout this repo [.dotfilesCheckout.sh](https://github.com/dandudzi/.dotfiles/blob/master/.dotfilesCheckout.sh)
