@@ -6,6 +6,7 @@ bindkey '^e' fzf-cd-widget
 
 # making sure that fd is used with fzf
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_CTRL_T_OPTS="
   --walker-skip .git,node_modules,target
   --preview 'bat -n --color=always {}'
@@ -44,7 +45,7 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons
 # minimal bottom padding fot tmux
 zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
 # apply to all command
-zstyle ':fzf-tab:*' popup-min-size 50 8
+zstyle ':fzf-tab:*' popup-min-size 50 20
 # display header and colorfull prefix
 zstyle ':fzf-tab:*' single-group prefix color header
 

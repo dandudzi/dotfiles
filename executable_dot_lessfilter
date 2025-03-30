@@ -4,7 +4,6 @@ mime=$(file -Lbs --mime-type "$1")
 category=${mime%%/*}
 kind=${mime##*/}
 ext=${1##*.}
-
 if [ "$kind" = json ]; then
   jq -Cr . "$1"
 elif [ -d "$1" ]; then

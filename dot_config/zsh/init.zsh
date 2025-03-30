@@ -83,6 +83,9 @@ SPACESHIP_TIME_SHOW=true
 SPACESHIP_EXIT_CODE_SHOW=true
 SPACESHIP_KUBECTL_SHOW=true
 
+# additional completions for zsh must be beofre sourcing ohmyzsh
+fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+
 # initilize fzf and fzf-tab and catppuccin with support for tmux
 # must be before oh-my-zsh init
 source $CONFIG_HOME/zsh/fzf.zsh
@@ -107,11 +110,10 @@ source $CONFIG_HOME/zsh/alias.zsh
  fi
 
 #🐱 Set up theme Catpuccin
-export BAT_THEME="Catppuccin Macchiato"
 source $CONFIG_HOME/zsh/themes/catppuccin_macchiato-zsh-syntax-highlighting.zsh
 export EXA_COLORS="catppuccin"
 
-#🍻 Source brew 
+#🍻 Source brew autou ubpdate script
 source $CONFIG_HOME/zsh/brew.zsh
 
 #🎖️ Command used in command line
@@ -119,6 +121,9 @@ source $CONFIG_HOME/zsh/command.zsh
 
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
+
+#🗣️ autosuggestiontions setup to not suggest bif buffers
+export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
 #🌈 sytnax higlight setup 
 source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

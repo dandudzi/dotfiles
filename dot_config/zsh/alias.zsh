@@ -4,11 +4,21 @@
 # fp -> copy pwd of the file
 # fls -> list files in directory
 # cx -> go to directory and list files
-# shift + cmd + x -> 🖼️ take screenshot
+# shift + ⌘ + x -> 🖼️ take screenshot
 # y -> file manager
 # gitstat -> summary of the git repository
 # cd - -> previous directory
 # z foo<SPACE><TAB>  # show interactive completions
+
+# 🚀 raycast 
+# ⌘ + space -> open raycast
+# alt + m -> open llm
+# hyper + ; -> open emojis 💜
+# 
+
+# 🌐 vivaldi
+# alt + c -> copy link 
+# ctrl + p -> toggle UI
 
 #🔍 bindings
 # <c-r> # Search command history
@@ -16,24 +26,40 @@
 # <c-e> # Fuzzy find directories
 
 #📺 Tmux bindings
-# <prefix> ?		# list all commands
-# <prefix> x       	# close pane
+# <prefix> ?        # list all commands
+# <prefix> x        # close pane
 # <prefix> d       	# close current seesion
 # <prefix> |       	# split horizonatlyk
 # <prefix> -       	# split verticaly
-# <prefix> [ -> shift-v -> y  #copy to clipboard
-# <prefix> ]		# paste between panes
+# <prefix> v        # toggle copy mode
+# when in copy mode
+# y                 # yank selection
+# gl                # move to end of line 
+# gh                # move to start of line
 # <prefix> <c-[/]> 	# move panes between spaces
 # <prefix> h/j/k/l 	# move between panes
 # <prefix> shift + f	# search actions
 # <prefix> <c-s>	# save session
 # <prefix> <c-r>	# restore session
 # <prefix> space	# which key
-# <prefix> <c-s>	# save session
-# <prefix> <c-r>	# restore session
+# <prefix> s        # change session
+# <prefix> c        # create new winodow
+# esc + s           # in terminal to list tmux sessions
 
 #📋 move fzf-tabs
 # <- ',' '.' ->
+
+#🌲 git repo search
+# CTRL-G CTRL-F for Files
+# CTRL-G CTRL-B for Branches
+# CTRL-G CTRL-T for Tags
+# CTRL-G CTRL-R for Remotes
+# CTRL-G CTRL-H for commit Hashes
+# CTRL-G CTRL-S for Stashes
+# CTRL-G CTRL-L for reflogs
+# CTRL-G CTRL-W for Worktrees
+# CTRL-G CTRL-E for Each ref
+
 
 #🐁 install developer dependcies and tools
 # mise exec node@22 -- node -v  //install node
@@ -54,6 +80,7 @@
 #🕸️ [httpie](https://httpie.io/cli) network tool ⚠️  need to install
 #📗 [mactex](https://www.tug.org/mactex/) if you like to write in latex ⚠️ need to install
 #🚄 [bench](https://github.com/Gabriella439/bench) better time for commands ⚠ need to instal
+#📅 [meeting reminder](https://www.inyourface.app/)
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
 
 # Get week number
@@ -62,6 +89,7 @@ alias week='date +%V'
 #🔎 search aliases
 alias rgi="rg --invert-match"           # invert search text in files
 alias rgf="rg --fixed-strings"          # search fixed string
+alias rfv="~/.config/scripts/rfv"       # fzf with rg fo searching files and its content 
 
 #🩳 aliases
 #🪛 tools aliases
