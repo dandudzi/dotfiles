@@ -177,7 +177,7 @@ alias ts="tmux new-session -s"                  # Create a new named tmux sessio
 alias python=python3
 alias pip=pip3
 
-#🔴 chezmoi aliases
+#🔴 chezmoi aliases TODO
 alias dot="chezmoi"
 alias dotap="chezmoi -v apply"
 alias dota="chezmoi add"
