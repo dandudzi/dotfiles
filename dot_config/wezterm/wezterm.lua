@@ -33,7 +33,7 @@ local config = {
 	use_dead_keys = false,
 	default_cursor_style = "BlinkingBar",
 	cursor_blink_rate = 500,
-
+	enable_kitty_graphics = true,
 	-- problem with urls in markdown file https://github.com/wez/wezterm/issues/3803#issuecomment-1608954312
 	hyperlink_rules = {
 		-- Matches: a URL in parens: (URL)

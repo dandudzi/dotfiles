@@ -11,12 +11,8 @@
     "type": "iterm",
     "source": "~/.config/images/fastfetch.png",
     "height": 20,
-    "width": 40,
+    "width": 45,
     "position": "left",
-    "padding": {
-      "top": 3,
-      "right": 3,
-    },
   },
   "display": {
     "separator": " ",
