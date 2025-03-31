@@ -82,7 +82,9 @@ zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
 SPACESHIP_TIME_SHOW=true
 SPACESHIP_EXIT_CODE_SHOW=true
 SPACESHIP_KUBECTL_SHOW=true
+# set up vim mode in terminal 
 spaceship add --before char vi_mode
+VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
 
 # additional completions for zsh must be beofre sourcing ohmyzsh
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
