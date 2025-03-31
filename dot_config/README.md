@@ -11,6 +11,7 @@
 1. Set up Github [gpg](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key)
 1. Install dev tools with `mise` -> more in `.zshrc` how to mange it
 1. Apply in vivaldi theme
+1. Add wallpapers
 1. Add `login items in Mac`
     1. Clipy
     1. Docker
