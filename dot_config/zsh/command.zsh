@@ -17,10 +17,13 @@ dd_fd_command_files() {
 	echo "fd --type f --hidden $exclude"
 }
 
+# functions to go or copy paths
 cx() { cd "$@" && lg; }
 fls() { cd "$(eval $(dd_fd_command_directory) | fzf)" && l; }
 fp() { echo "$(eval $(dd_fd_command_files) | fzf)" | pbcopy }
 fv() { nvim "$(eval $(dd_fd_command_files) | fzf)" }
+
+# yazi wraper to change directory on exit
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	yazi "$@" --cwd-file="$tmp"
