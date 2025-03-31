@@ -129,6 +129,7 @@ export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="~/.config/ripgrep/config"
 function zvm_after_select_vi_mode() {
+  eval spaceship_vi_mode_enable
   case $ZVM_MODE in
     $ZVM_MODE_NORMAL)
       echo "Daj"
