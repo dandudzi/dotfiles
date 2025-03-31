@@ -1,0 +1,34 @@
+# Don't let ripgrep vomit really long lines to my terminal, and show a preview.
+--max-columns=150
+--max-columns-preview
+
+# Make search case insensitive, unless an uppercase letter is used.
+--smart-case
+--color=always
+
+# search hidden files and directories
+--hidden
+
+# ignored directories or files
+--glob=!.git/
+--glob=!package-lock.json
+--glob=!yarn.lock
+
+# add new types for search 
+--type-add
+dts:*.d.ts
+
+--type-add
+spec:*.{spec,test}.{ts,tsx,js,jsx}
+
+--type-add
+test:*.{spec,test}.{ts,tsx,js,jsx}
+
+--type-add
+tsx:*.tsx
+
+--type-add
+stories:**/*.stories.{ts,tsx,js,jsx,mdx}
+
+--type-add
+pkg:package.json
