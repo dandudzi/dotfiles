@@ -9,17 +9,31 @@
 1. Run `chmod u+x .setUpMac.sh install-mysetup.sh`
 1. Run `./install-mysetup.sh`
 1. Set up Github [gpg](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key)
-1. Install dev tools with `mise` -> more in `.zshrc` how to mange it
-1. Apply in vivaldi theme
-1. Add wallpapers
-1. Add `login items in Mac`
-    1. Clipy
+1. Apply `Vivaldi` theme from path `~/.config/vivaldi/`
+1. Add wallpapers from path `~/.config/images/wallpapers`
+1. Add `login items` in Mac
     1. Docker
-    1. flameshot
-    1. Rectangle
+    1. Flameshot
+        - change `Capture Screen` shortcut to `⌘+⇧+x`
+        - change `Main color`
     1. Stats
     1. Stretchly
+        - change to full `screen mode`
+        - change `short break` for `1 min` every `30 min`
+        - `strict` mode for short breaks
+        - `monochrome` icon bar
+        - `dark theme`
     1. Caffeine
+    1. Homerow
+        - shortcut for clicking `⌘+⇧+space`
+        - `immediate click`
+        - search shortcut `hyper + /`
+        - `hide labels before click`
+        - scroling shortcut `⌘+⇧+j`
+        - enable `hyper`
+        - eneble `Automatic scroll deactivation`
+        - browser labele `fast`
+    1. Raycast
 
 ## Issues
 
