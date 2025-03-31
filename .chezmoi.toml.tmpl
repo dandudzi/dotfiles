@@ -1,7 +1,8 @@
-
+encryption = "gpg"
 [data]
     email = "20063579+dandudzi@users.noreply.github.com"
     name = "Daniel Dudziak"
+    passphrase =  {{ (bitwarden "item" "chezmoi").login.password }}
 
 [diff]
   command = "delta"
@@ -20,6 +21,6 @@
     autoCommit = true
     autoPush = true
 
-encryption = "age"
-[age]
-    passphrase = true
+[gpg]
+    symmetric = true
+    args = ["--batch", "--passphrase", {{ $passphrase | quote }}, "--no-symkey-cache"]P
