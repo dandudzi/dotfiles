@@ -82,9 +82,7 @@ zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
 SPACESHIP_TIME_SHOW=true
 SPACESHIP_EXIT_CODE_SHOW=true
 SPACESHIP_KUBECTL_SHOW=true
-# set up vim mode in terminal 
-spaceship add --before char vi_mode
-VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
+export RPS1="%{$reset_color%}"
 
 # additional completions for zsh must be beofre sourcing ohmyzsh
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
@@ -97,6 +95,12 @@ source $CONFIG_HOME/zsh/fzf.zsh
 source $ZSH/oh-my-zsh.sh
 # this bindkey myst be after oh-my-zsh otherwise it will be overwritten
 bindkey '^e' fzf-cd-widget
+
+# set up vim mode in terminal 
+spaceship add --before char vi_mode
+VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
+
+
 
 # make sure that pygmentize is not used by any alias
 alias_p="P"
