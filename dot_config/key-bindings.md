@@ -1,67 +1,93 @@
 
-# 🛠️tools
+# 🛠️Tools
 
-git-open              -- to open remote repository
-fv                    -- search and open file in vim
-fp                    -- copy pwd of the file
-fls                   -- list files in directory
-cx                    -- go to directory and list files
-shift + ⌘ + x         -- take screenshot
-y                     -- file manager
-gitstat               -- summary of the git repository
-cd -                  -- previous directory
-z foo<SPACE><TAB>     -- show interactive completions
+`git-open`              -- to open remote repository
+`fv`                    -- search and open file in vim
+`fp`                    -- copy pwd of the file
+`fls`                   -- list files in directory
+`cx`                    -- go to directory and list files
+`⇧ + ⌘ + X`             -- take screenshot
+`y`                     -- file manager
+`gitstat`               -- summary of the git repository
+`cd -`                  -- previous directory
+`z foo<Space><⇥>`       -- show interactive completions
 
-# 🚀 raycast
+# 🚀 Raycast
 
-⌘ + space             -- open raycast
-alt + m               -- open llm
-hyper + ;             -- open snippets
+`⌘ + Space`             -- open raycast
+`⌥ + M`                 -- open llm
+`✦ + ;`                 -- open snippets
+`✦ + V`                 -- open vivaldi
+`✦ + W`                 -- open wezterm
+`⌃ + ⌘ + Space`         -- search emoji
+`⇧ + ⌘ + V`             -- clipboard
+`✦ + M`                 -- maximize screen
+`⌃ + ⌥ + ⌘ + M`         -- almost maximize screen
+`⌃ + ⌥ + ⌘ + C`         -- center
+`⌃ + ⌥ + ⌘ + ←`         -- move left 1/3 2/3
+`⌃ + ⌥ + ⌘ + →`         -- move right 1/3 2/3
 
- 🌐 vivaldi
- alt + c -> copy link
- ctrl + p -> toggle UI
- ctrl + shift + <1-9>  pick workspace
+# 🌐 Vivaldi
 
-🔍 bindings
- <c-r>  Search command history
- <c-t>  Fuzzy find files
- <c-e>  Fuzzy find directories
+`⌥ + C`                 -- copy link
+`⌃ + P`                 -- toggle UI
+`⌃ + ⇧ + <1-9>`         -- pick workspace
+`⌘ + E`                 -- quick commands
+`⌥ + ⌘ + B`             -- open bookmark panel
+`⌘ + B`                 -- create bookmark
+`⌥ + ⌘ + H`             -- open history panel
+`⌥ + ⌘ + K`             -- cycle tab back
+`⌥ + ⌘ + J`             -- cycle tab forward
+`⌘ + Z`                 -- reopen closed tab
+`⌃ + ⇧ + <1-9>`         -- switch to workspace
 
-📺 Tmux bindings
- <prefix> ?         list all commands
- <prefix> x         close pane
- <prefix> d         close current seesion
- <prefix> |         split horizonatlyk
- <prefix> -         split verticaly
- <prefix> v         toggle copy mode
- when in copy mode
- y                  yank selection
- gl                 move to end of line
- gh                 move to start of line
- <prefix> <c-[/]>   move panes between spaces
- <prefix> h/j/k/l   move between panes
- <prefix> shift + f  search actions
- <prefix> <c-s>  save session
- <prefix> <c-r>  restore session
- <prefix> space  which key
- <prefix> s         change session
- <prefix> c         create new winodow
- esc + s            in terminal to list tmux sessions
+# 🔍 Bindings
 
-📋 move fzf-tabs
- <- ',' '.' ->
+`⌃ + R`                 -- Search command history
+`⌃ + T`                 -- Fuzzy find files
+`⌃ + E`                 -- Fuzzy find directories
 
-🌲 git repo search
- CTRL-G CTRL-F for Files
- CTRL-G CTRL-B for Branches
- CTRL-G CTRL-T for Tags
- CTRL-G CTRL-R for Remotes
- CTRL-G CTRL-H for commit Hashes
- CTRL-G CTRL-S for Stashes
- CTRL-G CTRL-L for reflogs
- CTRL-G CTRL-W for Worktrees
- CTRL-G CTRL-E for Each ref
+# 📺 Tmux bindings
+
+`sesh-sessions`         -- list sesh-sessions
+`esc + s`               -- in terminal to list tmux sessions
+
+`⌃ + b` → `x`             -- close pane
+`⌃ + b` → `d`             -- close current session
+`⌃ + b` → `|`             -- split horizontally
+`⌃ + b` → `-`             -- split vertically
+`⌃ + b` → `v`             -- toggle visual mode
+  → `gl`                -- move to end of line
+  → `gh`                -- move to start of the line
+  → `v`                 -- toggle visual selection
+    → `y`               -- yank what selected
+`⌃ + <h/j/k/l>`         -- move between panes
+`⌃ + b` → `<H/J/K/L>`     -- resize pane
+`⌃ + b` → `⌃ + s`         -- save session
+`⌃ + b` → `⌃ + r`         -- restore session
+`⌃ + b` → `space`         -- which key
+`⌃ + b` → `s`             -- change session
+`⌃ + b` → `c`             -- create new window
+`⌃ + b` → `<1-9>`         -- move to window
+`⌃ + b` → `k`             -- open sesh dialog
+`⌃ + b` → `j`             -- open sesh preview
+`⌃ + b` → `r`             -- open previous session
+
+# 📋 move fzf-tabs
+
+`,` `.`                   -- switch left right fzf groups
+
+# 🌲 git repo search
+
+ ⌃-G ⌃-F for Files
+ ⌃-G ⌃-B for Branches
+ ⌃-G ⌃-T for Tags
+ ⌃-G ⌃-R for Remotes
+ ⌃-G ⌃-H for commit Hashes
+ ⌃-G ⌃-S for Stashes
+ ⌃-G ⌃-L for reflogs
+ ⌃-G ⌃-W for Worktrees
+ ⌃-G ⌃-E for Each ref
 
 🐁 install developer dependcies and tools
  mise exec node@22 -- node -v  //install node
