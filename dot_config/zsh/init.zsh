@@ -96,8 +96,10 @@ source $ZSH/oh-my-zsh.sh
 bindkey '^e' fzf-cd-widget
 
 # setting vi mode 
-spaceship add --before time vi_mode
+spaceship add --after time vi_mode
 SPACESHIP_VI_MODE_COLOR="magenta"
+SPACESHIP_VI_MODE_INSERT="U+E0C6"
+SPACESHIP_VI_MODE_NORMAL="U+E0C5"
 # make sure that vi mode status is updated
 function zvm_after_select_vi_mode() {
   eval spaceship_vi_mode_enable
