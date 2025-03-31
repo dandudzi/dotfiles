@@ -128,7 +128,25 @@ export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="~/.config/ripgrep/config"
-
+function zvm_after_select_vi_mode() {
+  case $ZVM_MODE in
+    $ZVM_MODE_NORMAL)
+      echo "Daj"
+    ;;
+    $ZVM_MODE_INSERT)
+      # Something you want to do...
+    ;;
+    $ZVM_MODE_VISUAL)
+      # Something you want to do...
+    ;;
+    $ZVM_MODE_VISUAL_LINE)
+      # Something you want to do...
+    ;;
+    $ZVM_MODE_REPLACE)
+      # Something you want to do...
+    ;;
+  esac
+}
 #📢 zsh autosuggestiontions
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(zoxide init zsh)"
