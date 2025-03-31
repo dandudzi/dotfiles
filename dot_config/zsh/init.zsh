@@ -98,8 +98,8 @@ bindkey '^e' fzf-cd-widget
 # setting vi mode 
 spaceship add --after time vi_mode
 SPACESHIP_VI_MODE_COLOR="magenta"
-SPACESHIP_VI_MODE_INSERT="󰛐  "
-SPACESHIP_VI_MODE_NORMAL="󰷢  "
+SPACESHIP_VI_MODE_NORMAL="󰛐  "
+SPACESHIP_VI_MODE_INSERT="󰷢  "
 # make sure that vi mode status is updated
 function zvm_after_select_vi_mode() {
   eval spaceship_vi_mode_enable
