@@ -125,8 +125,9 @@ zstyle ':completion:*' special-dirs false
 #🗣️ autosuggestiontions setup to not suggest bif buffers
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
-#🌈 sytnax higlight setup 
-source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# ripgrep config 
+export RIPGREP_CONFIG_PATH="~/.config/ripgrep/config"
+
 #📢 zsh autosuggestiontions
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(zoxide init zsh)"

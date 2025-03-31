@@ -82,6 +82,7 @@
 #🚄 [bench](https://github.com/Gabriella439/bench) better time for commands ⚠ need to instal
 #📅 [meeting reminder](https://www.inyourface.app/)
 #📸 [image manipulation](https://imagemagick.org)
+#🌐 [wire shark](https://www.wireshark.org)
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
 
 # Get week number
