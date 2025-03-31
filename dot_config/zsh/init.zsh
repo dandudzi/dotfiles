@@ -71,7 +71,7 @@ setopt chaselinks
 ZSH_THEME="spaceship"
 
 #⚠️jira plugins require setup https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jira
-plugins=( spaceship-vi-mode chezmoi fzf mise alias-finder aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab fzf-tab-source)
+plugins=(zsh-vi-mode spaceship-vi-mode chezmoi fzf mise alias-finder aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab fzf-tab-source)
 # enable alias finder for all coommands 
 zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 zstyle ':omz:plugins:alias-finder' longer yes # disabled by default
