@@ -1,5 +1,6 @@
 -- Pull in the wezterm API
 local wezterm = require("wezterm")
+local k = require("utils/keys")
 -- This will hold the ration.
 local config = {
 
@@ -75,6 +76,18 @@ local config = {
 			regex = "\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b",
 			format = "mailto:$0",
 		},
+	},
+	keys = {
+		-- Select window 1-9
+		k.cmd_to_tmux_prefix("1", "1"),
+		k.cmd_to_tmux_prefix("2", "2"),
+		k.cmd_to_tmux_prefix("3", "3"),
+		k.cmd_to_tmux_prefix("4", "4"),
+		k.cmd_to_tmux_prefix("5", "5"),
+		k.cmd_to_tmux_prefix("6", "6"),
+		k.cmd_to_tmux_prefix("7", "7"),
+		k.cmd_to_tmux_prefix("8", "8"),
+		k.cmd_to_tmux_prefix("9", "9"),
 	},
 }
 -- and finally, return the ration to wezterm

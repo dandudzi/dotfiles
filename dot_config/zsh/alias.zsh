@@ -61,7 +61,6 @@
 # CTRL-G CTRL-W for Worktrees
 # CTRL-G CTRL-E for Each ref
 
-
 #🐁 install developer dependcies and tools
 # mise exec node@22 -- node -v  //install node
 # mise use --global node@22     //use global
@@ -82,6 +81,7 @@
 #📗 [mactex](https://www.tug.org/mactex/) if you like to write in latex ⚠️ need to install
 #🚄 [bench](https://github.com/Gabriella439/bench) better time for commands ⚠ need to instal
 #📅 [meeting reminder](https://www.inyourface.app/)
+#📸 [image manipulation](https://imagemagick.org)
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
 
 # Get week number
