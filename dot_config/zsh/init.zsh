@@ -94,8 +94,15 @@ source $CONFIG_HOME/zsh/fzf.zsh
 source $ZSH/oh-my-zsh.sh
 # this bindkey myst be after oh-my-zsh otherwise it will be overwritten
 bindkey '^e' fzf-cd-widget
-spaceship add --before char vi_mode
+
+# setting vi mode 
+spaceship add --before time vi_mode
 SPACESHIP_VI_MODE_COLOR="magenta"
+# make sure that vi mode status is updated
+function zvm_after_select_vi_mode() {
+  eval spaceship_vi_mode_enable
+}
+
 # make sure that pygmentize is not used by any alias
 alias_p="P"
 unalias $alias_p
@@ -128,26 +135,7 @@ export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="~/.config/ripgrep/config"
-function zvm_after_select_vi_mode() {
-  eval spaceship_vi_mode_enable
-  case $ZVM_MODE in
-    $ZVM_MODE_NORMAL)
-      echo "Daj"
-    ;;
-    $ZVM_MODE_INSERT)
-      # Something you want to do...
-    ;;
-    $ZVM_MODE_VISUAL)
-      # Something you want to do...
-    ;;
-    $ZVM_MODE_VISUAL_LINE)
-      # Something you want to do...
-    ;;
-    $ZVM_MODE_REPLACE)
-      # Something you want to do...
-    ;;
-  esac
-}
+
 #📢 zsh autosuggestiontions
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(zoxide init zsh)"
