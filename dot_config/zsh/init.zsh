@@ -95,6 +95,7 @@ source $ZSH/oh-my-zsh.sh
 # this bindkey myst be after oh-my-zsh otherwise it will be overwritten
 bindkey '^e' fzf-cd-widget
 spaceship add --before char vi_mode
+SPACESHIP_VI_MODE_COLOR="magenta"
 # make sure that pygmentize is not used by any alias
 alias_p="P"
 unalias $alias_p
