@@ -102,6 +102,11 @@
  `mise ls`                       -- list installed tools
  `mise ls-remote node`           -- list remote tools versions
 
+# ♻️ direnv can load and unload environment variables depending on the current directory
+
+`echo export FOO=foo > .envrc`   -- creates file in directory that will be loaded
+`direnv allow .`                   -- allow to load the .envrc if we trust it, by default disabled
+
 # 📱to consider
 
 𐂷 pstree               -- shows process in tree like
@@ -116,3 +121,5 @@
 📸 [image manipulation](https://imagemagick.org)
 🌐 [wire shark](https://www.wireshark.org)
 🪈 [pipeviewer](https://www.ivarch.com/programs/pv.shtml) --used to monitor the progress of data through a pipeline  
+💽 [postgresql cli](https://www.pgcli.com)
+📦 [kubernetes cli](https://k9scli.io)
