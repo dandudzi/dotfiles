@@ -333,7 +333,6 @@ elif [[ -n "${ZSH_VERSION:-}" ]]; then
       eval "fzf-git-$o-widget() { local result=\$(_fzf_git_$o | __fzf_git_join); zle reset-prompt; LBUFFER+=\$result }"
       eval "zle -N fzf-git-$o-widget"
       for m in emacs vicmd viins; do
-        echo "Some: ${o} and it 1 ${o[1]}"
         eval "bindkey -M $m '^g^${o[1]}' fzf-git-$o-widget"
         eval "bindkey -M $m '^g${o[1]}' fzf-git-$o-widget"
       done
