@@ -123,3 +123,4 @@
 🪈 [pipeviewer](https://www.ivarch.com/programs/pv.shtml) --used to monitor the progress of data through a pipeline  
 💽 [postgresql cli](https://www.pgcli.com)
 📦 [kubernetes cli](https://k9scli.io)
+💽 [database tool - DBeaver](https://dbeaver.io)
