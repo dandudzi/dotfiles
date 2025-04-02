@@ -98,10 +98,10 @@ alias dot="chezmoi"
 alias dota="chezmoi add"
 alias dotat="chezmoi add --template"
 alias dote="chezmoi edit --watch"
-alias econfig="dote ~/.config/chezmoi/chezmoi.toml"
+alias econfig="dote ~/.config"
 alias ez="dote ~/.config/zsh/init.zsh"
 alias ezals="dote ~/.config/zsh/alias.zsh"
-alias envim="dote ~/.config/nvim/README.md"
+alias envim="dote ~/.config/nvim"
 alias dots="dot status"
 
 # Dirs
