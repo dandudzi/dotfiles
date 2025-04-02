@@ -38,3 +38,10 @@
 ## Issues
 
 - [flameshot if cannot open on mac](https://github.com/flameshot-org/flameshot/issues/3572#issuecomment-2089076723)
+# 🔨 other tools I use that I could forgot I can
+1. `pinentry-mac`           -- use with gpg to provide passphrase
+1. `LuaRocks`               -- use as package manager for Lua modules 
+1. `imagemagick`            -- software suite for converting, editing, and processing images
+1. `pandoc`                 -- use for converting files between formats like markdow, pdf 
+1. `mas`                    -- Mac app store cli
+1. `chafa`                  -- convert images to ASCII

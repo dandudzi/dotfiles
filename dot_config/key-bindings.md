@@ -2,6 +2,7 @@
 # 🛠️Tools
 
 `git-open`              -- to open remote repository
+`onefetch`              -- info about git repository
 `fv`                    -- search and open file in vim
 `fp`                    -- copy pwd of the file
 `fls`                   -- list files in directory
@@ -26,6 +27,22 @@
 `⌃ + ⌥ + ⌘ + C`         -- center
 `⌃ + ⌥ + ⌘ + ←`         -- move left 1/3 2/3
 `⌃ + ⌥ + ⌘ + →`         -- move right 1/3 2/3
+`✦ + L`                 -- open Music app
+`✦ + D`                 -- open Discord
+`✦ + I`                 -- open Intellij
+`✦ + ↑`                 -- volume up
+`✦ + ↓`                 -- volume down
+`✦ + T`                 -- start timer
+`✦ + R`                 -- manage reminders
+`✦ + Q`                 -- dismiss timer
+`✦ + X`                 -- search via DuckDuck
+`✦ + E`                 -- open sesh session
+`✦ + N`                 -- open notes
+`✦ + 1`                 -- connect with speakers bia bluetooth
+`✦ + O`                 -- open VS code
+`✦ + A`                 -- ask about webpage
+`✦ + 2`                 -- ask music
+`⌃ + ⌥ + ⌘ + L`         -- open download folder
 
 # 🌐 Vivaldi
 
