@@ -58,6 +58,11 @@
 `⌥ + ⌘ + J`             -- cycle tab forward
 `⌘ + Z`                 -- reopen closed tab
 `⌃ + ⇧ + <1-9>`         -- switch to workspace
+`⌘ + ←`                 -- move in history back
+`⌘ + →`                 -- move in history forward
+`⌘ + ⌥ + ←`             -- cycle tab backwards
+`⌘ + ⌥ + →`             -- cycle tab forward
+P
 
 # 🔍 Bindings
 
