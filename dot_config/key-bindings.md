@@ -43,6 +43,7 @@
 `✦ + A`                 -- ask about webpage
 `✦ + 2`                 -- ask music
 `⌃ + ⌥ + ⌘ + L`         -- open download folder
+`⇧ +  ⌘ + S`            -- sleep computer
 
 # 🌐 Vivaldi
 
