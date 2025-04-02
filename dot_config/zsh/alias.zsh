@@ -95,14 +95,13 @@ alias pip=pip3
 
 #🔴 chezmoi aliases 
 alias dot="chezmoi"
-alias dotap="chezmoi -v apply"
 alias dota="chezmoi add"
 alias dotat="chezmoi add --template"
 alias dote="chezmoi edit --watch"
-alias econfig="dote ~/.config"
-alias ez="dote ~/.config/zsh"
+alias econfig="dote ~/.config/chezmoi/chezmoi.toml"
+alias ez="dote ~/.config/zsh/init.zsh"
 alias ezals="dote ~/.config/zsh/alias.zsh"
-alias envim="dote ~/.config/nvim/"
+alias envim="dote ~/.config/nvim/README.md"
 alias dots="dot status"
 
 # Dirs
