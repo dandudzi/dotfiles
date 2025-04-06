@@ -10,6 +10,7 @@ alias rfv="~/.config/scripts/rfv"       # fzf with rg fo searching files and its
 
 #🩳 aliases
 #🪛 tools aliases
+alias fastfetch="clear & fastfetch"
 alias tree=pstree
 alias cat=bat
 alias lals="cat ~/.config/zsh/alias.zsh"
