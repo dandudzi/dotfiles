@@ -62,7 +62,6 @@
 `⌘ + →`                 -- move in history forward
 `⌘ + ⌥ + ←`             -- cycle tab backwards
 `⌘ + ⌥ + →`             -- cycle tab forward
-P
 
 # 🔍 Bindings
 
