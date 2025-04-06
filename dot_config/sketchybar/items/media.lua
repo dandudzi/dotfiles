@@ -9,6 +9,7 @@ local media_cover = sbar.add("item", {
 		image = {
 			string = "media.artwork",
 			scale = 1,
+			corner_radius = 12,
 		},
 	},
 	label = { drawing = false },

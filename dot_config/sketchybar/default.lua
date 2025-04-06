@@ -36,7 +36,6 @@ sbar.default({
 		color = colors.transparent,
 		corner_radius = 15,
 		image = {
-			corner_radius = 40,
 			border_color = colors.grey,
 			border_width = 1,
 		},
