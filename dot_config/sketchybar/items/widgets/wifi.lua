@@ -17,19 +17,18 @@ local wifi_up = sbar.add("item", "widgets.wifi1", {
 	icon = {
 		padding_right = 0,
 		font = {
-			size = 9.0,
+			size = 13,
 		},
 		string = icons.wifi.upload,
 	},
 	label = {
 		font = {
-			family = settings.font.numbers,
-			size = 10.0,
+			size = 13.0,
 		},
 		color = colors.red,
 		string = "??? Bps",
 	},
-	y_offset = 4,
+	y_offset = 6,
 })
 
 local wifi_down = sbar.add("item", "widgets.wifi2", {
@@ -38,24 +37,26 @@ local wifi_down = sbar.add("item", "widgets.wifi2", {
 	icon = {
 		padding_right = 0,
 		font = {
-			size = 9.0,
+			size = 13.0,
 		},
 		string = icons.wifi.download,
 	},
 	label = {
 		font = {
-			family = settings.font.numbers,
-			size = 10.0,
+			size = 13.0,
 		},
 		color = colors.blue,
 		string = "??? Bps",
 	},
-	y_offset = -4,
+	y_offset = -6,
 })
 
 local wifi = sbar.add("item", "widgets.wifi.padding", {
 	position = "right",
 	label = { drawing = false },
+	background = {
+		colors = colors.background,
+	},
 })
 
 -- Background around the item
@@ -65,7 +66,7 @@ local wifi_bracket = sbar.add("bracket", "widgets.wifi.bracket", {
 	wifi_down.name,
 }, {
 	background = { color = colors.background },
-	popup = { align = "center", height = 32 },
+	popup = { align = "center", height = 40 },
 })
 
 local ssid = sbar.add("item", {
@@ -96,11 +97,17 @@ local hostname = sbar.add("item", {
 		align = "left",
 		string = "Hostname:",
 		width = popup_width / 2,
+		font = {
+			size = 15,
+		},
 	},
 	label = {
 		max_chars = 20,
 		string = "????????????",
 		width = popup_width / 2,
+		font = {
+			size = 15,
+		},
 		align = "right",
 	},
 })
@@ -109,11 +116,17 @@ local ip = sbar.add("item", {
 	position = "popup." .. wifi_bracket.name,
 	icon = {
 		align = "left",
+		font = {
+			size = 15,
+		},
 		string = "IP:",
 		width = popup_width / 2,
 	},
 	label = {
 		string = "???.???.???.???",
+		font = {
+			size = 15,
+		},
 		width = popup_width / 2,
 		align = "right",
 	},
@@ -123,12 +136,18 @@ local mask = sbar.add("item", {
 	position = "popup." .. wifi_bracket.name,
 	icon = {
 		align = "left",
+		font = {
+			size = 15,
+		},
 		string = "Subnet mask:",
 		width = popup_width / 2,
 	},
 	label = {
 		string = "???.???.???.???",
 		width = popup_width / 2,
+		font = {
+			size = 15,
+		},
 		align = "right",
 	},
 })
@@ -138,11 +157,17 @@ local router = sbar.add("item", {
 	icon = {
 		align = "left",
 		string = "Router:",
+		font = {
+			size = 15,
+		},
 		width = popup_width / 2,
 	},
 	label = {
 		string = "???.???.???.???",
 		width = popup_width / 2,
+		font = {
+			size = 15,
+		},
 		align = "right",
 	},
 })
@@ -174,7 +199,9 @@ wifi:subscribe({ "wifi_change", "system_woke" }, function(env)
 		wifi:set({
 			icon = {
 				string = connected and icons.wifi.connected or icons.wifi.disconnected,
-				color = connected and colors.white or colors.red,
+				color = connected and colors.teal or colors.red,
+				font = { size = 20 },
+				y_offset = -1,
 			},
 		})
 	end)

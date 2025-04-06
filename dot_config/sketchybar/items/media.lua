@@ -8,9 +8,8 @@ local media_cover = sbar.add("item", {
 	background = {
 		image = {
 			string = "media.artwork",
-			scale = 0.85,
+			scale = 1,
 		},
-		color = colors.transparent,
 	},
 	label = { drawing = false },
 	icon = { drawing = false },
@@ -31,10 +30,10 @@ local media_artist = sbar.add("item", {
 	icon = { drawing = false },
 	label = {
 		width = 0,
-		font = { size = 10 },
+		font = { size = 15 },
 		color = colors.with_alpha(colors.white, 0.6),
 		max_chars = 18,
-		y_offset = 6,
+		y_offset = 10,
 	},
 })
 
@@ -45,10 +44,10 @@ local media_title = sbar.add("item", {
 	padding_right = 0,
 	icon = { drawing = false },
 	label = {
-		font = { size = 11 },
+		font = { size = 15 },
 		width = 0,
 		max_chars = 16,
-		y_offset = -5,
+		y_offset = -7,
 	},
 })
 

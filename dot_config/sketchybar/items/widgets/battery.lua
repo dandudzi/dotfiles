@@ -7,7 +7,6 @@ local battery = sbar.add("item", "widgets.battery", {
 	icon = {
 		font = {
 			family = settings.font.icons,
-			size = 19.0,
 		},
 	},
 	label = { font = { family = settings.font.icons } },
@@ -19,12 +18,12 @@ local remaining_time = sbar.add("item", {
 	position = "popup." .. battery.name,
 	icon = {
 		string = "Time remaining:",
-		width = 100,
 		align = "left",
+		font = { size = 16 },
 	},
 	label = {
 		string = "??:??h",
-		width = 100,
+		font = { size = 16 },
 		align = "right",
 	},
 })
@@ -40,7 +39,7 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 			label = charge .. "%"
 		end
 
-		local color = colors.green
+		local color = colors.teal
 		local charging, _, _ = batt_info:find("AC Power")
 
 		if charging then
@@ -70,7 +69,7 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 			icon = {
 				string = icon,
 				color = color,
-				font = settings.font.icons,
+				font = { family = settings.font.icons },
 			},
 			label = { string = lead .. label },
 		})
@@ -88,6 +87,10 @@ battery:subscribe("mouse.clicked", function(env)
 			remaining_time:set({ label = label })
 		end)
 	end
+end)
+
+remaining_time:subscribe("mouse.exited.global", function(env)
+	battery:set({ popup = { drawing = "toggle" } })
 end)
 
 sbar.add("bracket", "widgets.battery.bracket", { battery.name }, {

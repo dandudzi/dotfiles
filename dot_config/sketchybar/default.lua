@@ -7,30 +7,36 @@ sbar.default({
 	icon = {
 		font = {
 			family = settings.font.icons,
-			size = 16.0,
+			size = 24.0,
 		},
 		color = colors.white,
 		padding_left = settings.paddings,
 		padding_right = settings.paddings,
-		background = { image = { corner_radius = 9 } },
+		background = {
+			height = 40,
+			image = { corner_radius = 9 },
+		},
 	},
 	label = {
 		font = {
 			family = settings.font.text,
-			size = 16.0,
+			size = 18.0,
 		},
 		color = colors.white,
 		padding_left = settings.paddings,
 		padding_right = settings.paddings,
+		background = {
+			height = 40,
+		},
 	},
 	background = {
-		height = 32,
-		corner_radius = 9,
+		height = 40,
 		border_width = 2,
 		border_color = colors.transparent,
 		color = colors.transparent,
+		corner_radius = 15,
 		image = {
-			corner_radius = 9,
+			corner_radius = 40,
 			border_color = colors.grey,
 			border_width = 1,
 		},

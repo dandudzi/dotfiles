@@ -1,7 +1,10 @@
 return {
 	cpu = "󰻠",
 	clipboard = "Missing Icon",
-
+	calendar = "󰸘",
+	time = "󱑒",
+	memory_pressure = "󰍛",
+	ram = "󱛜",
 	volume = {
 		_100 = "󰕾",
 		_66 = "󰖀",
@@ -15,14 +18,14 @@ return {
 		_50 = "󰁾",
 		_25 = "󰁻",
 		_0 = "󰁺",
-		charging = "",
+		charging = "󱐋",
 	},
 	wifi = {
 		upload = "󰁝",
 		download = "󰁅",
 		connected = "󱚻",
 		disconnected = "󱛅",
-		router = "Missing Icon",
+		router = "󰑩",
 	},
 	media = {
 		back = "󰒫",
