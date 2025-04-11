@@ -26,3 +26,8 @@
     type = "git-repo"
     url = "https://github.com/zsh-users/zsh-completions.git"
     refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/themes/spaceship-prompt"]
+    type = "git-repo"
+    url = "https://github.com/spaceship-prompt/spaceship-prompt.git"
+    refreshPeriod = "24h"
