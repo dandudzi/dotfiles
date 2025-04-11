@@ -1,3 +1,28 @@
 [".config/tmux/plugins/tpm"]
     type = "git-repo"
     url = "https://github.com/tmux-plugins/tpm"
+
+[".oh-my-zsh/custom/plugins/fzf-tab"]
+    type = "git-repo"
+    url = "https://github.com/Aloxaf/fzf-tab"
+    refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/plugins/fzf-tab-source"]
+    type = "git-repo"
+    url = "https://github.com/Freed-Wu/fzf-tab-source.git"
+    refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/plugins/spaceship-vi-mode"]
+    type = "git-repo"
+    url = "https://github.com/spaceship-prompt/spaceship-vi-mode.git"
+    refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/plugins/fast-syntax-highlighting"]
+    type = "git-repo"
+    url = "https://github.com/zdharma-continuum/fast-syntax-highlighting.git"
+    refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/plugins/zsh-completions"]
+    type = "git-repo"
+    url = "https://github.com/zsh-users/zsh-completions.git"
+    refreshPeriod = "24h"

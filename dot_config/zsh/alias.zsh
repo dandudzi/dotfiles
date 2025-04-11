@@ -14,6 +14,7 @@ alias fastfetch="clear & fastfetch"
 alias tree=pstree
 alias cat=bat
 alias lals="cat ~/.config/zsh/alias.zsh"
+alias lkey="cat ~/.config/key-bindings.md"
 alias vi="nvim"
 alias vim="nvim"
 alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 

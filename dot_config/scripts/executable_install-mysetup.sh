@@ -133,16 +133,6 @@ else
     echo "✅ fzf is already installed."
   fi
 
-  # Install fzf-tab plugin
-  FZF_TAB_DIR="$HOME/.oh-my-zsh/custom/plugins/fzf-tab"
-  if [ ! -d "$FZF_TAB_DIR" ]; then
-    echo "✅ Installing fzf-tab..."
-    git clone https://github.com/Aloxaf/fzf-tab "$FZF_TAB_DIR"
-  else
-    echo "✅ fzf-tab is already installed. Updating..."
-    cd "$FZF_TAB_DIR" && git pull
-  fi
-
   echo "🔄 Updating Homebrew..."
   brew update
   # List of CLI tools to install
