@@ -120,7 +120,7 @@ source $CONFIG_HOME/zsh/themes/catppuccin_macchiato-zsh-syntax-highlighting.zsh
 export EXA_COLORS="catppuccin"
 
 #🍻 Source brew autou ubpdate script
-source $CONFIG_HOME/zsh/brew.zsh
+source $CONFIG_HOME/zsh/update_packages.sh
 
 #🎖️ Command used in command line
 source $CONFIG_HOME/zsh/command.zsh

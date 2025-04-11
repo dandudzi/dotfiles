@@ -205,21 +205,6 @@ else
   echo "✅ Setup autocomplition for mise"
   mise completion zsh
 
-  echo "✅ installing yazi"
-  brew install yazi --HEAD
-
-  echo "✅ installing TPM for tmux"
-  TPM_DIR="$HOME/.tmux/plugins/tpm"
-  # todo change this path
-
-  if [ ! -d "$TPM_DIR" ]; then
-    echo "TPM not found. Cloning..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    tmux source ~/.tmux.conf
-  else
-    echo "TPM already exists at $TPM_DIR."
-  fi
-
   echo "✅ Setup theme for various tools"
   mkdir -p "$(bat --config-dir)/themes"
   cp ~/.themes/bat/* $(bat --config-dir)/themes
