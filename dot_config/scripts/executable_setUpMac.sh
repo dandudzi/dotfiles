@@ -130,6 +130,9 @@ defaults write NSGlobalDomain _HIHideMenuBar -bool true
 # With spring-loading enabled, when you drag a file or folder over another folder in the Finder, that folder will automatically open (or "spring open") after a short delay
 defaults write NSGlobalDomain com.apple.springing.enabled -bool true
 
+# make sure that only opened apps are shown in the dock
+dockutil --no-restart --remove all
+
 echo '🛫 Restarting apps...'
 killall Finder
 killall Dock
