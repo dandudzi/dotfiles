@@ -9,6 +9,12 @@ osascript -e 'tell application "System Preferences" to quit'
 # Enable tab in modal dialogs - tab works everywhere
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
+# function keys (F1–F12) act as standard function keys instead of their special hardware feature roles
+defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
+
+# disable natural scrolling
+defaults write NSGlobalDomain "com.apple.swipescrolldirection" -bool false
+
 # Scrollbars visible when scrolling
 defaults write NSGlobalDomain AppleShowScrollBars -string "WhenScrolling"
 
@@ -96,6 +102,10 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 # “General”, “Open with”, and “Sharing & Permissions”
 defaults write com.apple.finder FXInfoPanesExpanded -dict General -bool true OpenWith -bool true Privileges -bool true
 
+# Extended printing view
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
 # Enable the automatic update check
 defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
@@ -110,6 +120,15 @@ defaults write com.apple.SoftwareUpdate CriticalUpdateInstall -bool true
 
 # Turn on app auto-update
 defaults write com.apple.commerce AutoUpdate -bool true
+
+# Switch to dark theme
+defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
+
+# The menu bar is automatically hidden unless you move the cursor to the top of the screen, where it will reappear.
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
+
+# With spring-loading enabled, when you drag a file or folder over another folder in the Finder, that folder will automatically open (or "spring open") after a short delay
+defaults write NSGlobalDomain com.apple.springing.enabled -bool true
 
 echo '🛫 Restarting apps...'
 killall Finder
