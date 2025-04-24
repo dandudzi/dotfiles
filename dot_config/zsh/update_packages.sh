@@ -5,6 +5,7 @@ if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400
   echo "Updating Homebrew... 🍺"
   brew update && brew upgrade && brew cleanup
 
+  echo "Updating homebrew file"
   brew bundle dump --file="~/.config/brewfile/Brewfile" --force
 
   echo " Updating tpm plugins"
