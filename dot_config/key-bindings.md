@@ -2,6 +2,7 @@
 # 🛠️Tools
 
 `git-open`              -- to open remote repository
+`rfv`                   -- search files and content
 `onefetch`              -- info about git repository
 `fv`                    -- search and open file in vim
 `fp`                    -- copy pwd of the file
