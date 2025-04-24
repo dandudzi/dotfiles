@@ -2,13 +2,6 @@ local icons = require("icons")
 local colors = require("colors")
 local settings = require("settings")
 
-local function exec(command)
-	local handle = io.popen(command)
-	local result = handle:read("*a")
-	handle:close()
-	return result
-end
-
 local ram = sbar.add("graph", "widgets.ram", 60, {
 	position = "right",
 	graph = { color = colors.blue },
@@ -44,19 +37,50 @@ sbar.add("item", "widgets.ram.padding", {
 	position = "right",
 	width = settings.group_paddings,
 })
+-- Function to parse vm_stat output
+local function parse_vm_stat(vm_stat_output)
+	local stats = {}
+
+	-- Split the output into lines
+	for line in vm_stat_output:gmatch("[^\r\n]+") do
+		-- Match the relevant lines using patterns
+		local page_size = line:match("page size of (%d+) bytes")
+		if page_size then
+			stats.page_size = tonumber(page_size)
+		end
+
+		local active = line:match("Pages active:%s*([%d%.]+)")
+		if active then
+			stats.active_pages = tonumber(active)
+		end
+
+		local inactive = line:match("Pages inactive:%s*([%d%.]+)")
+		if inactive then
+			stats.inactive_pages = tonumber(inactive)
+		end
+
+		local free = line:match("Pages free:%s*([%d%.]+)")
+		if free then
+			stats.free_pages = tonumber(free)
+		end
+
+		local wired = line:match("Pages wired down:%s*([%d%.]+)")
+		if wired then
+			stats.wired_pages = tonumber(wired)
+		end
+	end
+
+	return stats
+end
 
 ram:subscribe({ "routine", "forced", "system_woke" }, function(env)
-	sbar.exec('vm_stat | grep "page size" | sed "s/.*page size of //; s/ bytes//; s/)//"', function(output)
-		local page_size = tonumber(output)
-		local active_pages =
-			tonumber(exec('vm_stat | grep "Pages active:" | sed "s/Pages active:[[:space:]]*//; s/[,.]//g; s/\\.//"'))
-		local inactive_pages = tonumber(
-			exec('vm_stat | grep "Pages inactive:" | sed "s/Pages inactive:[[:space:]]*//; s/[,.]//g; s/\\.//"')
-		)
-		local free_pages =
-			tonumber(exec('vm_stat | grep "Pages wired" | sed "s/Pages wired down:[[:space:]]*//; s/[,.]//g; s/\\.//"'))
-		local wired_pages =
-			tonumber(exec('vm_stat | grep "Pages wired" | sed "s/Pages wired down:[[:space:]]*//; s/[,.]//g; s/\\.//"'))
+	sbar.exec("vm_stat", function(output)
+		local stats = parse_vm_stat(output)
+		local page_size = stats.page_size
+		local active_pages = stats.active_pages
+		local inactive_pages = stats.inactive_pages
+		local free_pages = stats.free_pages
+		local wired_pages = stats.wired_pages
 
 		local total_used_pages = active_pages + inactive_pages + wired_pages
 		local total_number_of_pages = total_used_pages + free_pages
