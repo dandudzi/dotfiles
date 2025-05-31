@@ -54,7 +54,7 @@
 `⌘ + E`                 -- quick commands
 `⌥ + ⌘ + B`             -- open bookmark panel
 `⌘ + B`                 -- create bookmark
-`⌥ + ⌘ + H`             -- open history panel
+`⌥ + ⌘ + Y`             -- open history panel
 `⌥ + ⌘ + K`             -- cycle tab back
 `⌥ + ⌘ + J`             -- cycle tab forward
 `⌘ + Z`                 -- reopen closed tab
