@@ -93,55 +93,6 @@ fi
 
 echo "🔄 Updating Homebrew..."
 brew update
-# List of CLI tools to install
-BREW_PACKAGES=(
-  htop
-  wget
-  tmux
-  mise
-  tldr
-  zsh-syntax-highlighting
-  bat
-  git-delta
-  git-open
-  neovim
-  eza
-  zsh-autosuggestions
-  pstree
-  lnav
-  sqlite
-  stats
-  jq
-  ripgrep
-  nmap
-  coreutils
-  fd
-  gpg
-  pinentry-mac
-  zoxide
-  font-jetbrains-mono-nerd-font
-  onefetch
-)
-
-# List of GUI applications (casks)
-CASK_PACKAGES=(
-  google-chrome
-  visual-studio-code
-  spotify
-  intellij-idea-ce
-  sublime-text
-  docker
-  steam
-  skype
-  clipy
-  rectangle
-  discord
-  bitwarden
-  flameshot
-  discord
-  devtoys
-  caffeine
-)
 
 echo "📦 Installing CLI tools..."
 brew install "${BREW_PACKAGES[@]}"
