@@ -95,23 +95,9 @@ echo "🔄 Updating Homebrew..."
 brew update
 
 echo "📦 Installing CLI tools..."
-brew install "${BREW_PACKAGES[@]}"
-
-echo "🖥️ Installing GUI applications..."
-brew install --cask "${CASK_PACKAGES[@]}"
-brew install --cask --no-quarantine stretchly
 
 echo "✅ Setup autocomplition for mise"
 mise completion zsh
-
-echo "✅ Setup theme for various tools"
-mkdir -p "$(bat --config-dir)/themes"
-cp ~/.themes/bat/* $(bat --config-dir)/themes
-bat cache --build
-
-ya pack -a yazi-rs/flavors:catppuccin-macchiato
-mkdir ~/.config/yazi/
-cp ~/.themes/yazi/* ~/.config/yazi/
 
 echo "🧹 Cleaning up..."
 brew cleanup
