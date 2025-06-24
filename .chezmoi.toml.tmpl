@@ -1,9 +1,14 @@
 
 encryption = "gpg"
 {{ $passphrase := (bitwarden "item" "chezmoi").login.password }}
-
+{{ $work := promptBool "Is this work machine?" false}}
 [data]
+    work = {{ $work }}
+    {{ if work true }}
     email = "20063579+dandudzi@users.noreply.github.com"
+    {{ else }}
+    email = "ddudziak@atlassian.com"
+    {{ end }}
     name = "Daniel Dudziak"
     passphrase = {{ $passphrase | quote }} 
 
