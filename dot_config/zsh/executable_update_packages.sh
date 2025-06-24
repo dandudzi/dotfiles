@@ -2,6 +2,9 @@
 UPDATE_FILE="$HOME/.last_update"
 # Run only if last update was over 24 hours ago
 if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400)) ]; then
+  echo "Updating chezmoi"
+  chezmoi update
+
   echo "Updating Homebrew... 🍺"
   brew update && brew upgrade && brew cleanup
 

@@ -1,16 +1,12 @@
-
-encryption = "gpg"
-{{ $passphrase := (bitwarden "item" "chezmoi").login.password }}
-{{ $work := promptBool "Is this work machine?" false}}
+{{ $work := promptBool "Is this work machine?" false -}}
 [data]
     work = {{ $work }}
-    {{ if work true }}
-    email = "20063579+dandudzi@users.noreply.github.com"
-    {{ else }}
+    {{ if $work -}}
     email = "ddudziak@atlassian.com"
-    {{ end }}
+    {{ else -}}
+    email = "20063579+dandudzi@users.noreply.github.com"
+    {{ end -}}
     name = "Daniel Dudziak"
-    passphrase = {{ $passphrase | quote }} 
 
 [diff]
   command = "delta"
@@ -28,7 +24,3 @@ encryption = "gpg"
 [git]
     autoCommit = true
     autoPush = true
-
-[gpg]
-    symmetric = true
-    args = ["--batch", "--passphrase", {{ $passphrase | quote }}, "--no-symkey-cache", "--quiet"]
