@@ -98,6 +98,8 @@ alias pip=pip3
 #🔴 chezmoi aliases 
 alias dot="chezmoi"
 alias dota="chezmoi add"
+alias dotap="chezmoi apply"
+alias doti="chezmoi init"
 alias dotat="chezmoi add --template"
 alias dote="chezmoi edit --watch"
 alias econfig="dote ~/.config"
