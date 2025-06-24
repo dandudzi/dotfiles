@@ -1,3 +1,14 @@
 Host *
     # Always use SSH2
     Protocol 2
+
+    # multiplex connections: reuse a single TCP/TLS channel per host
+    ControlMaster   auto
+    ControlPath     ~/.ssh/control/%r@%h:%p
+    ControlPersist  1800
+  
+    # compression and keep-alive settings
+    Compression         yes
+    TCPKeepAlive        yes
+    ServerAliveInterval 20
+    ServerAliveCountMax 10
