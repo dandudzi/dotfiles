@@ -95,7 +95,7 @@ echo "🔄 Updating Homebrew..."
 brew update
 
 echo "📦 Installing CLI tools..."
-brew bundle --file="~/.config/brewfile/Brewfile"
+brew bundle --file="$(chezmoi source-path)/dot_config/brewfile"
 
 echo "✅ Setup autocomplition for mise"
 mise completion zsh
