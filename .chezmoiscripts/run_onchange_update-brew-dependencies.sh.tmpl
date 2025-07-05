@@ -3,4 +3,4 @@
 # brew dump files hash: {{ include "dot_config/brewfile/Brewfile" | sha256sum }}
 
 echo "📦 Installing CLI tools..."
-brew bundle --file="~/.config/brewfile/Brewfile"
+brew bundle --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
