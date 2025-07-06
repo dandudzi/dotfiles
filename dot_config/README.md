@@ -2,6 +2,9 @@
 
 1. Loggin to AppStore so we can download apps from it
 1. Copy from Bitwarden ssh key to download dotfiles
+    1. `touch ida_rsa`
+    1. `chmod 600 ida_rsa`
+    1. `pbpaste > ida_rsa`
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply dandudzi --ssh`
     1. During the installation pick if this is work laptop or not `y/n`
     1. When zsh is installed type `exit` to continue installation and refresh `<c-b> -> <⇧+i>`
