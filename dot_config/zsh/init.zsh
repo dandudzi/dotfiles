@@ -132,6 +132,8 @@ zstyle ':completion:*' special-dirs false
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="~/.config/ripgrep/config"
+# make bitwarden ssh agend
+export SSH_AUTH_SOCK=/Users/daniel/.bitwarden-ssh-agent.sock
 
 #📢 zsh autosuggestiontions
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh

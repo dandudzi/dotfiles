@@ -6,6 +6,7 @@
     1. During the installation pick if this is work laptop or not `y/n`
     1. When zsh is installed type `exit` to continue installation and refresh `<c-b> -> <⇧+i>`
 1. Sometimes `tmux` has an issue with installing dependencies then enter it and
+1. Enable in Bitwarden ssh agend
 1. Apply `Vivaldi` theme from path `~/.config/vivaldi/`
 1. Add wallpapers from path `~/.config/images/wallpapers`
 1. `<⇧-⌘-.>` to show hidden files in files/finder

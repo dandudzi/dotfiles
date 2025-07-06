@@ -14,5 +14,9 @@ sketchybar --load-font "Symbols Nerd Font Mono"
 sketchybar --load-font "CommitMono"
 
 brew services restart sketchybar
+
 echo "🐁 mise installation of tools"
 mise install
+
+echo "🔒make bitwarden as ssh service"
+export SSH_AUTH_SOCK=/Users/daniel/.bitwarden-ssh-agent.sock
