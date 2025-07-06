@@ -102,9 +102,3 @@ mise completion zsh
 
 echo "🧹 Cleaning up..."
 brew cleanup
-
-echo "📊 setup sketchybar"
-brew services start sketchybar
-sketchybar --load-font "Symbols Nerd Font"
-sketchybar --load-font "Symbols Nerd Font Mono"
-sketchybar --load-font "CommitMono"
