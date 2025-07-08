@@ -24,7 +24,7 @@
         - shortcut for clicking `⌘+⇧+space`
         - `immediate click`
         - search shortcut `hyper + /`
-        - `hide labels before seaerch`
+        - `hide labels before search`
         - scrolling shortcut `⌘+⇧+j`
         - enable `hyper`
         - eneble `Automatic scroll deactivation`
