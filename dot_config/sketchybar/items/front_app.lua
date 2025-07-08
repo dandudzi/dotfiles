@@ -13,7 +13,6 @@ local front_app = sbar.add("item", "front_app", {
 		},
 		y_offset = -1,
 		color = colors.pink,
-		position = "right",
 	},
 	label = {
 		padding_left = 5,

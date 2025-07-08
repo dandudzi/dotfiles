@@ -4,6 +4,7 @@ local colors = require("colors")
 -- Equivalent to the --default domain
 sbar.default({
 	updates = "when_shown",
+	y_offset = 5,
 	icon = {
 		font = {
 			family = settings.font.icons,
@@ -50,7 +51,7 @@ sbar.default({
 		},
 		blur_radius = 50,
 	},
-	padding_left = 5,
-	padding_right = 5,
+	padding_left = settings.group_paddings,
+	padding_right = settings.group_paddings,
 	scroll_texts = true,
 })

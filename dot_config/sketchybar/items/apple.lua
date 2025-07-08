@@ -2,7 +2,7 @@ local colors = require("colors")
 local settings = require("settings")
 
 -- Padding item required because of bracket
-sbar.add("item", { width = 10 })
+sbar.add("item", { width = settings.group_paddings })
 
 local apple = sbar.add("item", {
 	icon = {
@@ -25,6 +25,3 @@ local apple = sbar.add("item", {
 	padding_right = 1,
 	click_script = "$CONFIG_DIR/helpers/menus/bin/menus -s 0",
 })
-
--- Padding item required because of bracket
-sbar.add("item", { width = 7 })
