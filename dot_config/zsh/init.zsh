@@ -2,9 +2,6 @@
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
-#🍻 Source script that runs only once to setUp CI tools
-source $CONFIG_HOME/scripts/setUpCITools.sh
-
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
 setopt prompt_subst
@@ -127,6 +124,9 @@ source $CONFIG_HOME/scripts/update_packages.sh
 
 #🎖️ Command used in command line
 source $CONFIG_HOME/zsh/command.zsh
+
+#🍻 Source script that runs only once to setUp CI tools
+source $CONFIG_HOME/scripts/setUpCITools.sh
 
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
