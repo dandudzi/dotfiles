@@ -5,6 +5,9 @@ if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400
   echo "Updating chezmoi"
   chezmoi update
 
+  echo "Updating oh my zsh"
+  omz update
+
   echo "Updating Homebrew... 🍺"
   brew update && brew upgrade && brew cleanup
 

@@ -2,6 +2,9 @@
 echo "📲 installing xcode-select tools"
 xcode-select --install
 
+echo "Applying Homebrew environment settings..."
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 echo "⏳rebuilt bat cache"
 bat cache --build
 

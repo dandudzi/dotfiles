@@ -50,13 +50,12 @@ install_if_missing "zsh --version" "brew install zsh"
 echo "📟 Installing Oh my zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "📟 Oh My Zsh not found, installing..."
+  export RUNZSH=no      #skipping running zsh after intalltion"
+  export KEEP_ZSHRC=yes #do not change zsh file
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 else
   echo "✅ Oh My Zsh is already installed, skipping installation."
 fi
-
-echo "📟 Making our zsh config as deafult..."
-[ -f "$HOME/.zshrc.pre-oh-my-zsh" ] && mv "$HOME/.zshrc.pre-oh-my-zsh" "$HOME/.zshrc"
 
 echo "🚀 Installing spaceship plugin for ohmyzsh..."
 export ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
