@@ -29,5 +29,9 @@ if [ ! -f "$IS_CI_SET_UP_RUN" ]; then
   echo "🔒make bitwarden as ssh service"
   export SSH_AUTH_SOCK=/Users/daniel/.bitwarden-ssh-agent.sock
 
+  echo "🖥️build programs for scripts"
+  make -C ~/.config/scripts/hidapitester
+  make -C ~/.config/scripts/m1ddc
+
   touch "$IS_CI_SET_UP_RUN"
 fi
