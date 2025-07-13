@@ -54,8 +54,8 @@ function extract() {
     if [ -f $1 ]; then
         case $1 in
             *.tar.bz2)  tar -jxvf $1                        ;;
-            *.tar.gz)   tar -zxvf $1                        ;;
             *.tar)      tar -xvf $1                         ;;
+            *.tar.gz)   tar -zxvf $1                        ;;
             *.tbz2)     tar -jxvf $1                        ;;
             *.tgz)      tar -zxvf $1                        ;;
             *.zip)      unzip $1                            ;;
@@ -65,6 +65,15 @@ function extract() {
         esac
     else
         echo "'$1' is not a valid file"
+    fi
+}
+
+function did(){
+    local containerId=$(docker ps --format 'table {{.ID}}\t{{.Names}}' | eval "fzf -m --header='docker:containerId' --layout=reverse --height=40%" | awk '{print $1}')
+
+    if [ "$containerId" != "CONTAINER" ] && [ "x$containerId" != "x" ]
+    then
+        echo $containerId
     fi
 }
 

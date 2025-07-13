@@ -13,6 +13,9 @@
 `gitstat`               -- summary of the git repository
 `cd -`                  -- previous directory
 `z foo<Space><⇥>`       -- show interactive completions
+`did`                   -- list docker containers and print it id
+`extract`               -- extract files from compression
+`⌃ + s`
 
 # 🚀 Raycast
 
