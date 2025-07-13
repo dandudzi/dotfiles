@@ -7,6 +7,7 @@ alias week='date +%V'
 alias rgi="rg --invert-match"           # invert search text in files
 alias rgf="rg --fixed-strings"          # search fixed string
 alias rfv="~/.config/scripts/rfv"       # fzf with rg fo searching files and its content 
+alias kb="cat ~/.config/key-bindings.md ~/.config/zsh/alias.zsh | fzf"
 
 #🩳 aliases
 #🪛 tools aliases

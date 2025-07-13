@@ -33,6 +33,7 @@
     1. Raycast
         - rebind `⌘ + space`
         - enable hyper
+        - add command script directory `/.config/scripts`
 
 ## Issues
 

@@ -16,6 +16,8 @@
 `did`                   -- list docker containers and print it id
 `extract`               -- extract files from compression
 `⌃ + b` → `k`             -- open sesh dialog
+`kp`                    -- kill process
+`kb`                    -- list key-bindings
 
 # 🚀 Raycast
 
