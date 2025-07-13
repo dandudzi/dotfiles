@@ -43,9 +43,9 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons $realpath'
 
 # minimal bottom padding fot tmux
-zstyle ':fzf-tab:complete:*:*' popup-pad 100 100
+zstyle ':fzf-tab:complete:*:*' popup-pad 70 70
 # apply to all command
-zstyle ':fzf-tab:*' popup-min-size 100 100
+zstyle ':fzf-tab:*' popup-min-size 70 70
 # display header and colorfull prefix
 zstyle ':fzf-tab:*' single-group prefix color header
 
