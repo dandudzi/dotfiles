@@ -86,12 +86,6 @@ local config = {
 		k.cmd_to_tmux_prefix("7", "7"),
 		k.cmd_to_tmux_prefix("8", "8"),
 		k.cmd_to_tmux_prefix("9", "9"),
-		k.cmd_key(
-			"k",
-			wezterm.action({
-				SendString = "sesh-sessions\n",
-			})
-		),
 	},
 }
 -- and finally, return the ration to wezterm

@@ -15,6 +15,7 @@
 `z foo<Space><⇥>`       -- show interactive completions
 `did`                   -- list docker containers and print it id
 `extract`               -- extract files from compression
+`⌃ + b` → `k`             -- open sesh dialog
 
 # 🚀 Raycast
 
@@ -96,7 +97,6 @@
 `⌃ + b` → `s`             -- change session
 `⌃ + b` → `c`             -- create new window
 `⌃ + b` → `<1-9>`         -- move to window
-`⌃ + b` → `k`             -- open sesh dialog
 `⌃ + b` → `j`             -- open sesh preview
 `⌃ + b` → `r`             -- open previous session
 
