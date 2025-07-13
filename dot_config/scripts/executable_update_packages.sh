@@ -2,7 +2,7 @@
 UPDATE_FILE="$HOME/.last_update"
 # Run only if last update was over 24 hours ago
 if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400)) ]; then
-  echo "Updating chezmoi"
+  echo "Updating chezmoi dependencies"
   chezmoi update
 
   echo "Updating oh my zsh"
@@ -17,9 +17,6 @@ if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400
 
   echo " Updating tpm plugins"
   ~/.config/tmux/plugins/tpm/bin/update_plugins all
-
-  echo "🔄 Updating chezmoi external repos and dependencies"
-  chezmoi --refresh-externals apply
 
   date +%s >"$UPDATE_FILE" # Save current timestamp
 fi
