@@ -2,6 +2,7 @@
 java = "latest"
 node = "22"
 lua = "5.1"
+latex = "latest"
 pnpm = "latest"
 maven = "latest"
 gradle = "latest"
