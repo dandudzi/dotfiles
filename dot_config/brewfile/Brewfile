@@ -1,6 +1,7 @@
 tap "felixkratz/formulae"
 tap "joshmedeski/sesh"
 tap "rcmdnk/file"
+brew "ast-grep"
 brew "bat"
 brew "bitwarden-cli"
 brew "btop"
