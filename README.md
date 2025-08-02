@@ -5,6 +5,7 @@
     1. `touch ida_rsa.pub`
     1. `chmod 600 ida_rsa.pub`
     1. `pbpaste > ida_rsa.pub`
+1. If work laptop run `mv .zshrc .zshrc_work`
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --force dandudzi --ssh`
     1. During the installation pick if this is work laptop or not `y/n`
 1. Open wezterm to finish installing command line tools
