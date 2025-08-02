@@ -31,7 +31,7 @@
         - browser label `fast`
         - scroll speed 2nd from left
     1. Raycast
-        - rebind `⌘ + space`
+        - rebind `⌘ + space` - `Keyboard->Shortcuts->Spotlight`
         - enable hyper
         - add command script directory `/.config/scripts`
 
