@@ -11,7 +11,7 @@ if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400
   echo "Updating Homebrew... 🍺"
   brew update && brew upgrade && brew cleanup
 
-  {{ if .work -}}
+  {{ if not .work -}}
   echo "Updating homebrew bundle file"
   brew bundle dump --file="~/.config/brewfile/Brewfile" --force
   dota ~/.config/brewfile/Brewfile
