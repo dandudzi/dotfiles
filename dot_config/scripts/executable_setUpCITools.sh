@@ -39,9 +39,10 @@ if [ ! -f "$IS_CI_SET_UP_RUN" ]; then
   make -C ~/.config/scripts/hidapitester
   make -C ~/.config/scripts/m1ddc
 
-  echo "▦ add dedicated chezmoi ssh sign key"
+  echo "▦ add dedicated chezmoi ssh sign key and user"
   chezmoi cd
   git config user.signingkey "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5"
+  git config user.email 20063579+dandudzi@users.noreply.github.com
   cd ~
 
   touch "$IS_CI_SET_UP_RUN"
