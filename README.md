@@ -9,7 +9,6 @@
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --force dandudzi --ssh`
     1. During the installation pick if this is work laptop or not `y/n`
 1. Open wezterm to finish installing command line tools
-1. Run command  `echo "Include ~/.config/ssh/ssh_config" > ~/.ssh/config`
 1. Sometimes `tmux` has an issue with installing dependencies then enter it and refresh `<c-b> -> <⇧+i>`
 1. Enable in Bitwarden ssh agent
 1. Apply `Vivaldi` theme from path `~/.config/vivaldi/`
