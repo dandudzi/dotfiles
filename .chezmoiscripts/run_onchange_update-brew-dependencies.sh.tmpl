@@ -3,4 +3,6 @@
 # brew dump files hash: {{ include "dot_config/brewfile/Brewfile" | sha256sum }}
 
 echo "📦 Installing CLI tools..."
+trap 'echo "An error occurred, while installing brew dependencies but continue";' ERR
 brew bundle --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
+trap - ERR

@@ -11,4 +11,4 @@ startup_command = "yazi"
 [[session]]
 name = "Config 🔧"
 path = "~/.config"
-startup_command = "econfig ."
+startup_command = 'cd "$(chezmoi source-path)" && nvim'

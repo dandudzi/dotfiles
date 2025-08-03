@@ -94,10 +94,17 @@ echo "🔄 Updating Homebrew..."
 brew update
 
 echo "📦 Installing CLI tools..."
+trap 'echo "An error occurred, while installing brew dependencies";' ERR
 brew bundle --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
+trap - ERR
 
 echo "✅ Setup autocomplition for mise"
 mise completion zsh
+
+echo "▦ setting up ssh to include my config"
+echo "Include ~/.config/ssh/ssh_config" >~/.ssh/config
+mkdir ~/.ssh/control
+chmod 700 ~/.ssh/control
 
 echo "🧹 Cleaning up..."
 brew cleanup

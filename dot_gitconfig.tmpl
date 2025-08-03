@@ -1,7 +1,12 @@
 [user]
 	name = Daniel Dudziak
 	email = {{ .email }}
-	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5
+  {{ if .work -}}
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOhOBKJKhwfQ9ZR52PSiEHSCcv7srnwdH1EngDjIAwM
+  {{ else -}}
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5
+  {{ end -}}
+
 [color]
 	ui = auto
 [interactive]

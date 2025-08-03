@@ -27,11 +27,16 @@ if [ ! -f "$IS_CI_SET_UP_RUN" ]; then
   mise install
 
   echo "🔒make bitwarden as ssh service"
-  export SSH_AUTH_SOCK=/Users/daniel/.bitwarden-ssh-agent.sock
+  export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 
   echo "🖥️build programs for scripts"
   make -C ~/.config/scripts/hidapitester
   make -C ~/.config/scripts/m1ddc
+
+  echo "▦ add dedicated chezmoi ssh sign key"
+  chezmoi cd
+  git config user.signingkey "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5"
+  cd ~
 
   touch "$IS_CI_SET_UP_RUN"
 fi
