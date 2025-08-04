@@ -9,7 +9,9 @@ if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400
   omz update
 
   echo "Updating Homebrew... 🍺"
-  brew update && brew upgrade && brew cleanup
+  brew update
+  brew upgrade
+  brew cleanup
 
   {{ if not .work -}}
   echo "Updating homebrew bundle file"
