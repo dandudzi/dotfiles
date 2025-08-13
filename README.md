@@ -16,6 +16,7 @@
 1. `<⇧-⌘-.>` to show hidden files in files/finder
 1. Set up `Night shift`
 1. Unbind ⌘+⇧+a - `Keboard settings -> Shortcuts -> Services -> Text -> Search Man Pages`
+1. Load Intellij settings from `.config/idea`
 1. Add `login items` in Mac
     1. Docker
     1. Flameshot
