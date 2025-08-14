@@ -16,7 +16,7 @@ local volume_icon = sbar.add("item", "widgets.volume2", {
 	position = "right",
 	icon = {
 		string = icons.volume._100,
-		width = 0,
+		width = 1,
 		align = "left",
 		color = colors.mauve,
 		font = {
@@ -80,7 +80,11 @@ volume_percent:subscribe("volume_change", function(env)
 		lead = "0"
 	end
 
-	volume_icon:set({ label = icon })
+	volume_icon:set({
+		icon = {
+			string = icon,
+		},
+	})
 	volume_percent:set({ label = lead .. volume .. "%" })
 	volume_slider:set({ slider = { percentage = volume } })
 end)
