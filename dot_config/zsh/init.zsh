@@ -84,6 +84,8 @@ zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
 SPACESHIP_TIME_SHOW=true
 SPACESHIP_EXIT_CODE_SHOW=true
 SPACESHIP_KUBECTL_SHOW=true
+SPACESHIP_GIT_BRANCH_ASYNC=true
+SPACESHIP_EXEC_TIME_ELAPSED=1
 export RPS1="%{$reset_color%}"
 # additional completions for zsh must be beofre sourcing ohmyzsh
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
