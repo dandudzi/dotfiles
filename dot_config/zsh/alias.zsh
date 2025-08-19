@@ -32,9 +32,10 @@ alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
 alias go="git-open"
 alias g="git"
 alias st="status"
-alias avv="branch -avv"
-alias vv="branch -vv"
+alias avv="git branch -avv"
+alias vv="git branch -vv"
 alias amen="commit --amend"
+alias squa="git rebase -i"
 
 alias ga="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
