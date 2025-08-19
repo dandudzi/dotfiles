@@ -35,7 +35,7 @@ alias st="status"
 alias avv="git branch -avv"
 alias vv="git branch -vv"
 alias amen="commit --amend"
-alias squa="git rebase -i"
+alias gsqua="git rebase -i"
 
 alias ga="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
