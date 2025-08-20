@@ -31,11 +31,9 @@ alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
 #🎬 Git
 alias go="git-open"
 alias g="git"
-alias st="status"
-alias avv="git branch -avv"
-alias vv="git branch -vv"
+alias gavv="git branch -avv"
+alias gvv="git branch -vv"
 alias amen="commit --amend"
-alias gsqua="git rebase -i"
 
 alias ga="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
@@ -73,6 +71,8 @@ alias gba="git branch -a" #list all branches even remote
 
 alias gwipe="git reset --hard && git clean --force -df"
 alias gitstat="onefetch"
+alias git-list-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}"'
+alias git-remove-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}" | xargs git branch -D'
 
 #🌳 eza aliases
 alias lt='eza -l --sort=modified'      # Sort by modification time
