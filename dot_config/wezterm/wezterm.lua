@@ -9,6 +9,8 @@ local config = {
 	window_background_opacity = 0.8,
 	macos_window_background_blur = 20,
 	max_history_size = 10000,
+	scrollback_lines = 10000,
+	enable_scroll_bar = true,
 
 	-- performance boost
 	front_end = "WebGpu",
