@@ -73,7 +73,7 @@ cask "vivaldi"
 cask "wezterm"
 mas "GarageBand", id: 682658836
 mas "Goodnotes", id: 1444383602
-mas "HP Smart", id: 1474276998
+mas "HP", id: 1474276998
 mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
 mas "Kindle", id: 302584613
