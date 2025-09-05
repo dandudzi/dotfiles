@@ -19,7 +19,7 @@
 `kp`                    -- kill process
 `kb`                    -- list key-bindings
 `chafa`                 -- image to ASCII converter
-`fastfatch`             -- show system profile
+`fastfatch`             -- show system profile and my profile picture
 
 
 # 🚀 Raycast
