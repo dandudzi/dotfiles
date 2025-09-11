@@ -34,7 +34,7 @@ alias g="git"
 alias gavv="git branch -avv"
 alias gvv="git branch -vv"
 alias amen="commit --amend"
-
+alias cbc="git branch --show-current | pbcopy"
 alias ga="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
 
