@@ -68,6 +68,15 @@ local function parse_vm_stat(vm_stat_output)
 		if wired then
 			stats.wired_pages = tonumber(wired)
 		end
+
+		local speculative = line:match("Pages speculative:%s*([%d%.]+)")
+		if speculative then
+			stats.speculative_pages = tonumber(speculative)
+		end
+		local compressed = line:match("Pages occupied by compressor:%s*([%d%.]+)")
+		if compressed then
+			stats.compressed_pages = tonumber(compressed)
+		end
 	end
 
 	return stats
@@ -81,9 +90,11 @@ ram:subscribe({ "routine", "forced", "system_woke" }, function(env)
 		local inactive_pages = stats.inactive_pages
 		local free_pages = stats.free_pages
 		local wired_pages = stats.wired_pages
+		local speculative_pages = stats.speculative_pages
+		local compressed_pages = stats.compressed_pages
 
-		local total_used_pages = active_pages + inactive_pages + wired_pages
-		local total_number_of_pages = total_used_pages + free_pages
+		local total_used_pages = active_pages + inactive_pages + wired_pages + speculative_pages
+		local total_number_of_pages = total_used_pages + free_pages + compressed_pages
 
 		if page_size <= 0 or wired_pages <= 0 or inactive_pages <= 0 or active_pages <= 0 or free_pages <= 0 then
 			ram:set({
