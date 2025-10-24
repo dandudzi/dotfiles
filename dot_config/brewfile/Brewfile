@@ -45,6 +45,7 @@ brew "sevenzip"
 brew "switchaudio-osx"
 brew "tldr"
 brew "tmux"
+brew "tree-sitter-cli"
 brew "unar"
 brew "wget"
 brew "yazi", args: ["HEAD"]
