@@ -134,6 +134,9 @@ source $CONFIG_HOME/zsh/command.zsh
 #🍻 Source script that runs only once to setUp CI tools
 source $CONFIG_HOME/scripts/setUpCITools.sh
 
+#🕒 schedule cron jobs if not enabled
+source $CONFIG_HOME/scripts/crontabconfig.sh
+
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
 
