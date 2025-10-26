@@ -19,6 +19,7 @@ alias lkey="cat ~/.config/key-bindings.md"
 alias vi="nvim"
 alias vim="nvim"
 alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 
+alias htop="btop"
 
 #🛜 networking
 alias fig="find . -print | grep -iw"
