@@ -35,48 +35,6 @@ local config = {
 	use_dead_keys = false,
 	default_cursor_style = "BlinkingBar",
 	cursor_blink_rate = 500,
-	-- problem with urls in markdown file https://github.com/wez/wezterm/issues/3803#issuecomment-1608954312
-	hyperlink_rules = {
-		-- Matches: a URL in parens: (URL)
-		{
-			regex = "\\((\\w+://\\S+)\\)",
-			format = "$1",
-			highlight = 1,
-		},
-		-- Matches: a URL in brackets: [URL]
-		{
-			regex = "\\[(\\w+://\\S+)\\]",
-			format = "$1",
-			highlight = 1,
-		},
-		-- Matches: a URL in curly braces: {URL}
-		{
-			regex = "\\{(\\w+://\\S+)\\}",
-			format = "$1",
-			highlight = 1,
-		},
-		-- Matches: a URL in angle brackets: <URL>
-		{
-			regex = "<(\\w+://\\S+)>",
-			format = "$1",
-			highlight = 1,
-		},
-		-- Then handle URLs not wrapped in brackets
-		{
-			-- Before
-			--regex = '\\b\\w+://\\S+[)/a-zA-Z0-9-]+',
-			--format = '$0',
-			-- After
-			regex = "[^(]\\b(\\w+://\\S+[)/a-zA-Z0-9-]+)",
-			format = "$1",
-			highlight = 1,
-		},
-		-- implicit mailto link
-		{
-			regex = "\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b",
-			format = "mailto:$0",
-		},
-	},
 	keys = {
 		-- Select window 1-9
 		k.cmd_to_tmux_prefix("1", "1"),
