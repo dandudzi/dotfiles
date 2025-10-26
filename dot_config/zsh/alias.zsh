@@ -19,7 +19,6 @@ alias lkey="cat ~/.config/key-bindings.md"
 alias vi="nvim"
 alias vim="nvim"
 alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 
-alias htop="btop"
 
 #🛜 networking
 alias fig="find . -print | grep -iw"
@@ -66,7 +65,7 @@ alias grest="git restore"
 alias gbl="git blame --ignore-rev"  #ingore noisy commits
 
 alias gs="git switch"
-alias gsc="git switch -c"
+alias gsc="git switch -c" #create new branch
 alias gb="git branch"
 alias gba="git branch -a" #list all branches even remote
 
