@@ -3,11 +3,10 @@
 preview_command = "eza --all --git --icons --color=always {}"
 
 [[session]]
-name = "Downloads 📥"
+name = "Downloads"
 path = "~/Downloads"
 startup_command = "yazi"
 
 [[session]]
-name = "Config 🔧"
-path = "~/.config"
-startup_command = 'cd "$(chezmoi source-path)" && nvim'
+name = "Config"
+startup_command = 'econfig'
