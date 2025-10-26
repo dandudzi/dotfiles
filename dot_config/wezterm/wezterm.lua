@@ -12,7 +12,7 @@ local config = {
 	enable_scroll_bar = true,
 
 	-- performance boost
-	front_end = "WebGpu",
+	front_end = "OpenGL",
 	max_fps = 120,
 	webgpu_power_preference = "HighPerformance",
 
