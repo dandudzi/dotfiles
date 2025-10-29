@@ -8,6 +8,7 @@ export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
 
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
+
 setopt prompt_subst
 # allows zsh to use bash like completion scripts
 #autoload bashcompinit && bashcompinit
@@ -78,12 +79,51 @@ ZSH_THEME="spaceship"
 KITTY_CONFIG_DIRECTORY="$CONFIG_HOME/kitty/kitty.conf"
 
 #⚠️jira plugins require setup https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jira
-plugins=( vi-mode chezmoi fzf mise  aliases aws common-aliases gradle docker mvn docker-compose gpg-agent jira kubectl python rust safe-paste spring sublime fzf-tab fzf-tab-source spaceship-vi-mode direnv alias-finder)
+plugins=(
+  direnv              # Directory-based environment variables
+
+  fzf                 # Fuzzy finder general utility
+  fzf-tab             # FZF-based tab completion
+  fzf-tab-source      # Source plugins for fzf-tab
+
+  aliases             # General aliases
+  common-aliases      # Additional common aliases
+  alias-finder        # Discover command aliases
+  safe-paste          # Safe pasting of input
+  
+  aws                 # AWS management
+  kubectl             # kubectl command enhancements
+  docker              # Docker command enhancements
+  docker-compose      # Docker-compose enhancements
+  gradle              # Gradle build tool
+  mvn                 # Maven build tool
+  jira                # JIRA integration
+  gpg-agent           # GPG agent support
+  chezmoi             # Manage dotfiles
+  kitty               # Kitty terminal configurations
+  sublime             # Enhance sublime integrations
+  python              # Python environment and commands
+  rust                # Rust programming language tools
+  spring              # Spring framework tools
+
+  mise                # UI enhancements or interaction tweaks
+  
+  spaceship-vi-mode   # Enhances vi-mode for Spaceship prompt
+  vi-mode             # vi-style command editing
+)
+
 # enable alias finder for all coommands 
 zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 zstyle ':omz:plugins:alias-finder' longer yes # disabled by default
 zstyle ':omz:plugins:alias-finder' exact yes # disabled by default
 zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
+
+VI_MODE_SET_CURSOR=true
+VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
+VI_MODE_CURSOR_NORMAL=1
+VI_MODE_CURSOR_VISUAL=1
+VI_MODE_CURSOR_INSERT=5
+VI_MODE_CURSOR_OPPEND=5
 
 #🚀 spaceship settings
 SPACESHIP_TIME_SHOW=true
@@ -107,8 +147,8 @@ bindkey '^e' fzf-cd-widget
 # setting vi mode 
 spaceship add --after time vi_mode
 SPACESHIP_VI_MODE_COLOR="magenta"
-SPACESHIP_VI_MODE_NORMAL="󰛐  "
-SPACESHIP_VI_MODE_INSERT="󰷢  "
+SPACESHIP_VI_MODE_NORMAL="󰛐 "
+SPACESHIP_VI_MODE_INSERT="󰷢 "
 
 # make sure that pygmentize is not used by any alias
 alias_p="P"
@@ -155,3 +195,21 @@ source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval spaceship_vi_mode_enable
 eval "$(zoxide init zsh)"
 eval "$(mise activate zsh)"
+
+function zle-keymap-select() {
+  # Call the spaceship functionality
+  spaceship::core::refresh_section "vi_mode"
+  
+  # Original functionality - ensure it's sourced first
+  typeset -g VI_KEYMAP=$KEYMAP
+
+  if _vi-mode-should-reset-prompt; then
+    zle reset-prompt
+  fi
+  
+  zle -R
+  _vi-mode-set-cursor-shape-for-keymap "${VI_KEYMAP}"
+}
+
+# Bind the combined function
+zle -N zle-keymap-select
