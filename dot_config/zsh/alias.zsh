@@ -1,4 +1,5 @@
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
+alias htop="btop"
 
 # Get week number
 alias week='date +%V'
