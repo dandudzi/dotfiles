@@ -10,3 +10,11 @@ startup_command = "yazi"
 [[session]]
 name = "Config"
 startup_command = 'econfig'
+
+
+{{ if not .work -}}
+[[session]]
+name = "Vim Kata"
+path = "~/Repos/practice-neovim/Vim-Katas/exercises/"
+startup_command= "nvim"
+{{ end }}
