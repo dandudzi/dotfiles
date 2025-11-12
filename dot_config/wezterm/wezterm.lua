@@ -1,15 +1,20 @@
 -- Pull in the wezterm API
 local wezterm = require("wezterm")
 local k = require("utils/keys")
+local custom = wezterm.color.get_builtin_schemes()["Catppuccin Mocha"]
+custom.cursor_bg = "#c6a0f6"
+
 -- This will hold the ration.
 local config = {
-
+	color_schemes = {
+		["my-catppuccin"] = custom,
+	},
 	-- setting up background
-	color_scheme = "catppuccin-macchiato",
+	color_scheme = "my-catppuccin",
 	window_background_opacity = 0.8,
 	macos_window_background_blur = 20,
+
 	scrollback_lines = 10000,
-	enable_scroll_bar = true,
 
 	-- performance boost
 	front_end = "OpenGL",
