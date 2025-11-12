@@ -9,17 +9,17 @@ export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
 
+# disable oh-my-zsh autoupdate as we are doing it once per day
+zstyle ':omz:update' mode disabled
 setopt prompt_subst
-# allows zsh to use bash like completion scripts
-#autoload bashcompinit && bashcompinit
-# initilize zshrc completion system
-autoload -U compinit
-# initilize autocomolete
-zmodload zsh/complist
-compinit
-_comp_options+=(globdots)
+
 # making sure that hidden directories and files will be matched
 setopt globdots
+_comp_options+=(globdots)
+# additional completions for zsh must be beofre sourcing ohmyzsh
+fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+ZSH_DISABLE_COMPFIX="true"
+
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -82,32 +82,18 @@ KITTY_CONFIG_DIRECTORY="$CONFIG_HOME/kitty/kitty.conf"
 plugins=(
   direnv              # Directory-based environment variables
 
-  fzf                 # Fuzzy finder general utility
-  fzf-tab             # FZF-based tab completion
-  fzf-tab-source      # Source plugins for fzf-tab
-
   aliases             # General aliases
   common-aliases      # Additional common aliases
   alias-finder        # Discover command aliases
   safe-paste          # Safe pasting of input
   
   aws                 # AWS management
-  kubectl             # kubectl command enhancements
-  docker              # Docker command enhancements
-  docker-compose      # Docker-compose enhancements
-  gradle              # Gradle build tool
-  mvn                 # Maven build tool
-  jira                # JIRA integration
   gpg-agent           # GPG agent support
-  chezmoi             # Manage dotfiles
-  kitty               # Kitty terminal configurations
-  sublime             # Enhance sublime integrations
-  python              # Python environment and commands
-  rust                # Rust programming language tools
-  spring              # Spring framework tools
-
   mise                # UI enhancements or interaction tweaks
   
+  fzf-tab             # FZF-based tab completion
+  fzf-tab-source      # Source plugins for fzf-tab
+
   spaceship-vi-mode   # Enhances vi-mode for Spaceship prompt
   vi-mode             # vi-style command editing
 )
@@ -128,14 +114,11 @@ VI_MODE_CURSOR_OPPEND=5
 #🚀 spaceship settings
 SPACESHIP_TIME_SHOW=true
 SPACESHIP_EXIT_CODE_SHOW=true
-SPACESHIP_KUBECTL_SHOW=true
 SPACESHIP_GIT_BRANCH_ASYNC=true
-SPACESHIP_EXEC_TIME_ELAPSED=1
+SPACESHIP_ASYNC=true
+SPACESHIP_PROMPT_ASYNC=true
 export RPS1="%{$reset_color%}"
-# additional completions for zsh must be beofre sourcing ohmyzsh
-fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 
-# initilize fzf and fzf-tab and catppuccin with support for tmux
 # must be before oh-my-zsh init
 source $CONFIG_HOME/zsh/fzf.zsh
 
@@ -145,7 +128,7 @@ source $ZSH/oh-my-zsh.sh
 bindkey '^e' fzf-cd-widget
 
 # setting vi mode 
-spaceship add --after time vi_mode
+spaceship add --before char vi_mode
 SPACESHIP_VI_MODE_COLOR="magenta"
 SPACESHIP_VI_MODE_NORMAL="󰛐 "
 SPACESHIP_VI_MODE_INSERT="󰷢 "
@@ -189,12 +172,13 @@ export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 # make bitwarden ssh agend
 export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
-#📢 zsh autosuggestiontions
+#📢 zsh autosuggestiontion#s
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 # make sure that spaceship propmpt is refreshed
-eval spaceship_vi_mode_enable
 eval "$(zoxide init zsh)"
-eval "$(mise activate zsh)"
+
+# fix for not fzf binded to history, conflict with other plugins
+bindkey '^R' fzf-history-widget
 
 function zle-keymap-select() {
   # Call the spaceship functionality
