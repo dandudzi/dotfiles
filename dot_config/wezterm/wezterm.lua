@@ -21,7 +21,7 @@ local config = {
 	front_end = "OpenGL",
 	max_fps = 144,
 	webgpu_power_preference = "HighPerformance",
-	animations_fps = 10,
+	animation_fps = 10,
 
 	-- font settings
 	font_size = 16,

@@ -4,8 +4,6 @@ Host *
 
     # multiplex connections: reuse a single TCP/TLS channel per host
 #    ControlMaster   auto
-    #ControlPath     ~/.ssh/control/%r@%h:%p
-    #ControlPersist  1800
   
     # compression and keep-alive settings
     Compression         yes
