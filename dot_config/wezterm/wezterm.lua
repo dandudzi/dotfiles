@@ -3,6 +3,7 @@ local wezterm = require("wezterm")
 local k = require("utils/keys")
 local custom = wezterm.color.get_builtin_schemes()["Catppuccin Mocha"]
 custom.cursor_bg = "#c6a0f6"
+custom.background = "#24273a"
 
 -- This will hold the ration.
 local config = {
@@ -11,15 +12,16 @@ local config = {
 	},
 	-- setting up background
 	color_scheme = "my-catppuccin",
-	window_background_opacity = 0.8,
-	macos_window_background_blur = 20,
+	window_background_opacity = 0.80,
+	macos_window_background_blur = 10,
 
 	scrollback_lines = 10000,
 
 	-- performance boost
 	front_end = "OpenGL",
-	max_fps = 120,
+	max_fps = 144,
 	webgpu_power_preference = "HighPerformance",
+	animations_fps = 10,
 
 	-- font settings
 	font_size = 16,
