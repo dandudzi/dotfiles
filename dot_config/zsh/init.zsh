@@ -197,3 +197,7 @@ function zle-keymap-select() {
 
 # Bind the combined function
 zle -N zle-keymap-select
+
+if [ -z "$TMUX" ]; then
+    tmux attach || tmux new
+fi
