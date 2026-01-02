@@ -28,6 +28,7 @@ alias nm="nmap -sC -sV -oN nmap"
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias localip="ipconfig getifaddr en0"
 alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
+alias dig="dig"
 
 #🎬 Git
 alias go="git-open"
@@ -118,3 +119,4 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
+
