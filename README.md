@@ -38,6 +38,7 @@
       - rebind `⌘ + space` - `Keyboard->Shortcuts->Spotlight`
       - enable hyper
       - add command script directory `/.config/scripts`
+1. Install Opeanleaf for LED managment
 
 ## Issues
 
