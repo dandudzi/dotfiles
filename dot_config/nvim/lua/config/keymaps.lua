@@ -30,6 +30,7 @@ vim.api.nvim_create_user_command("NextNumberedFile", function()
 
     -- close previous buffer without saving
     vim.api.nvim_buf_delete(buf, { force = true }) -- open next file
+    vim.b.autoformat = false
 end, {})
 
 vim.keymap.set("n", "<leader>1", ":NextNumberedFile<CR>", { silent = true })
