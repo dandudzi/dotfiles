@@ -73,7 +73,6 @@ cask "steam"
 cask "sublime-text"
 cask "visual-studio-code"
 cask "vivaldi"
-cask "wezterm"
 mas "ATEN KVM Utility", id: 6450888492
 mas "GarageBand", id: 682658836
 mas "Goodnotes", id: 1444383602
