@@ -191,17 +191,6 @@ def main() -> int:
 
         -- 3) If checkbox is disabled, wait until enabled; then if unchecked, check it
         set t5 to (current date)
-        repeat
-            set enTxt to "true"
-            try
-                set enTxt to ((value of attribute "AXEnabled" of cb) as text)
-            end try
-
-            if enTxt is "true" then exit repeat
-            if (((current date) - t5) > UI_TIMEOUT) then error "Timeout: checkbox stayed disabled"
-            delay 0.2
-        end repeat
-
         set v to missing value 
         try
             set v to value of attribute "AXValue" of cb
