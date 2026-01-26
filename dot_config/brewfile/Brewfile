@@ -8,6 +8,7 @@ brew "bitwarden-cli"
 brew "btop"
 brew "chafa"
 brew "chezmoi"
+brew "cliclick"
 brew "coreutils"
 brew "direnv"
 brew "dockutil"
@@ -88,6 +89,7 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft Word", id: 462054704
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
+mas "Xcode", id: 497799835
 vscode "dbaeumer.vscode-eslint"
 vscode "donjayamanne.githistory"
 vscode "eamodio.gitlens"
