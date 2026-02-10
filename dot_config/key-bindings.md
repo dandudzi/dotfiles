@@ -19,6 +19,7 @@
 `kb` -- list key-bindings
 `chafa` -- image to ASCII converter
 `fastfatch` -- show system profile and my profile picture
+`entr` - run command when file changed
 
 # 🚀 Raycast
 
