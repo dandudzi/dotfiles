@@ -51,20 +51,21 @@ bindkey -M vicmd '\es' sesh-sessions
 bindkey -M viins '\es' sesh-sessions 
 
 function extract() {
-    if [ -f $1 ]; then
-        case $1 in
-            *.tar.bz2)  tar -jxvf $1                        ;;
-            *.tar)      tar -xvf $1                         ;;
-            *.tar.gz)   tar -zxvf $1                        ;;
-            *.tbz2)     tar -jxvf $1                        ;;
-            *.tgz)      tar -zxvf $1                        ;;
-            *.zip)      unzip $1                            ;;
-            *.ZIP)      unzip $1                            ;;
-            *.rar)      unar x $1                          ;;
-            *)          echo "'$1' cannot be extracted/mounted via extract()" ;;
+    local f="$1"
+    if [ -f "$f" ]; then
+        case "$f" in
+            *.tar.bz2|*.tbz2)  tar -jxvf -- "$f" ;;
+            *.tar.gz|*.tgz)    tar -zxvf -- "$f" ;;
+            *.tar)             tar -xvf  -- "$f" ;;
+            *.zip|*.ZIP)       unzip -- "$f" ;;
+            *.rar)
+                # unar has no "x" subcommand:
+                unar -- "$f"
+                ;;
+            *) echo "'$f' cannot be extracted/mounted via extract()" ;;
         esac
     else
-        echo "'$1' is not a valid file"
+        echo "'$f' is not a valid file"
     fi
 }
 
