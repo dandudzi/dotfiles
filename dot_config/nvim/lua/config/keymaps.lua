@@ -11,13 +11,13 @@ vim.api.nvim_create_user_command("NextNumberedFile", function()
     local name = vim.fn.expand("%:t")
     local dir = vim.fn.expand("%:p:h")
 
-    local num, rest = name:match("^(%d%d)_(.+)$")
+    local num, rest = name:match("^(%d%d%d)_(.+)$")
     if not num then
-        vim.notify("Filename does not match NN_xxxx format", vim.log.levels.ERROR)
+        vim.notify("Filename does not match NNN_xxxx format", vim.log.levels.ERROR)
         return
     end
 
-    local next_num = string.format("%02d", tonumber(num) + 1)
+    local next_num = string.format("%03d", tonumber(num) + 1)
     local pattern = dir .. "/" .. next_num .. "_*"
 
     local matches = vim.fn.glob(pattern, false, true)
