@@ -1,12 +1,13 @@
 [tools]
 java = "latest"
-node = "22"
+node = "24"
 lua = "5.1"
 pnpm = "latest"
+npm = "latest"
 maven = "latest"
 gradle = "latest"
 kotlin = "latest"
 rust = "latest"
-
+"npm:@cometix/ccline" = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
