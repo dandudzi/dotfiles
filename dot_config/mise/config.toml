@@ -9,5 +9,6 @@ gradle = "latest"
 kotlin = "latest"
 rust = "latest"
 "npm:@cometix/ccline" = "latest"
+bun = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
