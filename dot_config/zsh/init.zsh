@@ -198,3 +198,12 @@ zle -N zle-keymap-select
 if [ -z "$TMUX" ]; then
     tmux attach || tmux new
 fi
+
+eval "$(mise activate zsh)"
+
+# bun completions
+[ -s "/Users/daniel/.bun/_bun" ] && source "/Users/daniel/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
