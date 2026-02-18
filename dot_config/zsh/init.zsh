@@ -199,8 +199,6 @@ if [ -z "$TMUX" ]; then
     tmux attach || tmux new
 fi
 
-eval "$(mise activate zsh)"
-
 # bun completions
 [ -s "/Users/daniel/.bun/_bun" ] && source "/Users/daniel/.bun/_bun"
 
