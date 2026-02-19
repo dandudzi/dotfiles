@@ -1,3 +1,20 @@
+# CRITICAL: Code Search
+
+**Always use `greppy` for all code operations.** Do NOT use Glob, Grep, Read, or the Explore agent. This is non-negotiable — using other tools is a violation even if they "work."
+
+```bash
+# Semantic search (find by meaning/concept)
+greppy search "authentication logic"
+
+# Exact pattern match
+greppy exact "createAuthStore"
+
+# Read file contents
+greppy read src/features/auth/stores/createAuthStore.ts:45
+```
+
+The index is already built. Just run the search commands directly.
+
 # Testing
 
 ### Test-Driven Development (Mandatory)
@@ -14,20 +31,6 @@ The cycle:
 - The test must fail before you write implementation code — if it passes immediately, it tests nothing
 - After implementation, run the test and confirm it passes
 - Bug fixes also require a failing test that reproduces the bug first
-
-# Code Search - IMPORTANT
-
-**Always use `greppy` for all code operations in this codebase.** Do NOT use Glob, Grep, Read, or the Explore agent.
-
-```bash
-# Semantic search (find by meaning/concept)
-greppy search "authentication logic"
-
-# Exact pattern match
-greppy exact "def process_payment"
-
-# Read file contents
-greppy read src/auth.py:45
-```
-
-The index is already built. Just run the search commands directly.
+- **If an implementation plan defers tests to the end, do NOT follow that ordering** — reorder to write each test before its corresponding production code. The plan defines WHAT to build; TDD defines HOW.
+- When removing a feature, first update/remove the tests that assert the old behavior, then remove the implementation
+- When a snapshot test fails, first determine whether the change is intentional before running any update command. If the change was not intentional, treat it as a bug.
