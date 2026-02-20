@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
+"""Nanoleaf gaming automation — optimized single-pass AppleScript."""
 import argparse
 import subprocess
 import sys
-import textwrap
-
-
-def sh(*args: str) -> None:
-    subprocess.run(list(args), check=True)
 
 
 def run_osascript(script: str) -> str:
@@ -23,175 +19,120 @@ def run_osascript(script: str) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--open-timeout", type=float, default=10.0)
-    ap.add_argument("--ui-timeout", type=float, default=20.0)
+    ap = argparse.ArgumentParser(description="Nanoleaf gaming automation")
+    ap.add_argument("--ui-timeout", type=float, default=10.0)
     args = ap.parse_args()
 
-    # 1) Open both apps
-    #sh("open", "-a", "GeForceNOW")
-    sh("open", "-a", "Nanoleaf Desktop")
- 
-    # 2..6) Wait + interact with Nanoleaf GUI via Accessibility
-    applescript = """
-    set PROC_NAME to "Nanoleaf Desktop"
-    set OPEN_TIMEOUT to {open_timeout}
-    set UI_TIMEOUT to {ui_timeout}
-    set TARGET_LABEL to "Gaming Gaming"
+    # 1) Open Nanoleaf Desktop
+    subprocess.run(["open", "-a", "Nanoleaf Desktop"], check=True)
 
-    tell application "System Events"
-        set t0 to (current date)
+    # 2) Navigate to Gaming and enable the toggle
+    applescript = f"""\
+set UI_TIMEOUT to {args.ui_timeout}
+set PROC_NAME to "Nanoleaf Desktop"
 
-        repeat while (not (exists process PROC_NAME)) and (((current date) - t0) < OPEN_TIMEOUT)
+tell application "System Events"
+    -- Wait for process
+    set t0 to (current date)
+    repeat while (not (exists process PROC_NAME)) and (((current date) - t0) < UI_TIMEOUT)
+        delay 0.2
+    end repeat
+    if not (exists process PROC_NAME) then error "Timeout: process didn't appear"
+
+    tell process PROC_NAME
+        set frontmost to true
+
+        -- Wait for window
+        set t1 to (current date)
+        repeat
+            if (count of windows) > 0 then exit repeat
+            if (((current date) - t1) > UI_TIMEOUT) then error "Timeout: window didn't appear"
             delay 0.2
         end repeat
-
-        if not (exists process PROC_NAME) then
-            error "Timeout: process didn't appear"
-        end if
-
-        tell process PROC_NAME
-            set frontmost to true
-
-            -- Wait for a window
-            set t1 to (current date)
-            repeat
-                if (count of windows) > 0 then exit repeat
-                if (((current date) - t1) > UI_TIMEOUT) then error "Timeout: window didn't appear"
-                delay 0.2
-            end repeat
 
         set w to window 1
 
-        -- Find AXLink with matching title/description/label
+        -- Single scan: find Gaming link and click it
         set t2 to (current date)
-        set targetEl to missing value
-
+        set clicked to false
         repeat
             set allEls to entire contents of w
-            set targetEl to missing value
-
             repeat with e in allEls
-                set roleVal to ""
+                set r to ""
                 try
-                    set roleVal to (value of attribute "AXRole" of e) as text
+                    set r to (value of attribute "AXRole" of e) as text
                 end try
-
-                if roleVal is "AXLink" then
-                    set t to ""
+                if r is "AXLink" then
                     set d to ""
-                    set l to ""
-                    try
-                        set t to (value of attribute "AXTitle" of e) as text
-                    end try
                     try
                         set d to (value of attribute "AXDescription" of e) as text
                     end try
-                    try
-                        set l to (value of attribute "AXLabel" of e) as text
-                    end try
+                    if d contains "Gaming" then
+                        try
+                            perform action "AXPress" of e
+                        on error
+                            click e
+                        end try
+                        set clicked to true
+                        exit repeat
+                    end if
+                end if
+            end repeat
+            if clicked then exit repeat
+            if (((current date) - t2) > UI_TIMEOUT) then error "Timeout: Gaming link not found"
+            delay 0.2
+        end repeat
 
-                    ignoring case
-                        if (t is TARGET_LABEL) or (t contains TARGET_LABEL) or ¬
-                           (d is TARGET_LABEL) or (d contains TARGET_LABEL) or ¬
-                           (l is TARGET_LABEL) or (l contains TARGET_LABEL) then
-                            set targetEl to e
-                            exit repeat
-                        end if
-                    end ignoring
+        -- Wait for Gaming page to load
+        delay 1.5
+
+        -- Single scan: find banner checkbox in one pass
+        set t3 to (current date)
+        set cb to missing value
+        repeat
+            set allEls to entire contents of w
+            set bannerFound to false
+
+            repeat with e in allEls
+                set r to ""
+                try
+                    set r to (value of attribute "AXRole" of e) as text
+                end try
+
+                -- Once we find the banner, the next AXCheckBox is our target
+                if r is "AXGroup" and not bannerFound then
+                    set sr to ""
+                    try
+                        set sr to (value of attribute "AXSubrole" of e) as text
+                    end try
+                    if sr is "AXLandmarkBanner" then
+                        set bannerFound to true
+                        -- Search inside the banner for checkbox
+                        try
+                            set bannerKids to entire contents of e
+                        on error
+                            set bannerKids to {{}}
+                        end try
+                        repeat with k in bannerKids
+                            try
+                                if ((value of attribute "AXRole" of k) as text) is "AXCheckBox" then
+                                    set cb to k
+                                    exit repeat
+                                end if
+                            end try
+                        end repeat
+                        exit repeat
+                    end if
                 end if
             end repeat
 
-            if targetEl is not missing value then exit repeat
-
-            if (((current date) - t2) > UI_TIMEOUT) then
-                -- dump link titles/descriptions to help diagnose what attribute actually matches
-                set dumpTxt to ""
-                repeat with e in allEls
-                    try
-                        if ((value of attribute "AXRole" of e) as text) is "AXLink" then
-                            set t to ""
-                            set d to ""
-                            try
-                                set t to (value of attribute "AXTitle" of e) as text
-                            end try
-                            try
-                                set d to (value of attribute "AXDescription" of e) as text
-                            end try
-                            set dumpTxt to dumpTxt & "AXLink: " & t & " | " & d & linefeed
-                        end if
-                    end try
-                end repeat
-                error "Timeout: couldn't find '" & TARGET_LABEL & "'" & linefeed & dumpTxt
-            end if
-
-            delay 0.2
-        end repeat
-
-        -- Press it
-        try
-            perform action "AXPress" of targetEl
-        on error
-            click targetEl
-        end try
-
-        set t3 to (current date)
-        set bannerEl to missing value
-
-        repeat
-            set allEls to entire contents of w
-            set bannerEl to missing value
-
-            repeat with e in allEls
-                try
-                    if ((value of attribute "AXRole" of e) as text) is "AXGroup" then
-                        set sr to ""
-                        try
-                            set sr to (value of attribute "AXSubrole" of e) as text
-                        end try
-
-                        if sr is "AXLandmarkBanner" then
-                            set bannerEl to e
-                            exit repeat
-                        end if
-                    end if
-                end try
-            end repeat
-
-            if bannerEl is not missing value then exit repeat
-            if (((current date) - t3) > UI_TIMEOUT) then error "Timeout: banner (AXLandmarkBanner) didn't appear"
-            delay 0.2
-        end repeat
-        -- 2) Find deeply nested AXCheckBox inside the banner
-        set t4 to (current date)
-        set cb to missing value
-
-        repeat
-            set cb to missing value
-
-            try
-                set bannerKids to entire contents of bannerEl
-            on error
-                set bannerKids to {{}}
-            end try
-
-            repeat with e in bannerKids
-                try
-                    if ((value of attribute "AXRole" of e) as text) is "AXCheckBox" then
-                        set cb to e
-                        exit repeat
-                    end if
-                end try
-            end repeat
-
             if cb is not missing value then exit repeat
-            if (((current date) - t4) > UI_TIMEOUT) then error "Timeout: checkbox not found in banner"
+            if (((current date) - t3) > UI_TIMEOUT) then error "Timeout: toggle not found"
             delay 0.2
         end repeat
 
-        -- 3) If checkbox is disabled, wait until enabled; then if unchecked, check it
-        set t5 to (current date)
-        set v to missing value 
+        -- Toggle if off
+        set v to missing value
         try
             set v to value of attribute "AXValue" of cb
         end try
@@ -214,18 +155,26 @@ def main() -> int:
             perform action "AXPress" of cb
         end if
 
-        return "Clicked: " & TARGET_LABEL
-        end tell
+        if needsPress then
+            return "Gaming mode enabled"
+        else
+            return "Gaming mode already active"
+        end if
     end tell
-    """.format(
-        open_timeout=args.open_timeout,
-        ui_timeout=args.ui_timeout,
-    )
+end tell
+"""
 
     out = run_osascript(applescript)
-    sh("open", "-a", "GeForceNOW")
     if out:
         print(out)
+
+    # 3) Launch GeForce NOW
+    try:
+        subprocess.run(["open", "-a", "GeForceNOW"], check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Gaming mode activated, but failed to launch GeForceNOW: {e}", file=sys.stderr)
+        return 1
+
     return 0
 
 
@@ -235,4 +184,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         raise
-
