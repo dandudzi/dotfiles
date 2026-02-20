@@ -54,3 +54,47 @@ For all exemptions: run the existing test suite after the change to confirm no r
 ### Plan Execution
 
 - **If you believe a plan step is unnecessary or already satisfied, state this explicitly and ask the user before skipping it.** Never silently omit a step from an approved plan.
+
+# 10K Fitness Challenge
+
+A fitness challenge tracker runs globally via hooks. A hook runs on every prompt to manage exercise reminders.
+
+## How It Works
+
+- Every 5 prompts OR every 30 minutes, you will see a `[FITNESS CHALLENGE REMINDER]` in your system context. When you see it, briefly tell the user it is time for exercises (10 push-ups, 10 squats, 10 sit-ups), then proceed with your normal work.
+
+- On the NEXT interaction after a reminder, you will see `[FITNESS CHALLENGE - CHECK COMPLETION]`. Use the **AskUserQuestion tool** to prompt the user interactively:
+  - Question: "Did you complete your exercise round? (10 push-ups, 10 squats, 10 sit-ups)"
+  - Options: "Yes" and "No"
+  - If **Yes**: run `bash $HOME/.claude/hooks/log-exercises.sh` and display the progress output
+  - If **No**: acknowledge briefly (e.g., "No worries, keep going!") and do NOT log any exercises or update progress
+
+- If the user asks about their fitness progress at any time (or uses `/fitness-progress`), run:
+  ```
+  bash $HOME/.claude/hooks/fitness-progress.sh
+  ```
+  And display the output to the user.
+
+## Viewing Progress
+
+- **In Claude Code:** Use `/fitness-progress` to display current totals and progress bars
+- **In terminal:** Run `$HOME/.claude/hooks/fitness-progress.sh`
+
+## Progress Display Format
+
+When showing progress, use this format:
+
+```
+=== 10K Challenge Progress ===
+Push-ups: 150 / 10,000  [#---------]  1.5%
+Squats:   150 / 10,000  [#---------]  1.5%
+Sit-ups:  150 / 10,000  [#---------]  1.5%
+
+Rounds completed: 15 / 1,000
+```
+
+## Important
+
+- Do NOT skip or suppress the exercise reminders
+- Keep the reminder brief -- one or two sentences, then get back to work
+- The confirmation check should also be brief and not interrupt the user's flow
