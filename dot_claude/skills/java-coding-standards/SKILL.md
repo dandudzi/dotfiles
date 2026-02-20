@@ -93,22 +93,6 @@ throw new MarketNotFoundException(slug);
 public <T extends Identifiable> Map<Long, T> indexById(Collection<T> items) { ... }
 ```
 
-## Project Structure (Maven/Gradle)
-
-```
-src/main/java/com/example/app/
-  config/
-  controller/
-  service/
-  repository/
-  domain/
-  dto/
-  util/
-src/main/resources/
-  application.yml
-src/test/java/... (mirrors main)
-```
-
 ## Formatting and Style
 
 - Use 2 or 4 spaces consistently (project standard)
