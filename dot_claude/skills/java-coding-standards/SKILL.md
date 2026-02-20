@@ -127,4 +127,75 @@ log.error("failed_fetch_market slug={}", slug, ex);
 - Mockito for mocking; avoid partial mocks where possible
 - Favor deterministic tests; no hidden sleeps
 
+### Test Naming Convention
+
+Use a unified naming pattern: `should_<expectedBehavior>_when_<condition>`
+
+```java
+// ✅ Consistent test naming
+@Test
+void should_returnMarket_when_slugExists() {}
+
+@Test
+void should_throwNotFoundException_when_slugIsUnknown() {}
+
+@Test
+void should_returnEmptyList_when_noMarketsMatch() {}
+
+@Test
+void should_persistMarket_when_inputIsValid() {}
+
+// ❌ Avoid inconsistent or vague names
+@Test
+void testFindMarket() {}        // no intent or condition
+
+@Test
+void itWorks() {}               // meaningless
+
+@Test
+void findBySlug_success() {}    // no "should/when" structure
+```
+
+- `should_` describes the expected outcome
+- `when_` describes the precondition or trigger
+- Use camelCase within each segment
+- Keep names concise but descriptive enough to understand without reading the test body
+
+### Test Body Structure (Given/When/Then)
+
+Structure every test body with `// given`, `// when`, `// then` comments:
+
+```java
+@Test
+void should_returnMarket_when_slugExists() {
+    // given
+    var slug = "my-market";
+    var market = new Market(1L, "My Market", slug);
+    when(marketRepository.findBySlug(slug)).thenReturn(Optional.of(market));
+
+    // when
+    var result = marketService.findBySlug(slug);
+
+    // then
+    assertThat(result.id()).isEqualTo(1L);
+    assertThat(result.name()).isEqualTo("My Market");
+}
+
+@Test
+void should_throwNotFoundException_when_slugIsUnknown() {
+    // given
+    var slug = "unknown";
+    when(marketRepository.findBySlug(slug)).thenReturn(Optional.empty());
+
+    // when & then
+    assertThatThrownBy(() -> marketService.findBySlug(slug))
+        .isInstanceOf(MarketNotFoundException.class);
+}
+```
+
+- **given** — set up test data and mock behavior
+- **when** — execute the action under test
+- **then** — assert the expected outcome
+- Use `// when & then` when the action and assertion are combined (e.g., `assertThatThrownBy`)
+
 **Remember**: Keep code intentional, typed, and observable. Optimize for maintainability over micro-optimizations unless proven necessary.
