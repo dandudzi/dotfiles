@@ -1,24 +1,30 @@
 {
-  "permissions": {
-    "allow": ["Bash(greppy:*)"],
-    "deny": ["Glob", "Grep", "Read", "Task(Explore)"]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/ccline/ccline",
-    "padding": 0
-  },
-  "enabledPlugins": {
-    "claude-mem@thedotmack": true,
-    "security-guidance@claude-code-plugins": true,
-    "playground@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
-  },
-  "effortLevel": "medium",
   "env": {
     "ENABLE_TOOL_SEARCH": "true"
   },
+  "permissions": {
+    "allow": [
+      "Bash(greppy:*)"
+    ],
+    "deny": [
+      "Glob",
+      "Grep",
+      "Read",
+      "Task(Explore)"
+    ]
+  },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/fitness-tracker.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
@@ -40,5 +46,17 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/ccline/ccline",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "claude-mem@thedotmack": true,
+    "security-guidance@claude-code-plugins": true,
+    "playground@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "effortLevel": "medium"
 }
