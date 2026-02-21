@@ -3,6 +3,7 @@
 **Always use `greppy` for all code operations.** This is non-negotiable.
 
 **NEVER use these alternatives — even if they "work":**
+
 - NEVER use the `Glob`, `Grep`, or `Read` tools
 - NEVER use the Explore agent
 - NEVER use `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk` in bash for reading or searching code
@@ -44,6 +45,7 @@ The cycle:
 - When a snapshot test fails, first determine whether the change is intentional before running any update command. If the change was not intentional, treat it as a bug.
 
 **TDD exemptions** — these do NOT require a prior failing test:
+
 - Dependency version bumps (`pom.xml`, `package.json`)
 - Docker/compose config, `.gitignore`, CI/CD config
 - OpenAPI/Swagger annotation-only changes (no runtime behavior)
