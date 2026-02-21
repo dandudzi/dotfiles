@@ -3,9 +3,7 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
-    "allow": [
-      "Bash(greppy:*)"
-    ],
+    "allow": ["Bash(greppy:*)"],
     "deny": [
       "Glob",
       "Grep",
@@ -16,17 +14,6 @@
     ]
   },
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/fitness-tracker.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "matcher": "",
@@ -34,16 +21,6 @@
           {
             "type": "command",
             "command": "osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\"'"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "osascript -e 'display notification \"Task done\" with title \"Claude Code\"'"
           }
         ]
       }
