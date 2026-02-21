@@ -52,58 +52,7 @@ print(d['count'])
 }
 
 do_track() {
-  if [[ ! -f "$STATE_FILE" ]]; then
-    echo "No local state. Run 'fitness-track -r' first." >&2
-    exit 1
-  fi
-  if [[ ! -f "$PROMPT_FILE" ]]; then
-    echo '{"count":0}' > "$PROMPT_FILE"
-  fi
-
-  local dur_min dur_prompts last_ts local_count now elapsed remaining
-  dur_min=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('duration_between_sets_min', 30))")
-  dur_prompts=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('duration_between_sets_prompts', 10))")
-  last_ts=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('last_reminder_timestamp', 0))")
-  local_count=$(python3 -c "import json; d=json.load(open('$PROMPT_FILE')); print(d.get('count', 0))")
-
-  now=$(date +%s)
-  elapsed=$(( now - last_ts ))
-  local time_trigger=0 prompt_trigger=0
-
-  if (( elapsed >= dur_min * 60 )); then
-    time_trigger=1
-  fi
-  if (( local_count > 0 && local_count % dur_prompts == 0 )); then
-    prompt_trigger=1
-  fi
-
-  if (( time_trigger == 0 && prompt_trigger == 0 )); then
-    remaining=$(( (dur_min * 60 - elapsed) / 60 ))
-    (( remaining < 0 )) && remaining=0
-    echo "Not time yet. Next check in ~${remaining} min."
-    return
-  fi
-
-  # Open kitty if not running
-  if ! pgrep -x kitty > /dev/null 2>&1; then
-    open -a kitty
-    sleep 1
-  fi
-
-  # Create/attach tmux session "tracker" in kitty and prompt
-  kitty @ launch --type=tab --tab-title="Workout" --cwd="$HOME" \
-    bash -c "
-      echo '══════════════════════════════════════'
-      echo '  Time to work out!'
-      echo '══════════════════════════════════════'
-      echo ''
-      read -rp 'Sets to log [10]: ' sets
-      sets=\${sets:-10}
-      \"$0\" -l \"\$sets\"
-      echo ''
-      echo 'Done! This tab will close in 3s...'
-      sleep 3
-    "
+  python3 "$(dirname "$0")/track.py"
 }
 
 do_statusline() {
