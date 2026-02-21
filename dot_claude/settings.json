@@ -3,7 +3,9 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
-    "allow": ["Bash(greppy:*)"],
+    "allow": [
+      "Bash(greppy:*)"
+    ],
     "deny": [
       "Glob",
       "Grep",
@@ -28,7 +30,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/ccline/ccline",
+    "command": "printf '%s | %s' \"$(~/.claude/ccline/ccline)\" \"$(fitness-track statusline)\" ",
     "padding": 0
   },
   "enabledPlugins": {
