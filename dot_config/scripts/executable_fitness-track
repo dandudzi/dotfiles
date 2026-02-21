@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+API_URL="https://fitness-tracker.daniel-dudziak2.workers.dev"
+TOKEN="$(security find-generic-password -a 'fitness-tracker-1' -s 'fitness-tracker-1' -w)"
+STATE_FILE="$HOME/.fitness-state.json"
+PROMPT_FILE="$HOME/.fitness-prompt.json"
+
+do_refresh() {
+  local response
+  response=$(curl -sf -X GET "$API_URL/" \
+    -H "Authorization: Bearer $TOKEN")
+  echo "$response" > "$STATE_FILE"
+  echo "State refreshed → $STATE_FILE"
+}
+
+do_log() {
+  local sets="$1"
+  if [[ ! "$sets" =~ ^[0-9]+$ ]] || (( sets <= 0 )); then
+    echo "Error: sets must be a positive integer" >&2
+    exit 1
+  fi
+  local response
+  response=$(curl -sf -X POST "$API_URL/log/$sets" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json")
+  echo "$response"
+  do_refresh
+}
+
+do_summary() {
+  curl -sf -X GET "$API_URL/summary" \
+    -H "Authorization: Bearer $TOKEN"
+  echo
+}
+
+do_prompt() {
+  if [[ ! -f "$PROMPT_FILE" ]]; then
+    echo '{"count":0}' > "$PROMPT_FILE"
+  fi
+  local count
+  count=$(python3 -c "
+import json, sys
+with open('$PROMPT_FILE') as f:
+    d = json.load(f)
+d['count'] = d.get('count', 0) + 1
+with open('$PROMPT_FILE', 'w') as f:
+    json.dump(d, f)
+print(d['count'])
+")
+  echo "Prompt count: $count"
+}
+
+do_track() {
+  if [[ ! -f "$STATE_FILE" ]]; then
+    echo "No local state. Run 'fitness-track -r' first." >&2
+    exit 1
+  fi
+  if [[ ! -f "$PROMPT_FILE" ]]; then
+    echo '{"count":0}' > "$PROMPT_FILE"
+  fi
+
+  local dur_min dur_prompts last_ts local_count now elapsed remaining
+  dur_min=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('duration_between_sets_min', 30))")
+  dur_prompts=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('duration_between_sets_prompts', 10))")
+  last_ts=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('last_reminder_timestamp', 0))")
+  local_count=$(python3 -c "import json; d=json.load(open('$PROMPT_FILE')); print(d.get('count', 0))")
+
+  now=$(date +%s)
+  elapsed=$(( now - last_ts ))
+  local time_trigger=0 prompt_trigger=0
+
+  if (( elapsed >= dur_min * 60 )); then
+    time_trigger=1
+  fi
+  if (( local_count > 0 && local_count % dur_prompts == 0 )); then
+    prompt_trigger=1
+  fi
+
+  if (( time_trigger == 0 && prompt_trigger == 0 )); then
+    remaining=$(( (dur_min * 60 - elapsed) / 60 ))
+    (( remaining < 0 )) && remaining=0
+    echo "Not time yet. Next check in ~${remaining} min."
+    return
+  fi
+
+  # Open kitty if not running
+  if ! pgrep -x kitty > /dev/null 2>&1; then
+    open -a kitty
+    sleep 1
+  fi
+
+  # Create/attach tmux session "tracker" in kitty and prompt
+  kitty @ launch --type=tab --tab-title="Workout" --cwd="$HOME" \
+    bash -c "
+      echo '══════════════════════════════════════'
+      echo '  Time to work out!'
+      echo '══════════════════════════════════════'
+      echo ''
+      read -rp 'Sets to log [10]: ' sets
+      sets=\${sets:-10}
+      \"$0\" -l \"\$sets\"
+      echo ''
+      echo 'Done! This tab will close in 3s...'
+      sleep 3
+    "
+}
+
+do_statusline() {
+  # ANSI 256-color index (0-15 for terminal palette, 16-255 for extended)
+  local color="${1:-13}"
+
+  if [[ ! -f "$STATE_FILE" ]]; then
+    echo "  --"
+    return
+  fi
+  python3 -c "
+import json
+color = $color
+with open('$STATE_FILE') as f:
+    d = json.load(f)
+ex = d.get('exercise', {})
+goal = d.get('goal', 10000)
+p = ex.get('pushups', 0) / goal * 100 if goal else 0
+sq = ex.get('squats', 0) / goal * 100 if goal else 0
+si = ex.get('situps', 0) / goal * 100 if goal else 0
+avg = (p + sq + si) / 3
+c = f'\033[38;5;{color}m'
+r = '\033[0m'
+print(f'{c}󰥬 {avg:.1f}%{r}')
+"
+}
+
+usage() {
+  cat <<'EOF'
+fitness-track — CLI for the 10K fitness challenge
+
+Usage:
+  fitness-track -r | refresh       Fetch & cache current state from API
+  fitness-track -s | summary       Show plain-text progress summary
+  fitness-track -l | log <N>       Log N sets (POST to API + refresh)
+  fitness-track -p | prompt        Increment local prompt counter
+  fitness-track -t | track         Check if it's time to work out
+  fitness-track statusline         Compact progress for status bar
+  fitness-track -h | help          Show this help
+EOF
+}
+
+case "${1:-}" in
+  -r|refresh)
+    do_refresh
+    ;;
+  -l|log)
+    if [[ -z "${2:-}" ]]; then
+      echo "Error: missing sets number. Usage: fitness-track -l <N>" >&2
+      exit 1
+    fi
+    do_log "$2"
+    ;;
+  -s|summary)
+    do_summary
+    ;;
+  -p|prompt)
+    do_prompt
+    ;;
+  -t|track)
+    do_track
+    ;;
+  statusline)
+    do_statusline "${2:-}"
+    ;;
+  -h|help)
+    usage
+    ;;
+  "")
+    usage
+    ;;
+  *)
+    echo "Unknown command: $1" >&2
+    usage
+    exit 1
+    ;;
+esac
