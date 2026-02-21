@@ -3,16 +3,23 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
-    "allow": [
-      "Bash(greppy:*)"
-    ],
+    "allow": ["Bash(greppy:*)"],
     "deny": [
       "Glob",
       "Grep",
       "Read",
       "Task(Explore)",
       "Bash(bw:*)",
-      "Bash(*bitwarden*)"
+      "Bash(*bitwarden*)",
+      "Bash(rm -rf ~*)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm:*)",
+      "Bash(curl*|*bash:*)",
+      "Bash(wget*|*sh:*)",
+      "Bash(npm publish:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)"
     ]
   },
   "hooks": {
@@ -37,6 +44,10 @@
           },
           {
             "type": "command",
+            "command": "fitness-track -t"
+          },
+          {
+            "type": "command",
             "command": "osascript -e 'display notification \"Claude completed the task\" with title \"Claude Code\" sound name \"Glass\"'"
           }
         ]
@@ -56,3 +67,4 @@
   },
   "effortLevel": "medium"
 }
+
