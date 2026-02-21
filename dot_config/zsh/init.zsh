@@ -5,7 +5,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
 # Export IDE CE edition scripts
 export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
-export PATH="$PATH:$HOME/.config/scripts/fitness-track"
+export PATH="$PATH:$HOME/.config/scripts"
 
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
@@ -134,6 +134,15 @@ SPACESHIP_VI_MODE_COLOR="magenta"
 SPACESHIP_VI_MODE_NORMAL="󰛐 "
 SPACESHIP_VI_MODE_INSERT="󰷢 "
 
+spaceship_fitness() {
+    local result
+    result="$(fitness-track statusline 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g;
+  s/%/%%/g')"
+    [[ -z "$result " ]] && return
+    spaceship::section --color 13 "$result "
+  }
+
+spaceship add --after time fitness
 # make sure that pygmentize is not used by any alias
 alias_p="P"
 unalias $alias_p
