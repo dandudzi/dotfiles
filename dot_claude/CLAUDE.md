@@ -56,3 +56,14 @@ For all exemptions: run the existing test suite after the change to confirm no r
 ### Plan Execution
 
 - **If you believe a plan step is unnecessary or already satisfied, state this explicitly and ask the user before skipping it.** Never silently omit a step from an approved plan.
+
+# Safety
+
+- NEVER read or cat files matching: `.env`, `.env.*`, `~/.ssh/*`, `~/.aws/*`, `~/.config/gcloud/*`, any file likely containing secrets
+- NEVER pipe curl/wget output to bash/sh/python (`curl ... | bash` patterns)
+- NEVER use `--no-verify` or `--no-gpg-sign` on git commits
+- NEVER run `git push --force` or `git push -f` unless the user explicitly says "force push"
+- NEVER run `npm publish`, `docker push`, `terraform apply`, `terraform destroy`, `kubectl apply`, or `kubectl delete` without explicit user confirmation in that message
+- When deleting files: ALWAYS list what will be deleted and ask for confirmation before running rm
+- When running database migrations: ALWAYS show the migration SQL/diff and confirm before applying
+- If a command fails, do NOT retry with elevated privileges (sudo) or bypasses (--force) unless explicitly asked
