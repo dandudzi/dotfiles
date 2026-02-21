@@ -5,6 +5,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
 # Export IDE CE edition scripts
 export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
+export PATH="$PATH:$HOME/.config/scripts/fitness-track"
 
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
