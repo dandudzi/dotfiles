@@ -87,7 +87,7 @@ def build_dialog_script(state):
         f'activate\n'
         f'display dialog "{prompt_text}" '
         f'default answer "{default_sets}" '
-        f'buttons {{"Snooze 1 min", "Log"}} default button "Log" '
+        f'buttons {{"Log", "Snooze 1 min"}} default button "Snooze 1 min" '
         f'giving up after 300 '
         f'with title "Fitness Tracker"\n'
         f'end tell'
