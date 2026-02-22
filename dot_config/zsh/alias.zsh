@@ -120,3 +120,30 @@ alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
 
+
+# 🤖 Claude with auto greppy watch
+claude() {
+  local greppy_pid=""
+  local pid_dir="${TMPDIR:-/tmp}/greppy-watch"
+  local pid_file="$pid_dir/$(pwd | md5 -q).pid"
+
+  mkdir -p "$pid_dir"
+
+  # Check if greppy watch is already running for THIS directory
+  if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+    : # Already watching this directory
+  else
+    greppy watch --debounce 10 > /dev/null 2>&1 &
+    greppy_pid=$!
+    disown
+    echo "$greppy_pid" > "$pid_file"
+  fi
+
+  command claude "$@"
+
+  # Clean up only the instance we started
+  if [[ -n "$greppy_pid" ]] && kill -0 "$greppy_pid" 2>/dev/null; then
+    kill "$greppy_pid" 2>/dev/null
+    rm -f "$pid_file"
+  fi
+}
