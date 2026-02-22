@@ -205,6 +205,17 @@ function zle-keymap-select() {
 # Bind the combined function
 zle -N zle-keymap-select
 
+# 🏋️ Fitness tracker LaunchAgents
+for plist in "$CONFIG_HOME/scripts"/com.fitness-track.*.plist; do
+    name=$(basename "$plist")
+    target="$HOME/Library/LaunchAgents/$name"
+    label="${name%.plist}"
+    # Symlink if missing
+    [[ -L "$target" ]] || ln -sf "$plist" "$target"
+    # Load if not running
+    launchctl list "$label" &>/dev/null || launchctl load "$target" 2>/dev/null
+done
+
 if [ -z "$TMUX" ]; then
     tmux attach || tmux new
 fi
@@ -215,3 +226,5 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+source $HOME/.config/scripts/check_dsg.zsh

@@ -52,6 +52,12 @@ print(d['count'])
 }
 
 do_track() {
+  local lockfile="$HOME/.fitness-track.lock"
+  if ! shlock -f "$lockfile" -p $$; then
+    echo "Another fitness-track instance is already running. Skipping."
+    return
+  fi
+  trap 'rm -f "$HOME/.fitness-track.lock"' EXIT
   python3 "$(dirname "$0")/track.py"
 }
 
@@ -80,6 +86,65 @@ print(f'{c}󰥬 {avg:.1f}%{r}')
 "
 }
 
+do_edit() {
+  local tmpfile
+  tmpfile=$(mktemp /tmp/fitness-state-edit.XXXXXX.json)
+  trap 'rm -f "$tmpfile"' RETURN
+
+  # Fetch current state
+  local current
+  current=$(curl -sf -X GET "$API_URL/" -H "Authorization: Bearer $TOKEN")
+  if [[ -z "$current" ]]; then
+    echo "Error: could not fetch current state from API" >&2
+    return 1
+  fi
+
+  # Pretty-print to temp file
+  echo "$current" | python3 -m json.tool > "$tmpfile"
+  local before
+  before=$(cat "$tmpfile")
+
+  # Open in editor
+  "${EDITOR:-vi}" "$tmpfile"
+
+  # Validate JSON
+  if ! python3 -m json.tool "$tmpfile" > /dev/null 2>&1; then
+    echo "Error: invalid JSON. Aborting." >&2
+    return 1
+  fi
+
+  local after
+  after=$(cat "$tmpfile")
+
+  # Check for changes
+  if [[ "$before" == "$after" ]]; then
+    echo "No changes made."
+    return 0
+  fi
+
+  # Show diff
+  echo "Changes:"
+  diff --color <(echo "$before") <(echo "$after") || true
+  echo
+
+  # Confirm
+  read -rp "Push these changes to the API? [y/N] " confirm
+  if [[ "$confirm" != [yY] ]]; then
+    echo "Aborted."
+    return 0
+  fi
+
+  # POST updated state
+  local response
+  response=$(curl -sf -X POST "$API_URL/" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d @"$tmpfile")
+  echo "$response"
+  do_refresh
+  echo "State updated."
+}
+
 usage() {
   cat <<'EOF'
 fitness-track — CLI for the 10K fitness challenge
@@ -89,6 +154,7 @@ Usage:
   fitness-track -s | summary       Show plain-text progress summary
   fitness-track -l | log <N>       Log N sets (POST to API + refresh)
   fitness-track -p | prompt        Increment local prompt counter
+  fitness-track -e | edit          Edit state in $EDITOR and push to API
   fitness-track -t | track         Check if it's time to work out
   fitness-track statusline         Compact progress for status bar
   fitness-track -h | help          Show this help
@@ -111,6 +177,9 @@ case "${1:-}" in
     ;;
   -p|prompt)
     do_prompt
+    ;;
+  -e|edit)
+    do_edit
     ;;
   -t|track)
     do_track
