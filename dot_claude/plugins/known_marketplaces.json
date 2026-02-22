@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/daniel/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-02-22T13:06:53.335Z"
+    "lastUpdated": "2026-02-22T14:08:17.234Z"
   },
   "claude-code-plugins": {
     "source": {
@@ -13,7 +13,7 @@
       "repo": "anthropics/claude-code"
     },
     "installLocation": "/Users/daniel/.claude/plugins/marketplaces/claude-code-plugins",
-    "lastUpdated": "2026-02-22T13:46:24.239Z"
+    "lastUpdated": "2026-02-22T14:06:34.610Z"
   },
   "thedotmack": {
     "source": {
