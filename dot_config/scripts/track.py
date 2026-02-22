@@ -11,6 +11,20 @@ import time
 STATE_FILE = os.path.expanduser("~/.fitness-state.json")
 PROMPT_FILE = os.path.expanduser("~/.fitness-prompt.json")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work"}
+
+
+def get_active_focus():
+    """Return the active Focus Mode name, or None."""
+    try:
+        result = subprocess.run(
+            ["shortcuts", "run", "Get Focus Mode"],
+            capture_output=True, text=True, timeout=5
+        )
+        name = result.stdout.strip()
+        return name if name and name != "None" else None
+    except subprocess.TimeoutExpired:
+        return None
 
 
 def check_triggers(state, prompt_data, now=None):
@@ -73,7 +87,7 @@ def build_dialog_script(state):
         f'activate\n'
         f'display dialog "{prompt_text}" '
         f'default answer "{default_sets}" '
-        f'buttons {{"Skip", "Log"}} default button "Log" '
+        f'buttons {{"Snooze 1 min", "Log"}} default button "Log" '
         f'giving up after 300 '
         f'with title "Fitness Tracker"\n'
         f'end tell'
@@ -144,6 +158,14 @@ def do_track(state_file=None, prompt_file=None):
         print(f"Not time yet. Next check in ~{remaining} min.")
         return
 
+    focus = get_active_focus()
+    if focus and focus in SUPPRESS_FOCUS_MODES:
+        state["last_reminder_timestamp"] = int(time.time())
+        with open(state_file, "w") as f:
+            json.dump(state, f)
+        print(f"Focus mode active ({focus}), skipping reminder.")
+        return
+
     script = build_dialog_script(state)
     result = subprocess.run(
         ["osascript", "-e", script],
@@ -155,7 +177,7 @@ def do_track(state_file=None, prompt_file=None):
 
     button, text, gave_up = parse_dialog_output(result.stdout.strip())
 
-    if gave_up or button == "Skip":
+    if gave_up or button == "Snooze 1 min":
         return
 
     if button == "Log":
