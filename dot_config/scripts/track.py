@@ -173,11 +173,24 @@ def do_track(state_file=None, prompt_file=None):
     )
 
     if result.returncode != 0:
+        state["last_reminder_timestamp"] = int(time.time())
+        with open(state_file, "w") as f:
+            json.dump(state, f)
         return
 
     button, text, gave_up = parse_dialog_output(result.stdout.strip())
 
-    if gave_up or button == "Snooze 1 min":
+    if gave_up:
+        state["last_reminder_timestamp"] = int(time.time())
+        with open(state_file, "w") as f:
+            json.dump(state, f)
+        return
+
+    if button == "Snooze 1 min":
+        dur_min = state.get("duration_between_sets_min", 30)
+        state["last_reminder_timestamp"] = int(time.time()) - (dur_min * 60) + 60
+        with open(state_file, "w") as f:
+            json.dump(state, f)
         return
 
     if button == "Log":
