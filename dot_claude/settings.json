@@ -49,15 +49,6 @@
             "command": "osascript -e 'display notification \"Claude completed the task\" with title \"Claude Code\" sound name \"Glass\"'"
           }
         ]
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "pkill -f \"greppy watch\" 2>/dev/null || true"
-          }
-        ]
       }
     ],
     "PreToolUse": [
@@ -67,17 +58,6 @@
           {
             "type": "command",
             "command": "/Users/daniel/.local/bin/dcg"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "pgrep -f 'greppy watch' > /dev/null || nohup greppy watch --debounce 10 > /dev/null 2>&1 &"
           }
         ]
       }
