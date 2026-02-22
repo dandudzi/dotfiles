@@ -3,7 +3,9 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
-    "allow": ["Bash(greppy:*)"],
+    "allow": [
+      "Bash(greppy:*)"
+    ],
     "deny": [
       "Glob",
       "Grep",
@@ -48,6 +50,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/daniel/.local/bin/dcg"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -63,4 +76,3 @@
   },
   "effortLevel": "medium"
 }
-
