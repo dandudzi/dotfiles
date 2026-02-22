@@ -44,10 +44,6 @@
           },
           {
             "type": "command",
-            "command": "fitness-track -t"
-          },
-          {
-            "type": "command",
             "command": "osascript -e 'display notification \"Claude completed the task\" with title \"Claude Code\" sound name \"Glass\"'"
           }
         ]
