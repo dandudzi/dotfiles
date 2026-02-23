@@ -11,7 +11,7 @@ import time
 STATE_FILE = os.path.expanduser("~/.fitness-state.json")
 PROMPT_FILE = os.path.expanduser("~/.fitness-prompt.json")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work"}
+SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work", "Sick leave"}
 
 
 def get_active_focus():
@@ -147,6 +147,14 @@ def do_track(state_file=None, prompt_file=None):
     with open(prompt_file) as f:
         prompt_data = json.load(f)
 
+    focus = get_active_focus()
+    if focus and focus in SUPPRESS_FOCUS_MODES:
+        state["last_reminder_timestamp"] = int(time.time())
+        with open(state_file, "w") as f:
+            json.dump(state, f)
+        print(f"Focus mode active ({focus}), skipping reminder.")
+        return
+
     triggered, reason, remaining = check_triggers(state, prompt_data)
 
     # Update last_checked_count so next check knows where we left off
@@ -156,14 +164,6 @@ def do_track(state_file=None, prompt_file=None):
 
     if not triggered:
         print(f"Not time yet. Next check in ~{remaining} min.")
-        return
-
-    focus = get_active_focus()
-    if focus and focus in SUPPRESS_FOCUS_MODES:
-        state["last_reminder_timestamp"] = int(time.time())
-        with open(state_file, "w") as f:
-            json.dump(state, f)
-        print(f"Focus mode active ({focus}), skipping reminder.")
         return
 
     script = build_dialog_script(state)
