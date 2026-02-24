@@ -1,29 +1,47 @@
 {
-  "env": {
-    "ENABLE_TOOL_SEARCH": "true"
-  },
   "permissions": {
-    "allow": [
-      "Bash(greppy:*)"
-    ],
+    "allow": ["Bash(greppy:*)"],
     "deny": [
       "Glob",
       "Grep",
-      "Read",
-      "Task(Explore)",
-      "Bash(bw:*)",
       "Bash(*bitwarden*)",
-      "Bash(rm -rf ~*)",
-      "Bash(rm -rf /*)",
-      "Bash(sudo rm:*)",
-      "Bash(curl*|*bash:*)",
-      "Bash(wget*|*sh:*)",
-      "Bash(npm publish:*)",
-      "Bash(terraform destroy:*)",
+      "Bash(bw:*)",
+      "Bash(cat */.env:*)",
+      "Bash(cat ~/.aws:*)",
+      "Bash(cat ~/.ssh:*)",
+      "Bash(chmod 777:*)",
+      "Bash(curl *|* bash*)",
+      "Bash(curl *|* sh*)",
+      "Bash(docker push*)",
+      "Bash(git clean -f:*)",
+      "Bash(git commit *--no-gpg-sign*)",
+      "Bash(git commit *--no-verify*)",
       "Bash(git push --force:*)",
-      "Bash(git push -f:*)"
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard:*)",
+      "Bash(kubectl apply*)",
+      "Bash(kubectl delete*)",
+      "Bash(npm publish*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(rm -rf*)",
+      "Bash(sudo *--force*)",
+      "Bash(sudo *-f*)",
+      "Bash(sudo:*)",
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)",
+      "Bash(wget *|* bash*)",
+      "Bash(wget *|* sh*)",
+      "Bash(wget*|*sh:*)",
+      "Read(.env.*)",
+      "Read(~/.aws/*)",
+      "Read(~/.config/gcloud/*)",
+      "Read(~/.ssh/*)",
+      "Task(Explore)"
     ]
   },
+  "model": "opusplan",
   "hooks": {
     "Notification": [
       {
@@ -72,7 +90,6 @@
     "claude-mem@thedotmack": true,
     "security-guidance@claude-code-plugins": true,
     "playground@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
-  },
-  "effortLevel": "medium"
+    "feature-dev@claude-plugins-official": true
+  }
 }
