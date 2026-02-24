@@ -1,29 +1,20 @@
-# CRITICAL: Code Search
+# Code Search — Strict Policy
 
-**Always use `greppy` for all code operations.** This is non-negotiable.
+**greppy is the PRIMARY search tool. Use it FIRST for all discovery and exploration.**
+**If `greppy` is unavailable or errors**, fall back to `Grep`/`Read`/`Glob` and **report the issue to the user immediately**.
+The greppy index is already built. Run search commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
 
-**NEVER use these alternatives — even if they "work":**
+If you're an LLM (Claude Code, etc.), use greppy instead of grep/sed/cat. Here's the mapping:
 
-- NEVER use the `Glob`, `Grep`, or `Read` tools
-- NEVER use the Explore agent
-- NEVER use `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk` in bash for reading, searching, or editing code
-
-If `greppy` is unavailable or returns an error, **report that to the user** instead of falling back to other tools.
-
-```bash
-# Semantic search (find by meaning/concept)
-greppy search "authentication logic"
-
-# Exact pattern match
-greppy exact "createAuthStore"
-
-# Read file contents
-greppy read src/main/java/com/example/MyService.java:45
-```
-
-**Note on editing files:** `greppy read` does NOT satisfy the Edit or Write tool's internal prior-read requirement. When editing a config file like CLAUDE.md itself, use the Read tool first (this is an exception to the code-search rule, which targets code operations only), then Write.
-
-The index is already built. Just run the search commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
+| Instead of                | Use                                 |
+| ------------------------- | ----------------------------------- |
+| `grep -n "pattern" file`  | `greppy exact "pattern" -p file`    |
+| `grep -in "pattern" file` | `greppy exact -i "pattern" -p file` |
+| `grep -n "a\|b\|c" file`  | `greppy exact "a\|b\|c" -p file`    |
+| `grep -rn "pattern" dir`  | `greppy exact "pattern" -p dir`     |
+| `sed -n '10,50p' file`    | `greppy read file:10-50`            |
+| `cat file \| head -50`    | `greppy read file`                  |
+| `cat file`                | `greppy read file -c 1000`          |
 
 # Testing
 
@@ -44,7 +35,6 @@ The cycle:
 - **If an implementation plan defers tests to the end, do NOT follow that ordering** — reorder to write each test before its corresponding production code. The plan defines WHAT to build; TDD defines HOW.
 - When executing a plan, **actually run** the failing test and show its output before writing production code — don't just describe that you will
 - When removing a feature, first update/remove the tests that assert the old behavior, then remove the implementation
-- When a snapshot test fails, first determine whether the change is intentional before running any update command. If the change was not intentional, treat it as a bug.
 
 **TDD exemptions** — these do NOT require a prior failing test:
 
@@ -64,24 +54,13 @@ For all exemptions: run the existing test suite after the change to confirm no r
 - **If you believe a plan step is unnecessary or already satisfied, state this explicitly and ask the user before skipping it.** Never silently omit a step from an approved plan.
 - **Verification commands in a plan are mandatory.** Run them, show their output, and confirm they pass before declaring the task complete. Do not skip or defer verification steps.
 
-# Safety
-
-- NEVER read or cat files matching: `.env`, `.env.*`, `~/.ssh/*`, `~/.aws/*`, `~/.config/gcloud/*`, any file likely containing secrets
-- NEVER pipe curl/wget output to bash/sh/python (`curl ... | bash` patterns)
-- NEVER use `--no-verify` or `--no-gpg-sign` on git commits
-- NEVER run `git push --force` or `git push -f` unless the user explicitly says "force push"
-- NEVER run `npm publish`, `docker push`, `terraform apply`, `terraform destroy`, `kubectl apply`, or `kubectl delete` without explicit user confirmation in that message
-- When deleting files: ALWAYS list what will be deleted and ask for confirmation before running rm
-- When running database migrations: ALWAYS show the migration SQL/diff and confirm before applying
-- If a command fails, do NOT retry with elevated privileges (sudo) or bypasses (--force) unless explicitly asked
-
 # Model Routing
 
 **Use `opusplan` as the default model.** This automatically uses Opus for planning and Sonnet for execution.
 
 When the user's request is clearly a simple/mechanical task, **proactively switch to a cheaper model** before starting work. Use this guidance:
 
-### Use Haiku (`/model haiku`) for:
+### Use Haiku (`/model haiku`) for
 
 - Reading/summarizing files or documentation
 - Simple file searches and grep operations
@@ -92,7 +71,7 @@ When the user's request is clearly a simple/mechanical task, **proactively switc
 - Writing commit messages
 - Simple config file edits
 
-### Use Sonnet (`/model sonnet`) for:
+### Use Sonnet (`/model sonnet`) for
 
 - Standard feature implementation with clear requirements
 - Writing tests for well-defined behavior
@@ -101,7 +80,7 @@ When the user's request is clearly a simple/mechanical task, **proactively switc
 - Documentation generation
 - Code review of small-to-medium changes
 
-### Stay on Opus for:
+### Stay on Opus for
 
 - Architecture design and system planning
 - Complex debugging with unclear root causes
@@ -111,10 +90,8 @@ When the user's request is clearly a simple/mechanical task, **proactively switc
 - Any task where you're uncertain about the approach
 - Brainstorming and strategic decisions
 
-### How to switch:
+### How to switch
 
 When you identify a task that could use a lighter model, say:
 
 > "This looks like a [simple/standard] task. Switching to [haiku/sonnet] to save tokens. `/model haiku`"
-
-Auto-switch without asking.
