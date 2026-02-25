@@ -1,16 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "Bash(greppy:*)"
+      "Bash(greppy:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__plugin_playwright_*",
+      "mcp__plugin_claude-mem_*",
+      "WebSearch",
+      "Bash(ls:*)",
+      "Bash(tail:*)",
+      "Skill(code-search)",
+      "Bash(open:*)",
+      "Bash(/usr/bin/open:*)",
+      "Bash(node:*)",
+      "Bash(unzip:*)",
+      "Bash(echo:*)"
     ],
     "deny": [
       "Glob",
       "Grep",
       "Bash(*bitwarden*)",
       "Bash(bw:*)",
-      "Bash(cat */.env:*)",
-      "Bash(cat ~/.aws:*)",
-      "Bash(cat ~/.ssh:*)",
+      "Bash(cat */.env*)",
+      "Bash(cat ~/.aws*)",
+      "Bash(cat ~/.ssh*)",
+      "Bash(grep * ~/.ssh*)",
+      "Bash(grep * ~/.aws*)",
       "Bash(chmod 777:*)",
       "Bash(curl *|* bash*)",
       "Bash(curl *|* sh*)",
@@ -101,6 +116,7 @@
     "security-guidance@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
-    "frontend-design@claude-code-plugins": true
+    "frontend-design@claude-code-plugins": true,
+    "jdtls-lsp@claude-plugins-official": true
   }
 }
