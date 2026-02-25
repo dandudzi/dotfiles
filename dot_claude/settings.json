@@ -1,6 +1,8 @@
 {
   "permissions": {
-    "allow": ["Bash(greppy:*)"],
+    "allow": [
+      "Bash(greppy:*)"
+    ],
     "deny": [
       "Glob",
       "Grep",
@@ -83,13 +85,14 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "printf '%s | %s' \"$(~/.claude/ccline/ccline)\" \"$(fitness-track statusline)\" ",
+    "command": "printf '%s | %s' \"$(ccline)\" \"$(fitness-track statusline)\" ",
     "padding": 0
   },
   "enabledPlugins": {
     "claude-mem@thedotmack": true,
     "security-guidance@claude-code-plugins": true,
     "playground@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true
+    "feature-dev@claude-plugins-official": true,
+    "vtsls@claude-code-lsps": true
   }
 }
