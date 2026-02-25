@@ -148,3 +148,4 @@ claude() {
   fi
 }
 alias claude-update='npm update -g @anthropic-ai/claude-code && npx tweakcc --apply'
+export ENABLE_LSP_TOOL=1
