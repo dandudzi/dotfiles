@@ -1,5 +1,11 @@
 # Code Search — Strict Policy
 
+## Internet search tool for docs and code generations
+
+Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+
+## Local search tool
+
 **greppy is the PRIMARY search tool. Use it FIRST for all discovery and exploration.**
 **If `greppy` is unavailable or errors**, fall back to `Grep`/`Read`/`Glob` and **report the issue to the user immediately**.
 The greppy index is already built. Run search commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
