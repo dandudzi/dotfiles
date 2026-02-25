@@ -147,3 +147,4 @@ claude() {
     rm -f "$pid_file"
   fi
 }
+alias claude-update='npm update -g @anthropic-ai/claude-code && npx tweakcc --apply'
