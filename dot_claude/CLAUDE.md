@@ -64,7 +64,7 @@ For all exemptions: run the existing test suite after the change to confirm no r
 
 # Model Routing
 
-**Use `opusplan` as the default model.** This automatically uses Opus for planning and Sonnet for execution.
+**Use `sonnet` as the default model.**
 
 When the user's request is clearly a simple/mechanical task, **proactively switch to a cheaper model** before starting work. Use this guidance:
 
