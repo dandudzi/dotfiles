@@ -1,26 +1,28 @@
 # Code Search — Strict Policy
 
-## Internet search tool for docs and code generations
+## (Mandatory) Internet search tool for docs and code generations
 
 Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
 ## Local search tool
 
-**greppy is the PRIMARY search tool. Use it FIRST for all discovery and exploration.**
-**If `greppy` is unavailable or errors**, fall back to `Grep`/`Read`/`Glob` and **report the issue to the user immediately**.
-The greppy index is already built. Run search commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
+**greppy is the PRIMARY search tool. Using `grep`, `cat`, `head`, `tail`, `sed`, or `find` via Bash instead of greppy is a violation of these instructions.**
 
-If you're an LLM (Claude Code, etc.), use greppy instead of grep/sed/cat. Here's the mapping:
+- Use `greppy` for every file read, pattern search, and directory exploration — no exceptions.
+- **If `greppy` is unavailable or errors**, fall back to `Grep`/`Read`/`Glob` and **report the issue to the user immediately**.
+- The greppy index is already built. Run commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
+- Using the Bash tool with `grep`/`cat`/`find`/`sed`/`head`/`tail` when greppy would suffice is not allowed, even if it feels faster.
 
-| Instead of                | Use                                 |
-| ------------------------- | ----------------------------------- |
-| `grep -n "pattern" file`  | `greppy exact "pattern" -p file`    |
-| `grep -in "pattern" file` | `greppy exact -i "pattern" -p file` |
-| `grep -n "a\|b\|c" file`  | `greppy exact "a\|b\|c" -p file`    |
-| `grep -rn "pattern" dir`  | `greppy exact "pattern" -p dir`     |
-| `sed -n '10,50p' file`    | `greppy read file:10-50`            |
-| `cat file \| head -50`    | `greppy read file`                  |
-| `cat file`                | `greppy read file -c 1000`          |
+| Instead of                | Use                                    |
+| ------------------------- | -------------------------------------- |
+| `grep -n "pattern" file`  | `greppy exact "pattern" -p file`       |
+| `grep -in "pattern" file` | `greppy exact -i "pattern" -p file`    |
+| `grep -n "a\|b\|c" file`  | `greppy exact "a\|b\|c" -p file`       |
+| `grep -rn "pattern" dir`  | `greppy exact "pattern" -p dir`        |
+| `sed -n '10,50p' file`    | `greppy read file:10-50`               |
+| `cat file \| head -50`    | `greppy read file`                     |
+| `cat file`                | `greppy read file -c 1000`             |
+| `find . -name "*.java"`   | `greppy exact "" -p . --glob "*.java"` |
 
 # Testing
 
