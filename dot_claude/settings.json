@@ -17,6 +17,7 @@
       "Bash(echo:*)"
     ],
     "deny": [
+      "WebFetch(domain:example.com)",
       "Glob",
       "Grep",
       "Bash(*bitwarden*)",
@@ -109,7 +110,6 @@
     "playground@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
     "vtsls@claude-code-lsps": true,
-    "jdtls@claude-code-lsps": true,
     "pyright@claude-code-lsps": true,
     "frontend-design@claude-plugins-official": false,
     "playwright@claude-plugins-official": true,
@@ -117,6 +117,6 @@
     "claude-md-management@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
     "frontend-design@claude-code-plugins": true,
-    "jdtls-lsp@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true
   }
 }
