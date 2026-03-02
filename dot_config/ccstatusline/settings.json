@@ -3,27 +3,25 @@
   "lines": [
     [
       {
+        "id": "4cbc078d-0c27-4b83-8d02-2208d0ca7e09",
+        "type": "custom-text",
+        "customText": "🤖"
+      },
+      {
         "id": "1",
         "type": "model",
-        "color": "brightRed"
+        "color": "cyan",
+        "rawValue": true
       },
       {
         "id": "2",
         "type": "separator"
       },
       {
-        "id": "3",
-        "type": "context-length",
-        "color": "white"
-      },
-      {
-        "id": "4",
-        "type": "separator"
-      },
-      {
         "id": "1dbe7b57-7831-44af-a042-79ff88313680",
         "type": "context-percentage",
-        "color": "red"
+        "color": "brightRed",
+        "rawValue": true
       },
       {
         "id": "3e70a2c0-e205-4c7e-a89f-1bc4e68d88a4",
@@ -31,7 +29,27 @@
       },
       {
         "id": "4cdcdac6-ec0b-486d-9186-b6fde02e173d",
-        "type": "tokens-total"
+        "type": "tokens-total",
+        "color": "brightGreen",
+        "rawValue": true
+      },
+      {
+        "id": "fd38b1b3-4b5d-4faa-9396-43aa0660ba00",
+        "type": "separator"
+      },
+      {
+        "id": "2d775d5b-d12f-4fed-b6aa-21ef86bff74a",
+        "type": "custom-text",
+        "customText": "📁"
+      },
+      {
+        "id": "2ec2eb26-bc72-4e5e-a4dc-ec72338cddf2",
+        "type": "current-working-dir",
+        "color": "white",
+        "rawValue": true,
+        "metadata": {
+          "segments": "1"
+        }
       }
     ],
     [
@@ -52,56 +70,56 @@
       {
         "id": "2ce326cf-deb2-4ef9-a744-24cb27d6e92f",
         "type": "git-worktree",
-        "color": "cyan"
-      },
-      {
-        "id": "ddff6325-0251-4522-b4d7-63b3bcd13bfc",
-        "type": "separator"
-      },
-      {
-        "id": "e6591905-1919-4384-9a1b-c761583c54f9",
-        "type": "current-working-dir",
-        "color": "",
-        "metadata": {
-          "segments": "1"
-        }
+        "color": "brightWhite"
       }
     ],
     [
       {
-        "id": "2ea5f7f1-b2b7-4df5-a01b-7ae6bb76d3d7",
+        "id": "3c226524-6a4b-4c92-a7fd-ec24bf1a3a22",
         "type": "custom-command",
-        "color": "brightMagenta",
         "commandPath": "fitness-track statusline",
         "preserveColors": true,
         "timeout": 3000
       },
       {
-        "id": "3a5fb63f-1365-4dd3-812f-9b97e1fb02be",
+        "id": "e8411af1-f875-4b05-b66a-d6ccf919c0d8",
         "type": "separator"
       },
       {
-        "id": "64fc5b74-ce68-486b-ae2d-a2ab2a6b1f37",
+        "id": "459e7ae7-bb57-4ade-b366-4577e45b4f22",
+        "type": "custom-command",
+        "commandPath": "npx -y ccusage@latest blocks --active --json 2>/dev/null | node -e \"process.stdin.resume();const c=[];process.stdin.on('data',d=>c.push(d));process.stdin.on('end',()=>{try{const d=JSON.parse(c.join(''));const b=d.blocks[0];if(!b){process.stdout.write('no block');return;}const limit=1000000;const pct=Math.min(100,Math.round(b.totalTokens/limit*100));const color=pct>=80?'\\x1b[91m':pct>=50?'\\x1b[33m':'\\x1b[97m';const reset='\\x1b[0m';const minsLeft=Math.max(0,Math.round((new Date(b.endTime)-Date.now())/60000));const timeStr=minsLeft>=60?(Math.floor(minsLeft/60)+'h '+(minsLeft%60)+'m'):minsLeft+'m';process.stdout.write(color+'󱙺 '+pct+'%'+reset+' | '+color+'⏱ '+timeStr+reset);}catch(e){process.stdout.write('err');}});\"",
+        "preserveColors": true,
+        "timeout": 5000
+      },
+      {
+        "id": "dec964f0-4c99-4a1b-ab6e-8fc14981a593",
+        "type": "separator"
+      },
+      {
+        "id": "4821998b-19f3-4964-9c60-f3c9f4419f33",
+        "type": "custom-text",
+        "customText": "💰"
+      },
+      {
+        "id": "e6f3d31e-7c17-4b43-90ac-98bff1394bee",
         "type": "session-cost",
         "color": "brightYellow"
       }
     ]
   ],
-  "flexMode": "full",
-  "compactThreshold": 60,
+  "flexMode": "full-until-compact",
+  "compactThreshold": 80,
   "colorLevel": 1,
   "inheritSeparatorColors": false,
   "globalBold": false,
   "powerline": {
     "enabled": false,
-    "separators": [
-      ""
-    ],
-    "separatorInvertBackground": [
-      false
-    ],
+    "separators": [""],
+    "separatorInvertBackground": [false],
     "startCaps": [],
     "endCaps": [],
     "autoAlign": false
   }
 }
+
