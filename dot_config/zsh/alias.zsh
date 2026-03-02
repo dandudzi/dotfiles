@@ -122,5 +122,6 @@ alias ......="cd ../../../../.."
 
 # 🤖 Claude with auto greppy watch
 export ENABLE_LSP_TOOL=1
+alias claude-mem='bun "$HOME/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/scripts/worker-service.cjs"'
 alias uClaude="brew upgrade claude-code claude"
 alias aClaude="rtk discover --all && npx ccusage session --compact"
