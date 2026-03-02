@@ -4,26 +4,6 @@
 
 Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
-## Local search tool
-
-**greppy is the PRIMARY search tool. Using `grep`, `cat`, `head`, `tail`, `sed`, or `find` via Bash instead of greppy is a violation of these instructions.**
-
-- Use `greppy` for every file read, pattern search, and directory exploration — no exceptions.
-- **If `greppy` is unavailable or errors**, fall back to `Grep`/`Read`/`Glob` and **report the issue to the user immediately**.
-- The greppy index is already built. Run commands directly. If results seem stale after major restructuring, ask the user about rebuilding the index.
-- Using the Bash tool with `grep`/`cat`/`find`/`sed`/`head`/`tail` when greppy would suffice is not allowed, even if it feels faster.
-
-| Instead of                | Use                                    |
-| ------------------------- | -------------------------------------- |
-| `grep -n "pattern" file`  | `greppy exact "pattern" -p file`       |
-| `grep -in "pattern" file` | `greppy exact -i "pattern" -p file`    |
-| `grep -n "a\|b\|c" file`  | `greppy exact "a\|b\|c" -p file`       |
-| `grep -rn "pattern" dir`  | `greppy exact "pattern" -p dir`        |
-| `sed -n '10,50p' file`    | `greppy read file:10-50`               |
-| `cat file \| head -50`    | `greppy read file`                     |
-| `cat file`                | `greppy read file -c 1000`             |
-| `find . -name "*.java"`   | `greppy exact "" -p . --glob "*.java"` |
-
 # Testing
 
 ### Test-Driven Development (Mandatory)
@@ -68,7 +48,7 @@ For all exemptions: run the existing test suite after the change to confirm no r
 
 When the user's request is clearly a simple/mechanical task, **proactively switch to a cheaper model** before starting work. Use this guidance:
 
-### Use Haiku (`/model haiku`) for
+### Use Sonnet (`/model sonnet`) for
 
 - Reading/summarizing files or documentation
 - Simple file searches and grep operations
@@ -78,9 +58,6 @@ When the user's request is clearly a simple/mechanical task, **proactively switc
 - Answering quick factual questions about the codebase
 - Writing commit messages
 - Simple config file edits
-
-### Use Sonnet (`/model sonnet`) for
-
 - Standard feature implementation with clear requirements
 - Writing tests for well-defined behavior
 - Code refactoring with known patterns
@@ -103,3 +80,5 @@ When the user's request is clearly a simple/mechanical task, **proactively switc
 When you identify a task that could use a lighter model, say:
 
 > "This looks like a [simple/standard] task. Switching to [haiku/sonnet] to save tokens. `/model haiku`"
+
+@RTK.md
