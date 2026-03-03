@@ -37,6 +37,25 @@ The cycle:
 
 For all exemptions: run the existing test suite after the change to confirm no regressions.
 
+### Test Double Strategy (Mandatory)
+
+**Never mock what you can use for real.** Prefer the highest-fidelity test double available:
+
+1. **Real infrastructure first** — If the project has test containers, in-memory databases, or similar test infra, use them. Write integration tests that hit real databases over unit tests that stub repositories.
+2. **Mock only at trust boundaries** — External HTTP services (OAuth providers, third-party APIs), cross-module ports in hexagonal/DDD architecture, and things you genuinely cannot run locally.
+3. **Integration tests must go full-stack** — Do NOT mock application services in controller/endpoint integration tests. Let requests flow through the real service → repository → database. Only mock external adapters.
+4. **When a mock IS appropriate**, prefer the narrowest scope: mock the specific port/adapter, not the entire service.
+
+**Acceptable mocks:**
+- External API clients (OAuth2, payment gateways, email services)
+- Cross-module ports that enforce bounded-context isolation
+- Time, randomness, and other non-deterministic sources
+
+**Not acceptable (when real infra exists):**
+- Repositories / data-access layers when a test database is available
+- Application services in integration tests
+- Domain services that have no external dependencies
+
 ### Plan Execution
 
 - **If you believe a plan step is unnecessary or already satisfied, state this explicitly and ask the user before skipping it.** Never silently omit a step from an approved plan.
