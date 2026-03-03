@@ -34,6 +34,7 @@ brew "lnav"
 brew "lua"
 brew "luarocks"
 brew "mas"
+brew "mermaid-cli"
 brew "mise"
 brew "neovim"
 brew "nmap"
@@ -92,16 +93,17 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft Word", id: 462054704
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
+mas "Structured", id: 1499198946
 mas "Xcode", id: 497799835
 vscode "dbaeumer.vscode-eslint"
 vscode "donjayamanne.githistory"
 vscode "eamodio.gitlens"
 vscode "flowtype.flow-for-vscode"
 vscode "formulahendry.auto-close-tag"
-vscode "github.copilot"
 vscode "github.copilot-chat"
 vscode "github.vscode-github-actions"
 vscode "k--kato.intellij-idea-keybindings"
+vscode "mermaidchart.vscode-mermaid-chart"
 vscode "ms-azuretools.vscode-containers"
 vscode "ms-azuretools.vscode-docker"
 vscode "roscop.activefileinstatusbar"
