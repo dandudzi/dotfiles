@@ -86,14 +86,29 @@
         "type": "separator"
       },
       {
-        "id": "459e7ae7-bb57-4ade-b366-4577e45b4f22",
+        "id": "d7adbc4d-4456-402c-b214-ae17fe7ef5c5",
+        "type": "custom-text",
+        "customText": "📈"
+      },
+      {
+        "id": "93a1147c-b29c-49a1-849b-ee3575ba3aec",
         "type": "custom-command",
-        "commandPath": "npx -y ccusage@latest blocks --active --json 2>/dev/null | node -e \"process.stdin.resume();const c=[];process.stdin.on('data',d=>c.push(d));process.stdin.on('end',()=>{try{const d=JSON.parse(c.join(''));const b=d.blocks[0];if(!b){process.stdout.write('no block');return;}const limit=1000000;const pct=Math.min(100,Math.round(b.totalTokens/limit*100));const color=pct>=80?'\\x1b[91m':pct>=50?'\\x1b[33m':'\\x1b[97m';const reset='\\x1b[0m';const minsLeft=Math.max(0,Math.round((new Date(b.endTime)-Date.now())/60000));const timeStr=minsLeft>=60?(Math.floor(minsLeft/60)+'h '+(minsLeft%60)+'m'):minsLeft+'m';process.stdout.write(color+'󱙺 '+pct+'%'+reset+' | '+color+'⏱ '+timeStr+reset);}catch(e){process.stdout.write('err');}});\"",
+        "commandPath": "node $HOME/.config/scripts/usage.js",
         "preserveColors": true,
-        "timeout": 5000
+        "timeout": 3000
       },
       {
         "id": "dec964f0-4c99-4a1b-ab6e-8fc14981a593",
+        "type": "separator"
+      },
+      {
+        "id": "158c1608-ff22-4d0e-9961-a0581205ce66",
+        "type": "custom-command",
+        "commandPath": "context-window-time",
+        "timeout": 3000
+      },
+      {
+        "id": "92d1d802-84c2-4a19-90b4-57959e8eb5e9",
         "type": "separator"
       },
       {
@@ -104,7 +119,8 @@
       {
         "id": "e6f3d31e-7c17-4b43-90ac-98bff1394bee",
         "type": "session-cost",
-        "color": "brightYellow"
+        "color": "brightYellow",
+        "rawValue": true
       }
     ]
   ],
@@ -115,11 +131,14 @@
   "globalBold": false,
   "powerline": {
     "enabled": false,
-    "separators": [""],
-    "separatorInvertBackground": [false],
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
     "startCaps": [],
     "endCaps": [],
     "autoAlign": false
   }
 }
-
