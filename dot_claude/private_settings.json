@@ -3,6 +3,10 @@
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1"
   },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "mcp__context7__resolve-library-id",
@@ -38,6 +42,7 @@
       "Bash(git push --force:*)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
+      "Bash(git push *)",
       "Bash(git reset --hard:*)",
       "Bash(kubectl apply*)",
       "Bash(kubectl delete*)",
@@ -60,6 +65,7 @@
     ],
     "defaultMode": "default"
   },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -114,9 +120,11 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "claude-mem@thedotmack": true,
     "pyright-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true
+  },
+  "sandbox": {
+    "enabled": true
   },
   "effortLevel": "medium"
 }
