@@ -57,9 +57,9 @@
       "Read(~/.aws/*)",
       "Read(~/.config/gcloud/*)",
       "Read(~/.ssh/*)"
-    ]
+    ],
+    "defaultMode": "default"
   },
-  "model": "sonnet",
   "hooks": {
     "Notification": [
       {
