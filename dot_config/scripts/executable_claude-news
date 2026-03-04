@@ -1,0 +1,24 @@
+#!/bin/bash
+# claude-news — wrapper for scheduled Claude Code news skills
+# Usage: claude-news ai-updates | news-summary
+
+set -euo pipefail
+
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export HOME="/Users/daniel"
+unset CLAUDE_CODE_SESSION
+
+cd /Users/daniel/news
+
+case "${1:-}" in
+  ai-updates)
+    claude -p "Run the ai-updates skill: fetch all Anthropic sources and save the briefing as a timestamped markdown file." --allowedTools 'Bash(python3*)' 'Bash(date*)' 'Write(/Users/daniel/news/*)' WebSearch WebFetch
+    ;;
+  news-summary)
+    claude -p "Run the news-summary skill: fetch RSS feeds and save a news briefing as a timestamped markdown file." --allowedTools 'Bash(python3*)' 'Bash(date*)' 'Write(/Users/daniel/news/*)' WebSearch WebFetch
+    ;;
+  *)
+    echo "Usage: claude-news {ai-updates|news-summary}" >&2
+    exit 1
+    ;;
+esac
