@@ -121,7 +121,8 @@
   },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true
+    "security-guidance@claude-plugins-official": true,
+    "claude-mermaid@claude-mermaid": true
   },
   "sandbox": {
     "enabled": true
