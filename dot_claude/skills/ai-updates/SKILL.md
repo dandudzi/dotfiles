@@ -61,25 +61,42 @@ import xml.etree.ElementTree as ET
 import json
 import re
 import sys
-from html.parser import HTMLParser
 from datetime import datetime, timedelta, timezone
 
 headers = {"User-Agent": "Mozilla/5.0 (compatible; AnthropicUpdatesSkill/1.0)"}
 seen_titles = set()
 stories = []
 CUTOFF = datetime.now(timezone.utc) - timedelta(days=3)
+TIMEOUT = 30
+
+# English month patterns for date extraction from listing pages
+_MONTH_RE = r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+_DATE_PATTERNS = [
+    re.compile(r'(\d{4}-\d{2}-\d{2})'),
+    re.compile(r'(' + _MONTH_RE + r'\s+\d{1,2},?\s+\d{4})', re.I),
+]
 
 
 def parse_date(date_str):
     """Try to parse a date string into a datetime. Returns None on failure."""
     if not date_str:
         return None
-    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d"):
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d",
+                "%B %d, %Y", "%B %d %Y", "%b %d, %Y", "%b %d %Y"):
         try:
-            return datetime.strptime(date_str, fmt).replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(date_str.strip(), fmt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except ValueError:
             continue
-    # RFC 2822 style (from RSS pubDate)
+    try:
+        dt = datetime.fromisoformat(date_str.strip())
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except (ValueError, AttributeError):
+        pass
     try:
         from email.utils import parsedate_to_datetime
         return parsedate_to_datetime(date_str)
@@ -87,150 +104,96 @@ def parse_date(date_str):
         return None
 
 
-def add_story(source, category, title, desc="", link="", date=""):
+def extract_date_from_context(html, pos, window=500):
+    """Extract the nearest date from HTML context around a match position."""
+    start = max(0, pos - window)
+    end = min(len(html), pos + window)
+    ctx = html[start:end]
+    for pat in _DATE_PATTERNS:
+        m = pat.search(ctx)
+        if m:
+            return parse_date(m.group(1))
+    return None
+
+
+def add_story(source, category, title, desc="", link="", date="", dt=None):
     """Add a story with deduplication by normalized title."""
     key = re.sub(r'\s+', ' ', title.lower().strip())[:80]
     if title and key not in seen_titles:
         seen_titles.add(key)
         stories.append({
-            "source": source,
-            "category": category,
-            "title": title.strip(),
-            "desc": desc.strip()[:300],
-            "link": link.strip(),
-            "date": date.strip()
+            "source": source, "category": category,
+            "title": title.strip(), "desc": desc.strip()[:600],
+            "link": link.strip(), "date": date.strip() if date else "",
+            "_dt": dt,
         })
 
 
-def fetch_url(url):
+def fetch_url(url, timeout=TIMEOUT):
     """Fetch a URL and return the response body as a string."""
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8", errors="replace")
 
 
-# ------------------------------------------------------------------
-# 1. Anthropic Newsroom (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://www.anthropic.com/news")
-    # Look for article links with titles — pattern: links containing /news/ path
-    for m in re.finditer(
-        r'<a[^>]*href="(/news/[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        # Extract visible text as title
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://www.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 10 and "/news/" in m.group(1):
-            add_story("Anthropic Newsroom", "announcements", title_text, link=link)
-except Exception as e:
-    print(f"[Anthropic Newsroom] failed: {e}", file=sys.stderr)
+# Helper: scrape a listing page, extract articles with dates, filter by CUTOFF
+def scrape_listing(url, source, category, path_pattern, base_url="",
+                    min_title=10, exclude_urls=None, exclude_paths=None,
+                    drop_undated=True):
+    """Scrape articles from a listing page, extract dates from context, skip old items.
+    If drop_undated=True (default), items with no detectable date are dropped."""
+    try:
+        html = fetch_url(url)
+        regex = re.compile(r'<a[^>]*href="(' + path_pattern + r')"[^>]*>.*?</a>', re.DOTALL)
+        for m in regex.finditer(html):
+            block = m.group(0)
+            # Extract text, collapse whitespace, cap length to avoid embedded metadata
+            title_text = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', block)).strip()[:150]
+            raw_href = m.group(1)
+            link = base_url + raw_href if base_url else raw_href
+            if not title_text or len(title_text) < min_title:
+                continue
+            if exclude_urls and link.rstrip("/") in {u.rstrip("/") for u in exclude_urls}:
+                continue
+            if exclude_paths and any(ep in raw_href for ep in exclude_paths):
+                continue
+            dt = extract_date_from_context(html, m.start())
+            if dt and dt < CUTOFF:
+                continue  # older than 3 days, skip
+            if dt is None and drop_undated:
+                continue  # no date found, likely old or nav item
+            date_str = dt.strftime("%Y-%m-%d") if dt else ""
+            add_story(source, category, title_text, link=link, date=date_str, dt=dt)
+    except Exception as e:
+        print(f"[{source}] failed: {e}", file=sys.stderr)
 
 
 # ------------------------------------------------------------------
-# 2. Anthropic Engineering Blog (HTML scrape)
+# 1-7. HTML-scraped sources (with listing-page date extraction)
 # ------------------------------------------------------------------
-try:
-    html = fetch_url("https://www.anthropic.com/engineering")
-    for m in re.finditer(
-        r'<a[^>]*href="(/engineering/[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://www.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 10:
-            add_story("Engineering Blog", "engineering", title_text, link=link)
-except Exception as e:
-    print(f"[Engineering Blog] failed: {e}", file=sys.stderr)
+scrape_listing("https://www.anthropic.com/news",
+    "Anthropic Newsroom", "announcements", r'/news/[^"]+', "https://www.anthropic.com")
 
+scrape_listing("https://www.anthropic.com/engineering",
+    "Engineering Blog", "engineering", r'/engineering/[^"]+', "https://www.anthropic.com")
 
-# ------------------------------------------------------------------
-# 3. Anthropic Research (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://www.anthropic.com/research")
-    for m in re.finditer(
-        r'<a[^>]*href="(/research/[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://www.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 10:
-            add_story("Anthropic Research", "research", title_text, link=link)
-except Exception as e:
-    print(f"[Anthropic Research] failed: {e}", file=sys.stderr)
+scrape_listing("https://www.anthropic.com/research",
+    "Anthropic Research", "research", r'/research/[^"]+', "https://www.anthropic.com",
+    exclude_paths=["/research/team/"])
 
+scrape_listing("https://alignment.anthropic.com",
+    "Alignment Science", "alignment", r'https://alignment\.anthropic\.com/[^"]+',
+    exclude_urls={"https://alignment.anthropic.com", "https://alignment.anthropic.com/"})
 
-# ------------------------------------------------------------------
-# 4. Alignment Science Blog (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://alignment.anthropic.com")
-    # This blog uses a different structure — look for post links
-    for m in re.finditer(
-        r'<a[^>]*href="(https://alignment\.anthropic\.com/[^"]+)"[^>]*>.*?</a>',
-        html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = m.group(1)
-        if title_text and len(title_text) > 10 and link != "https://alignment.anthropic.com/":
-            add_story("Alignment Science", "alignment", title_text, link=link)
-except Exception as e:
-    print(f"[Alignment Science] failed: {e}", file=sys.stderr)
+scrape_listing("https://claude.com/blog",
+    "Claude Blog", "product", r'/blog/[^"]+', "https://claude.com")
 
+scrape_listing("https://www.anthropic.com/transparency",
+    "Transparency Hub", "transparency", r'/transparency/[^"]+', "https://www.anthropic.com")
 
-# ------------------------------------------------------------------
-# 5. Claude Blog (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://claude.com/blog")
-    for m in re.finditer(
-        r'<a[^>]*href="(/blog/[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://claude.com" + m.group(1)
-        if title_text and len(title_text) > 10:
-            add_story("Claude Blog", "product", title_text, link=link)
-except Exception as e:
-    print(f"[Claude Blog] failed: {e}", file=sys.stderr)
-
-
-# ------------------------------------------------------------------
-# 6. Transparency Hub (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://www.anthropic.com/transparency")
-    for m in re.finditer(
-        r'<a[^>]*href="(/transparency/[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://www.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 10:
-            add_story("Transparency Hub", "transparency", title_text, link=link)
-except Exception as e:
-    print(f"[Transparency Hub] failed: {e}", file=sys.stderr)
-
-
-# ------------------------------------------------------------------
-# 7. Claude Developer Newsletter (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://docs.anthropic.com/en/developer-newsletter/overview")
-    for m in re.finditer(
-        r'<a[^>]*href="(/en/developer-newsletter/[^"]+)"[^>]*>.*?</a>',
-        html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://docs.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 5 and "overview" not in m.group(1):
-            add_story("Developer Newsletter", "newsletter", title_text, link=link)
-except Exception as e:
-    print(f"[Developer Newsletter] failed: {e}", file=sys.stderr)
+scrape_listing("https://docs.anthropic.com/en/developer-newsletter/overview",
+    "Developer Newsletter", "newsletter", r'/en/developer-newsletter/[^"]+',
+    "https://docs.anthropic.com", min_title=5, exclude_paths=["overview"])
 
 
 # ------------------------------------------------------------------
@@ -242,7 +205,7 @@ try:
         "User-Agent": headers["User-Agent"],
         "Accept": "application/vnd.github.v3+json"
     })
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         releases = json.loads(resp.read().decode("utf-8"))
     for rel in releases:
         pub_date = rel.get("published_at", "")
@@ -253,37 +216,23 @@ try:
         body = (rel.get("body") or "").strip()
         link = rel.get("html_url", "")
         date = pub_date[:10]
-        # Flag changelog-only releases so Claude follows the link
         is_changelog_only = (
             not body
             or len(body) < 40
             or re.match(r'^(changelog|bump|version)\s*(update|bump)?\.?$', body, re.I)
         )
         if is_changelog_only:
-            body = "[CHANGELOG_ONLY — follow link for details]"
+            body = "[CHANGELOG_ONLY]"
         else:
             body = body[:600]
-        add_story("Claude Code GitHub", "claude-code", name, desc=body, link=link, date=date)
+        add_story("Claude Code GitHub", "claude-code", name, desc=body, link=link, date=date, dt=dt)
 except Exception as e:
     print(f"[Claude Code GitHub] failed: {e}", file=sys.stderr)
 
 
-# ------------------------------------------------------------------
-# 9. Docs Release Notes (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://docs.anthropic.com/en/release-notes/overview")
-    for m in re.finditer(
-        r'<a[^>]*href="(/en/release-notes/[^"]+)"[^>]*>.*?</a>',
-        html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = "https://docs.anthropic.com" + m.group(1)
-        if title_text and len(title_text) > 5 and "overview" not in m.group(1):
-            add_story("Docs Release Notes", "release-notes", title_text, link=link)
-except Exception as e:
-    print(f"[Docs Release Notes] failed: {e}", file=sys.stderr)
+scrape_listing("https://docs.anthropic.com/en/release-notes/overview",
+    "Docs Release Notes", "release-notes", r'/en/release-notes/[^"]+',
+    "https://docs.anthropic.com", min_title=5, exclude_paths=["overview"])
 
 
 # ------------------------------------------------------------------
@@ -300,14 +249,36 @@ try:
         title = (title_el.text or "").strip() if title_el is not None else ""
         link = (link_el.text or "").strip() if link_el is not None else ""
         desc = (desc_el.text or "").strip()[:300] if desc_el is not None else ""
-        date = (pub_el.text or "").strip() if pub_el is not None else ""
-        dt = parse_date(date)
+        date_str = (pub_el.text or "").strip() if pub_el is not None else ""
+        dt = parse_date(date_str)
         if dt and dt < CUTOFF:
             continue
         if title:
-            add_story("Status Page", "status", title, desc=desc, link=link, date=date)
+            add_story("Status Page", "status", title, desc=desc, link=link, date=date_str, dt=dt)
 except Exception as e:
     print(f"[Status Page] failed: {e}", file=sys.stderr)
+
+
+# ------------------------------------------------------------------
+# Resolve changelog-only releases from CHANGELOG.md
+# ------------------------------------------------------------------
+changelog_stories = [s for s in stories if s.get("desc", "") == "[CHANGELOG_ONLY]"]
+if changelog_stories:
+    try:
+        changelog_md = fetch_url(
+            "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+            timeout=15
+        )
+        for s in changelog_stories:
+            version = s["title"].lstrip("v").strip()
+            pattern = r'##\s*\[?' + re.escape(version) + r'\]?[^\n]*\n(.*?)(?=\n## |\Z)'
+            m = re.search(pattern, changelog_md, re.DOTALL)
+            if m:
+                s["desc"] = m.group(1).strip()[:600]
+            else:
+                s["desc"] = "Details not found in CHANGELOG.md"
+    except Exception as e:
+        print(f"[CHANGELOG.md] failed: {e}", file=sys.stderr)
 
 
 # ------------------------------------------------------------------
@@ -330,11 +301,14 @@ PYEOF
 
 ### 1. Full Briefing
 
-1. Run the fetch script above to pull data from all sources.
-2. **Changelog-only releases**: For any Claude Code release tagged `[CHANGELOG_ONLY — follow link for details]`, use **WebFetch** on its GitHub release URL to extract the actual changes. Replace the placeholder with a real summary. Never output "Changelog update" as the description.
-3. **External / non-official coverage**: The Python script only fetches official sources. After processing them, run a **WebSearch** query like `"Anthropic" OR "Claude" news -site:anthropic.com -site:claude.com` (scoped to the last 3 days) to find third-party press, community blogs, and competitor context. Include relevant results in the **External Coverage** section.
-4. **3-day recency filter**: Discard any item older than 3 days from today. The Python script already filters GitHub releases and status incidents by date. For HTML-scraped sources that lack dates, use WebFetch on the article URL if uncertain — if the content is clearly older than 3 days, drop it.
-5. Group stories by category:
+1. Run the fetch script above to pull data from all sources. The script automatically:
+   - **Filters by date**: extracts publication dates from listing page context and drops anything older than 3 days (items without a detectable date are kept — they may still be recent)
+   - **Resolves changelog-only releases**: fetches `CHANGELOG.md` from the Claude Code repo and replaces placeholder descriptions with real change details
+2. **External / non-official coverage**: The Python script only fetches official sources. After processing them, run **two WebSearch queries**:
+   - `"Anthropic" OR "Claude" news -site:anthropic.com -site:claude.com` — third-party press, community blogs, and competitor context
+   - `site:anthropicnews.com` — dedicated Anthropic news aggregator (JS-rendered, can only be reached via WebSearch)
+   Combine results, deduplicate, and include in the **External Coverage** section.
+3. Group stories by category:
    - **Claude Code** — GitHub releases, version changes
    - **Product & Apps** — Claude Blog, Newsroom product announcements, Docs release notes for Apps
    - **API & SDK** — Docs release notes for API/SDK changes
@@ -344,17 +318,17 @@ PYEOF
    - **Developer Newsletter** — Monthly newsletter highlights
    - **Status** — Recent incidents or ongoing issues
    - **External Coverage** — Third-party press (TechCrunch, The Verge, etc.), community blogs, competitor context (from WebSearch)
-6. Deduplicate — if the same announcement appears in Newsroom and Claude Blog, keep the Newsroom version.
-7. Write a concise summary. Keep each item to 1–2 sentences. Limit to the 15–20 most notable items across all categories.
-8. Format using the template below.
-9. Save the summary to the user's workspace as a timestamped `.md` file:
+4. Deduplicate — if the same announcement appears in Newsroom and Claude Blog, keep the Newsroom version.
+5. Write a concise summary. Keep each item to 1–2 sentences. Limit to the 15–20 most notable items across all categories.
+6. Format using the template below.
+7. Save the summary to the user's workspace as a timestamped `.md` file:
 
    ```bash
    date +"%Y-%m-%d_%H-%M"
    ```
 
    File name: `anthropic-updates-YYYY-MM-DD_HH-MM.md`
-10. Present the saved file link to the user.
+8. Present the saved file link to the user.
 
 ### 2. Quick Check (Top 5)
 
@@ -425,8 +399,8 @@ surface that category first and expand it with more detail.
 
 ## Best Practices
 
-- **Hard 3-day cutoff**: never include items older than 3 days. If a quiet day yields few items, that's fine — a short briefing is better than padding with stale content.
-- **No "Changelog update" summaries**: if a Claude Code release body is empty or just says "Changelog update", you MUST use WebFetch on the release URL to get the actual changes. Never leave a release entry without a real description.
+- **Hard 3-day cutoff**: the Python script enforces this automatically — it extracts dates from listing page context and drops anything older than 3 days. Items without a detectable date are kept (they may be recent). If a quiet day yields few items, that's fine — a short briefing is better than padding with stale content.
+- **Changelog-only releases resolved automatically**: the script fetches `CHANGELOG.md` from the Claude Code repo and replaces placeholder descriptions. If the script still outputs `[CHANGELOG_ONLY]` (e.g., CHANGELOG.md fetch failed), use WebFetch on `https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md` to get the details manually.
 - **External coverage via WebSearch**: since unofficial aggregator sites are JS-rendered and can't be scraped, use WebSearch to find third-party press about Anthropic/Claude from the last 3 days. Always keep external items in their own section at the bottom.
 - **Cite sources**: always note where each item came from.
 - **Be concise**: the value is in the digest, not full articles. 15–20 items max for a full briefing.
