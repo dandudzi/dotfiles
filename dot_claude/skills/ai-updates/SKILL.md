@@ -38,15 +38,11 @@ deep-dives, research publications, and operational status.
 | Docs Release Notes          | API, SDK, Apps changes         | `https://docs.anthropic.com/en/release-notes/overview`        | Several times/month |
 | Status Page                 | Incidents, degradations        | `https://status.claude.com`                                   | As needed           |
 
-### Bonus Source (Community Aggregator)
+### External Coverage (via WebSearch)
 
-| Source            | Category                                                   | URL                         | Notes                                                             |
-| ----------------- | ---------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------- |
-| AnthropicNews.com | Third-party press, competitor news, community blogs, video | `https://anthropicnews.com` | Unofficial. Adds external coverage not found in official sources. |
-
-Use the **core sources** as primary. AnthropicNews.com is a supplementary source that captures
-third-party press coverage (TechCrunch, The Verge, etc.), OpenAI/competitor context, community
-blog posts, and video content that official channels never publish.
+After processing official sources, use **WebSearch** to find third-party press about Anthropic/Claude
+from the last 3 days. This captures TechCrunch, The Verge, Ars Technica, community blogs,
+and competitor context that official channels never publish. Keep these in a separate section.
 
 ---
 
@@ -66,10 +62,29 @@ import json
 import re
 import sys
 from html.parser import HTMLParser
+from datetime import datetime, timedelta, timezone
 
 headers = {"User-Agent": "Mozilla/5.0 (compatible; AnthropicUpdatesSkill/1.0)"}
 seen_titles = set()
 stories = []
+CUTOFF = datetime.now(timezone.utc) - timedelta(days=3)
+
+
+def parse_date(date_str):
+    """Try to parse a date string into a datetime. Returns None on failure."""
+    if not date_str:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(date_str, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    # RFC 2822 style (from RSS pubDate)
+    try:
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(date_str)
+    except Exception:
+        return None
 
 
 def add_story(source, category, title, desc="", link="", date=""):
@@ -230,10 +245,24 @@ try:
     with urllib.request.urlopen(req, timeout=15) as resp:
         releases = json.loads(resp.read().decode("utf-8"))
     for rel in releases:
+        pub_date = rel.get("published_at", "")
+        dt = parse_date(pub_date)
+        if dt and dt < CUTOFF:
+            continue
         name = rel.get("name") or rel.get("tag_name", "")
-        body = rel.get("body", "")[:300]
+        body = (rel.get("body") or "").strip()
         link = rel.get("html_url", "")
-        date = rel.get("published_at", "")[:10]
+        date = pub_date[:10]
+        # Flag changelog-only releases so Claude follows the link
+        is_changelog_only = (
+            not body
+            or len(body) < 40
+            or re.match(r'^(changelog|bump|version)\s*(update|bump)?\.?$', body, re.I)
+        )
+        if is_changelog_only:
+            body = "[CHANGELOG_ONLY — follow link for details]"
+        else:
+            body = body[:600]
         add_story("Claude Code GitHub", "claude-code", name, desc=body, link=link, date=date)
 except Exception as e:
     print(f"[Claude Code GitHub] failed: {e}", file=sys.stderr)
@@ -258,7 +287,7 @@ except Exception as e:
 
 
 # ------------------------------------------------------------------
-# 10. Status Page (RSS feed)
+# 10. Status Page (RSS feed) — last 3 days only
 # ------------------------------------------------------------------
 try:
     xml_text = fetch_url("https://status.claude.com/history.rss")
@@ -272,30 +301,13 @@ try:
         link = (link_el.text or "").strip() if link_el is not None else ""
         desc = (desc_el.text or "").strip()[:300] if desc_el is not None else ""
         date = (pub_el.text or "").strip() if pub_el is not None else ""
+        dt = parse_date(date)
+        if dt and dt < CUTOFF:
+            continue
         if title:
             add_story("Status Page", "status", title, desc=desc, link=link, date=date)
 except Exception as e:
     print(f"[Status Page] failed: {e}", file=sys.stderr)
-
-
-# ------------------------------------------------------------------
-# BONUS: AnthropicNews.com (HTML scrape)
-# ------------------------------------------------------------------
-try:
-    html = fetch_url("https://anthropicnews.com")
-    for m in re.finditer(
-        r'<a[^>]*href="(https?://[^"]+)"[^>]*>.*?</a>', html, re.DOTALL
-    ):
-        block = m.group(0)
-        title_text = re.sub(r'<[^>]+>', '', block).strip()
-        link = m.group(1)
-        # Skip navigation and internal links
-        if (title_text and len(title_text) > 15
-                and "anthropicnews.com" not in link
-                and not link.endswith(('.css', '.js', '.png', '.svg'))):
-            add_story("AnthropicNews.com", "external", title_text, link=link)
-except Exception as e:
-    print(f"[AnthropicNews.com] failed: {e}", file=sys.stderr)
 
 
 # ------------------------------------------------------------------
@@ -319,7 +331,10 @@ PYEOF
 ### 1. Full Briefing
 
 1. Run the fetch script above to pull data from all sources.
-2. Group stories by category:
+2. **Changelog-only releases**: For any Claude Code release tagged `[CHANGELOG_ONLY — follow link for details]`, use **WebFetch** on its GitHub release URL to extract the actual changes. Replace the placeholder with a real summary. Never output "Changelog update" as the description.
+3. **External / non-official coverage**: The Python script only fetches official sources. After processing them, run a **WebSearch** query like `"Anthropic" OR "Claude" news -site:anthropic.com -site:claude.com` (scoped to the last 3 days) to find third-party press, community blogs, and competitor context. Include relevant results in the **External Coverage** section.
+4. **3-day recency filter**: Discard any item older than 3 days from today. The Python script already filters GitHub releases and status incidents by date. For HTML-scraped sources that lack dates, use WebFetch on the article URL if uncertain — if the content is clearly older than 3 days, drop it.
+5. Group stories by category:
    - **Claude Code** — GitHub releases, version changes
    - **Product & Apps** — Claude Blog, Newsroom product announcements, Docs release notes for Apps
    - **API & SDK** — Docs release notes for API/SDK changes
@@ -328,18 +343,18 @@ PYEOF
    - **Transparency & Policy** — Transparency Hub, RSP updates, policy announcements
    - **Developer Newsletter** — Monthly newsletter highlights
    - **Status** — Recent incidents or ongoing issues
-   - **External Coverage** _(from AnthropicNews.com)_ — Third-party press, competitor context, community content
-3. Deduplicate — if the same announcement appears in Newsroom and Claude Blog, keep the Newsroom version.
-4. Write a concise summary. Keep each item to 1–2 sentences. Limit to the 15–20 most notable items across all categories.
-5. Format using the template below.
-6. Save the summary to the user's workspace as a timestamped `.md` file:
+   - **External Coverage** — Third-party press (TechCrunch, The Verge, etc.), community blogs, competitor context (from WebSearch)
+6. Deduplicate — if the same announcement appears in Newsroom and Claude Blog, keep the Newsroom version.
+7. Write a concise summary. Keep each item to 1–2 sentences. Limit to the 15–20 most notable items across all categories.
+8. Format using the template below.
+9. Save the summary to the user's workspace as a timestamped `.md` file:
 
    ```bash
    date +"%Y-%m-%d_%H-%M"
    ```
 
    File name: `anthropic-updates-YYYY-MM-DD_HH-MM.md`
-7. Present the saved file link to the user.
+10. Present the saved file link to the user.
 
 ### 2. Quick Check (Top 5)
 
@@ -394,13 +409,13 @@ Always use this structure for the full briefing:
 
 ---
 
-📰 EXTERNAL COVERAGE (via AnthropicNews.com)
+📰 EXTERNAL COVERAGE (via WebSearch)
 • [headline] — [summary.] (Original source)
 
 ---
 Sources: Anthropic Newsroom, Engineering Blog, Research, Alignment Science,
 Claude Blog, Transparency Hub, Developer Newsletter, Claude Code GitHub,
-Docs Release Notes, Status Page, AnthropicNews.com
+Docs Release Notes, Status Page, WebSearch
 ```
 
 Omit categories that have no items. If the user asked about a specific topic (e.g. "Claude Code"),
@@ -410,14 +425,13 @@ surface that category first and expand it with more detail.
 
 ## Best Practices
 
-- **Prioritize recency**: lead with the most recent items. Claude Code releases ship multiple
-  times per week — show the latest 3–5, not all of them.
+- **Hard 3-day cutoff**: never include items older than 3 days. If a quiet day yields few items, that's fine — a short briefing is better than padding with stale content.
+- **No "Changelog update" summaries**: if a Claude Code release body is empty or just says "Changelog update", you MUST use WebFetch on the release URL to get the actual changes. Never leave a release entry without a real description.
+- **External coverage via WebSearch**: since unofficial aggregator sites are JS-rendered and can't be scraped, use WebSearch to find third-party press about Anthropic/Claude from the last 3 days. Always keep external items in their own section at the bottom.
 - **Cite sources**: always note where each item came from.
 - **Be concise**: the value is in the digest, not full articles. 15–20 items max for a full briefing.
 - **Graceful degradation**: if a source fails, skip it silently and use the others.
   Print failures to stderr so they're visible for debugging but don't break the output.
-- **Separate official from external**: always keep AnthropicNews.com items in their own section
-  at the bottom, clearly marked as external/community coverage.
 - **Dedup across sources**: the same announcement often appears on both the Newsroom and
   Claude Blog. Keep the more detailed version and drop the duplicate.
 - **HTML scraping is fragile**: if Anthropic redesigns a page, the regex patterns may break.
