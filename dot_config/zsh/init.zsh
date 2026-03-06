@@ -1,11 +1,6 @@
 # 📺 ZSH setup
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-# Export toolbox scripts
-export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
-# Export IDE CE edition scripts
-export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
-export PATH="$PATH:$HOME/.config/scripts"
 
 export CONFIG_HOME="$HOME/.config"
 # allows you to use commands in your prompt that are dynamically evaluated each time the prompt is displayed.
@@ -178,7 +173,9 @@ export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 # make bitwarden ssh agent
-export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
+    export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+fi
 #📢 zsh autosuggestions
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 # make sure that spaceship prompt is refreshed
@@ -205,27 +202,7 @@ function zle-keymap-select() {
 # Bind the combined function
 zle -N zle-keymap-select
 
-# 🏋️ Fitness tracker LaunchAgents
-for plist in "$CONFIG_HOME/scripts"/com.fitness-track.*.plist; do
-    name=$(basename "$plist")
-    target="$HOME/Library/LaunchAgents/$name"
-    label="${name%.plist}"
-    # Symlink if missing
-    [[ -L "$target" ]] || ln -sf "$plist" "$target"
-    # Load if not running
-    launchctl list "$label" &>/dev/null || launchctl load "$target" 2>/dev/null
-done
-
-if [ -z "$TMUX" ]; then
-    tmux attach || tmux new
-fi
-
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-export PATH="$HOME/.local/bin:$PATH"
 source $HOME/.config/scripts/check_dsg.zsh

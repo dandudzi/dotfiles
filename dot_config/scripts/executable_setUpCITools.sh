@@ -16,7 +16,7 @@ if [ ! -f "$IS_CI_SET_UP_RUN" ]; then
   echo "📊 setup sketchybar"
   cd ~/.config/sketchybar
   mise trust
-  mise intsall
+  mise install
   if lua -v | grep -q "Lua 5.1"; then
     echo "🔴 Error lua version is still 5.1 cannot inatall sketychybar"
   else

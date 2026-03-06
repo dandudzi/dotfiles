@@ -1,6 +1,6 @@
 source ~/.config/zsh/init.zsh
-FILE_TO_SOURCE="$HOME/.zshrc_work"
-# Check if the file exists
-  if [ -f "$FILE_TO_SOURCE" ]; then
-    source "$FILE_TO_SOURCE"
+{{ if .work -}}
+if [ -f "$HOME/.zshrc_work" ]; then
+    source "$HOME/.zshrc_work"
 fi
+{{ end -}}

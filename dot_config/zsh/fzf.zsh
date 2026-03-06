@@ -1,9 +1,6 @@
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
 
-# bind new key for finding directories 
-bindkey '^e' fzf-cd-widget
-
 # making sure that fd is used with fzf
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"

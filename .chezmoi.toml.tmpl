@@ -1,4 +1,4 @@
-{{ $work := promptBool "Is this work machine?" false -}}
+{{ $work := promptBoolOnce . "work" "Is this work machine?" false -}}
 [data]
     work = {{ $work }}
     {{ if $work -}}
