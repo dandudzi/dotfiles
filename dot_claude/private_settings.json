@@ -126,5 +126,6 @@
   },
   "sandbox": {
     "enabled": true
-  }
+  },
+  "effortLevel": "high"
 }
