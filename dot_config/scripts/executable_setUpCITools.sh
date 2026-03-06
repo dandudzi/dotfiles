@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 #🍻 Update brew once per day
 IS_CI_SET_UP_RUN="$HOME/.isCISetUpRun"
 # Run only if last update was over 24 hours ago
