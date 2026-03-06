@@ -4,6 +4,17 @@
 
 Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
+## (Mandatory) jcodemunch MCP for indexed repos
+
+When working in a repo indexed by jcodemunch (`list_repos` to check), prefer jcodemunch tools over Grep/Glob for code navigation:
+
+- **Symbol lookup** — Use `search_symbols` / `get_symbol` instead of Grep when looking for classes, methods, or functions by name.
+- **Repo overview** — Use `get_repo_outline` / `get_file_tree` instead of Glob/ls to understand project structure.
+- **File structure** — Use `get_file_outline` instead of reading an entire file when you only need to see its API surface.
+- **Text search** — Use `search_text` instead of Grep for full-text search within indexed repos.
+
+Fall back to Grep/Glob only for repos that are not indexed or when jcodemunch results are insufficient.
+
 # Testing
 
 ### Test-Driven Development (Mandatory)
