@@ -2,13 +2,17 @@
 name: repo-indexer
 description: >
   Automatically index git repositories using the jcodemunch MCP when starting work
-  in a codebase. Use this skill whenever Claude begins a session in a git repository,
-  opens a project, navigates to a repo directory, or the user asks to explore, search,
-  or understand a codebase. This skill should trigger at the very start of working in
-  any git repo — even if the user doesn't explicitly ask for indexing. If you're in a
-  git repository and about to do code navigation, search for symbols, or explore the
-  project structure, trigger this skill first. Also use when the user says things like
-  "index this repo", "set up jcodemunch", or "make sure the repo is indexed".
+  in an existing codebase. Trigger this skill whenever Claude begins a session in a
+  git repository, opens or navigates to a project directory, or the user wants to
+  explore, search, or understand a codebase — even if they don't mention indexing.
+  Specific triggers: finding classes/methods/symbols, viewing project structure or
+  architecture, searching across the codebase, starting work on a bug or feature in
+  a repo, auditing code, or any task that benefits from AST-aware code navigation.
+  Also trigger when the user explicitly says "index this repo", "set up jcodemunch",
+  or "make sure the repo is indexed". Do NOT trigger for: standalone scripts not in
+  a repo, conceptual programming questions, creating new projects from scratch,
+  reviewing pasted diffs or clipboard code, editing config files without needing
+  codebase context, or reading individual files outside a git repository.
 ---
 
 # Repo Indexer
@@ -36,6 +40,8 @@ git rev-parse --show-toplevel
 ```
 
 If this fails, you're not in a git repo — skip indexing and proceed normally.
+Do NOT search for repositories elsewhere on the filesystem. Only index the repo
+you're currently inside of.
 
 ### 2. Index with jcodemunch
 
