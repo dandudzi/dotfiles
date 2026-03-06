@@ -10,12 +10,15 @@ if [ -f "$INSTALL_DIR/sketchybar.so" ] && [ -f "$INSTALL_DIR/lua" ]; then
   exit 0
 fi
 
+mkdir -p "$INSTALL_DIR"
+
 TMPDIR_SBAR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_SBAR"' EXIT
+
 git clone https://github.com/FelixKratz/SbarLua.git "$TMPDIR_SBAR" \
   && cd "$TMPDIR_SBAR" \
   && make install \
   && cp lua-5.5.0/src/lua "$INSTALL_DIR/lua" \
-  && chmod +x "$INSTALL_DIR/lua" \
-  && rm -rf "$TMPDIR_SBAR"
+  && chmod +x "$INSTALL_DIR/lua"
 
 echo "✅ SbarLua installed!"

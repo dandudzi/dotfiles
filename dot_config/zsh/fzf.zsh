@@ -23,7 +23,7 @@ export FZF_DEFAULT_OPTS=" --ansi \
 zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
 # brew installing lesspipe in strange place so this is why it is here
 # ** in case version will change
-export LESSOPEN="|/opt/homebrew/Cellar/lesspipe/**/bin/lesspipe.sh %s"
+export LESSOPEN="|${HOMEBREW_PREFIX:-/opt/homebrew}/Cellar/lesspipe/**/bin/lesspipe.sh %s"
 # make completion case insestive
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 # disable sort when completing `git checkout`

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 #🍻 Update brew once per day
 IS_CI_SET_UP_RUN="$HOME/.isCISetUpRun"
 # Run only if last update was over 24 hours ago
@@ -18,10 +19,9 @@ if [ ! -f "$IS_CI_SET_UP_RUN" ]; then
   mise trust
   mise install
   if lua -v | grep -q "Lua 5.1"; then
-    echo "🔴 Error lua version is still 5.1 cannot inatall sketychybar"
+    echo "🔴 Error lua version is still 5.1 cannot install sketchybar"
   else
     curl -L https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.28/sketchybar-app-font.ttf -o $HOME/Library/Fonts/sketchybar-app-font.ttf
-    (git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/)
     sketchybar --load-font "Symbols Nerd Font"
     sketchybar --load-font "Symbols Nerd Font Mono"
     sketchybar --load-font "CommitMono"

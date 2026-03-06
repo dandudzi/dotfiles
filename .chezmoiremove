@@ -1,0 +1,2 @@
+# Files listed here will be removed from the target directory by `chezmoi apply`.
+# Use this to clean up stale dotfiles that are no longer managed.

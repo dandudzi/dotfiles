@@ -1,14 +1,14 @@
 [user]
 	name = Daniel Dudziak
 	email = {{ .email }}
-  {{ if .work -}}
-    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOhOBKJKhwfQ9ZR52PSiEHSCcv7srnwdH1EngDjIAwM
-  {{ else -}}
-    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5
-  {{ end -}}
+{{- if .work }}
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOhOBKJKhwfQ9ZR52PSiEHSCcv7srnwdH1EngDjIAwM
+{{- else }}
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5
+{{- end }}
 
 [alias]
- amen = commit --amend
+	amen = commit --amend
 [color]
 	ui = auto
 [interactive]
@@ -38,12 +38,12 @@
 	whitespace = fix
 [commit]
 	gpgsign = true
-  # shows changes when writing down commit message
-  verbose = true
+	# shows changes when writing down commit message
+	verbose = true
 [tag]
 	gpgSign = true
-  # sorts tags based on the versioning
-  sort = version:refname
+	# sorts tags based on the versioning
+	sort = version:refname
 [branch]
 	# Show most recently changed branches first.
 	sort = -committerdate
@@ -61,29 +61,29 @@
 	rebase = true
 [merge]
 	conflictStyle = zdiff3
-  # mare nvim diff as tool for merging conflicts
+	# make nvim diff as tool for merging conflicts
 [mergetool "nvimdiff"]
-  layout = "LOCAL,BASE,REMOTE / MERGED"
+	layout = "LOCAL,BASE,REMOTE / MERGED"
 [rerere]
-  # reuse recorded resolutions for merge conflicts so it will be done automatically
-  enabled = true
-  # git will learn and put into cache how conflicts were solved
-  autoupdate = true
+	# reuse recorded resolutions for merge conflicts so it will be done automatically
+	enabled = true
+	# git will learn and put into cache how conflicts were solved
+	autoupdate = true
 [rebase]
-  # when there are any commits marked to be squashed it will be done during rebase
-  autoSquash = true
-  # auto stash uncommited changes so rebased can be sucessful 
-  autoStash = true
-  # ensure that branch refs point to the new commit after rebase
-  # after rebase commits have new hashes so this option should be default to make sure all is set up
-  updateRefs = true
+	# when there are any commits marked to be squashed it will be done during rebase
+	autoSquash = true
+	# auto stash uncommited changes so rebased can be sucessful
+	autoStash = true
+	# ensure that branch refs point to the new commit after rebase
+	# after rebase commits have new hashes so this option should be default to make sure all is set up
+	updateRefs = true
 [push]
 	# will push the current branch to the remote branch of the same name, but only if they match
 	default = simple
-	# create a new branch, Git automatically sets up a tracking relationship with the remote repository 
+	# create a new branch, Git automatically sets up a tracking relationship with the remote repository
 	autoSetupRemote = true
-  # make sure that tags are also pushed so they are synced
-  followTags = true
+	# make sure that tags are also pushed so they are synced
+	followTags = true
 [diff]
 	algorithm = histogram
 	# Use new diff algorithm to make e.g. function diffs look better.
@@ -111,5 +111,5 @@
 	hyperlinks = true
 	decorations = true
 	features = catppuccin-macchiato
- [gpg]
-     format = ssh
+[gpg]
+	format = ssh

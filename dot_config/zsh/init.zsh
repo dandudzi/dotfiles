@@ -177,7 +177,7 @@ if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
     export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 fi
 #📢 zsh autosuggestions
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # make sure that spaceship prompt is refreshed
 eval "$(zoxide init zsh)"
 

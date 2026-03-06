@@ -1,1 +1,3 @@
 README.md
+.claude/skills/**/.keep
+.config/nvim/lazy-lock.json
