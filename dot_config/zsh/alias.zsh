@@ -12,7 +12,7 @@ alias kb="cat ~/.config/key-bindings.md ~/.config/zsh/alias.zsh | fzf"
 
 #🩳 aliases
 #🪛 tools aliases
-alias fastfetch="clear & fastfetch"
+alias fastfetch="clear && fastfetch"
 alias tree=pstree
 alias cat=bat
 alias lals="cat ~/.config/zsh/alias.zsh"
@@ -28,14 +28,13 @@ alias nm="nmap -sC -sV -oN nmap"
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias localip="ipconfig getifaddr en0"
 alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
-alias dig="dig"
+alias dig="dig +short"
 
 #🎬 Git
 alias go="git-open"
 alias g="git"
 alias gavv="git branch -avv"
 alias gvv="git branch -vv"
-alias amen="commit --amend"
 alias cbc="git branch --show-current | pbcopy"
 alias ga="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
@@ -77,15 +76,16 @@ alias git-list-untracked='git fetch --prune && git branch -r | awk "{print \$1}"
 alias git-remove-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}" | xargs git branch -D'
 
 #🌳 eza aliases
+eza_params='--git --group --header --group-directories-first --icons'
 alias lt='eza -l --sort=modified'      # Sort by modification time
-alias l='eza -l --icons $eza_params'                # Simple long list with icons
-alias ls='eza -al --icons $eza_paras'
-alias lg='eza --git-ignore $eza_params'
-alias ll='eza --all --header --long $eza_params'
-alias llm='eza --all --header --long --sort=modified $eza_params'
+alias l="eza -l --icons $eza_params"                # Simple long list with icons
+alias ls="eza -al --icons $eza_params"
+alias lg="eza --git-ignore $eza_params"
+alias ll="eza --all --header --long $eza_params"
+alias llm="eza --all --header --long --sort=modified $eza_params"
 alias la='eza -lbhHigUmuSa'
 alias lx='eza -lbhHigUmuSa@'
-alias ltree='eza --tree $eza_params'
+alias ltree="eza --tree $eza_params"
 
 #🪟 tmux aliasses
 alias ta="tmux attach -t"                       # Attach new tmux session to already running named session

@@ -47,8 +47,3 @@ refreshPeriod = "24h"
 type = "git-repo"
 url = "https://github.com/waydabber/m1ddc"
 refreshPeriod = "24h"
-
-["Repos/reminders-plugin"]
-type = "git-repo"
-url = "https://github.com/dandudzi/reminders-plugin-"
-refreshPeriod = "24h"

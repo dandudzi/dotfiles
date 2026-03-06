@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 echo '⌚️ Configuring your mac. Hang tight.'
 # More options can be found [here](https://www.defaults-write.com/?s=wvous-bl-corner)
@@ -26,7 +27,7 @@ defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 defaults write com.apple.LaunchServices LSQuarantine -bool false
 
 # Reveal IP address, hostname, OS version, etc. when clicking the clock in the login window
-sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
+sudo -n defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName 2>/dev/null || echo "⚠️ Skipping AdminHostInfo (no sudo)"
 
 # Set minimal autohide/show delay for hidden dock
 defaults write com.apple.dock autohide-delay -float 0
@@ -131,7 +132,7 @@ defaults write NSGlobalDomain _HIHideMenuBar -bool true
 defaults write NSGlobalDomain com.apple.springing.enabled -bool true
 
 # make sure that only opened apps are shown in the dock
-dockutil --no-restart --remove all
+command -v dockutil &>/dev/null && dockutil --no-restart --remove all
 
 echo '🛫 Restarting apps...'
 killall Finder

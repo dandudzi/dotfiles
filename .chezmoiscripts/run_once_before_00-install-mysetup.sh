@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 check_brew() {
   if command -v brew &>/dev/null; then
@@ -23,7 +24,7 @@ install_if_missing() {
   fi
 }
 
-echo "🚀 Starting seting up..."
+echo "🚀 Starting setting up..."
 
 if ! check_brew; then
   echo "🍻 Installing Homebrew..."
@@ -50,32 +51,23 @@ install_if_missing "zsh --version" "brew install zsh"
 echo "📟 Installing Oh my zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   echo "📟 Oh My Zsh not found, installing..."
-  export RUNZSH=no      #skipping running zsh after intalltion"
+  export RUNZSH=no      #skipping running zsh after installation"
   export KEEP_ZSHRC=yes #do not change zsh file
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 else
   echo "✅ Oh My Zsh is already installed, skipping installation."
 fi
 
-echo "🚀 Installing spaceship plugin for ohmyzsh..."
+echo "🚀 Setting up spaceship theme symlink..."
 export ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-# Define the theme path
+# Spaceship repo is managed by .chezmoiexternal.toml — only create symlink here
 SPACESHIP_DIR="$ZSH_CUSTOM/themes/spaceship-prompt"
 SPACESHIP_LINK="$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-# Check if the repository already exists before cloning
-if [ ! -d "$SPACESHIP_DIR/.git" ]; then
-  echo "🚀 Cloning Spaceship theme..."
-  git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$SPACESHIP_DIR" --depth=1
-else
-  echo "✅ Spaceship theme already exists, skipping clone."
-fi
-
-# Ensure the symlink exists
-if [ ! -L "$SPACESHIP_LINK" ]; then
-  echo "🚀 Creating symlink for Spaceship theme..."
+if [ ! -L "$SPACESHIP_LINK" ] && [ -d "$SPACESHIP_DIR" ]; then
   ln -s "$SPACESHIP_DIR/spaceship.zsh-theme" "$SPACESHIP_LINK"
+  echo "✅ Spaceship symlink created."
 else
-  echo "✅ Symlink for Spaceship theme already exists, skipping."
+  echo "✅ Spaceship symlink already exists or theme not yet cloned, skipping."
 fi
 
 # Install fzf if not already installed
@@ -98,12 +90,14 @@ trap 'echo "An error occurred, while installing brew dependencies";' ERR
 brew bundle --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
 trap - ERR
 
-echo "✅ Setup autocomplition for mise"
+echo "✅ Setup autocompletion for mise"
 mise completion zsh
 
 echo "▦ setting up ssh to include my config"
-echo "Include ~/.config/ssh/ssh_config" >~/.ssh/config
-mkdir ~/.ssh/control
+if ! grep -qF "Include ~/.config/ssh/ssh_config" ~/.ssh/config 2>/dev/null; then
+  echo "Include ~/.config/ssh/ssh_config" >> ~/.ssh/config
+fi
+mkdir -p ~/.ssh/control
 chmod 700 ~/.ssh/control
 
 echo "🧹 Cleaning up..."

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 echo "🔧 Installing SbarLua (Lua 5.5 + sketchybar module)..."
 

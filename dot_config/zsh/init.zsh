@@ -1,7 +1,7 @@
 # 📺 ZSH setup
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-# Expore toolbox scripts
+# Export toolbox scripts
 export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
 # Export IDE CE edition scripts
 export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
@@ -17,7 +17,7 @@ setopt prompt_subst
 # making sure that hidden directories and files will be matched
 setopt globdots
 _comp_options+=(globdots)
-# additional completions for zsh must be beofre sourcing ohmyzsh
+# additional completions for zsh must be before sourcing ohmyzsh
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 ZSH_DISABLE_COMPFIX="true"
 
@@ -99,7 +99,7 @@ plugins=(
   vi-mode             # vi-style command editing
 )
 
-# enable alias finder for all coommands 
+# enable alias finder for all commands
 zstyle ':omz:plugins:alias-finder' autoload yes # disabled by default
 zstyle ':omz:plugins:alias-finder' longer yes # disabled by default
 zstyle ':omz:plugins:alias-finder' exact yes # disabled by default
@@ -159,9 +159,9 @@ source $CONFIG_HOME/zsh/alias.zsh
 
 #🐱 Set up theme Catpuccin
 source $CONFIG_HOME/zsh/themes/catppuccin_macchiato-zsh-syntax-highlighting.zsh
-export EXA_COLORS="catppuccin"
+export EZA_COLORS="catppuccin"
 
-#🍻 Source brew autou ubpdate script
+#🍻 Source brew auto update script
 source $CONFIG_HOME/scripts/update_packages.sh
 
 #🎖️ Command used in command line
@@ -173,15 +173,15 @@ source $CONFIG_HOME/scripts/setUpCITools.sh
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
 
-#🗣️ autosuggestiontions setup to not suggest bif buffers
+#🗣️ autosuggestions setup to not suggest big buffers
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
-# make bitwarden ssh agend
+# make bitwarden ssh agent
 export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
-#📢 zsh autosuggestiontion#s
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-# make sure that spaceship propmpt is refreshed
+#📢 zsh autosuggestions
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# make sure that spaceship prompt is refreshed
 eval "$(zoxide init zsh)"
 
 # fix for not fzf binded to history, conflict with other plugins
@@ -221,7 +221,7 @@ if [ -z "$TMUX" ]; then
 fi
 
 # bun completions
-[ -s "/Users/daniel/.bun/_bun" ] && source "/Users/daniel/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
