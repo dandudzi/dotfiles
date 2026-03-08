@@ -65,6 +65,11 @@ do_statusline() {
   # ANSI 256-color index (0-15 for terminal palette, 16-255 for extended)
   local color="${1:-13}"
 
+  if [[ ! "$color" =~ ^[0-9]+$ ]]; then
+    echo "Error: color must be a non-negative integer" >&2
+    return 1
+  fi
+
   if [[ ! -f "$STATE_FILE" ]]; then
     echo "  --"
     return
@@ -79,7 +84,9 @@ goal = d.get('goal', 10000)
 p = ex.get('pushups', 0) / goal * 100 if goal else 0
 sq = ex.get('squats', 0) / goal * 100 if goal else 0
 si = ex.get('situps', 0) / goal * 100 if goal else 0
-avg = (p + sq + si) / 3
+lr = ex.get('leg_rises', 0) / goal * 100 if goal else 0
+sm = ex.get('superman', 0) / goal * 100 if goal else 0
+avg = (p + sq + si + lr + sm) / 5
 c = f'\033[38;5;{color}m'
 r = '\033[0m'
 print(f'{c}󰥬 {avg:.1f}%{r}')
