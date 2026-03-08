@@ -6,14 +6,55 @@ Always use Context7 MCP when I need library/API documentation, code generation, 
 
 ## (Mandatory) jcodemunch MCP for indexed repos
 
-When working in a repo indexed by jcodemunch (`list_repos` to check), prefer jcodemunch tools over Grep/Glob for code navigation:
+jcodemunch indexes codebases using tree-sitter AST parsing, letting agents retrieve specific symbols instead of loading entire files — cutting code-reading token costs by up to 99%.
 
-- **Symbol lookup** — Use `search_symbols` / `get_symbol` instead of Grep when looking for classes, methods, or functions by name.
-- **Repo overview** — Use `get_repo_outline` / `get_file_tree` instead of Glob/ls to understand project structure.
-- **File structure** — Use `get_file_outline` instead of reading an entire file when you only need to see its API surface.
-- **Text search** — Use `search_text` instead of Grep for full-text search within indexed repos.
+When working in a repo indexed by jcodemunch (`list_repos` to check), **always prefer jcodemunch tools first**.
 
-Fall back to Grep/Glob only for repos that are not indexed or when jcodemunch results are insufficient.
+### Available tools
+
+| Tool | Purpose |
+|---|---|
+| `index_repo` | Index a GitHub repository |
+| `index_folder` | Index a local folder |
+| `list_repos` | List indexed repositories |
+| `get_file_tree` | Repository file structure |
+| `get_file_outline` | Symbol hierarchy for a file |
+| `get_file_content` | Retrieve cached file content (with line ranges) |
+| `get_symbol` | Retrieve full symbol source by stable ID |
+| `get_symbols` | Batch retrieve multiple symbols |
+| `search_symbols` | Search symbols with filters (name, kind, language) |
+| `search_text` | Full-text search with context lines |
+| `get_repo_outline` | High-level repo overview |
+| `invalidate_cache` | Remove cached index |
+
+### When to use (instead of built-in tools)
+
+- **Finding classes/methods/functions** — `search_symbols` / `get_symbol` / `get_symbols` instead of Grep.
+- **Understanding project structure** — `get_repo_outline` / `get_file_tree` instead of Glob/ls.
+- **Viewing a file's API surface** — `get_file_outline` instead of reading the entire file.
+- **Reading file content** — `get_file_content` instead of Read when only specific lines are needed.
+- **Full-text search** — `search_text` instead of Grep.
+- **Indexing new repos** — `index_repo` (GitHub) or `index_folder` (local). Use `invalidate_cache` to force re-indexing.
+
+### Best suited for
+
+- Large multi-module repositories
+- Agent-driven refactors
+- Architecture exploration
+- Faster onboarding
+- Token-efficient multi-agent workflows
+
+### Not intended for
+
+- LSP diagnostics or completions
+- Real-time editing workflows
+- Cross-repository global indexing
+
+### Stable symbol ID format
+
+`{file_path}::{qualified_name}#{kind}` — e.g. `src/main.py::UserService.login#method`
+
+Fall back to Grep/Glob/Read only for repos that are not indexed or when jcodemunch results are insufficient.
 
 # Testing
 
