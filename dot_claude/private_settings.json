@@ -115,7 +115,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'L=$(npx -y ccstatusline@latest 2>/dev/null);J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); [ -n \"$J\" ] && echo \"$L | $J\" || echo \"$L\"'",
+    "command": "bash -c 'L=$(npx -y ccstatusline@latest 2>/dev/null);J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); [ -n \"$J\" ] && echo \"$L\n$J\" || echo \"$L\"'",
     "padding": 0
   },
   "enabledPlugins": {
