@@ -11,7 +11,7 @@ import time
 STATE_FILE = os.path.expanduser("~/.fitness-state.json")
 PROMPT_FILE = os.path.expanduser("~/.fitness-prompt.json")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work", "Sick leave"}
+SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work", "Sick leave", "Driving", "Holiday", "Gym", "Fitness", "Mindfulness"}
 
 
 def get_active_focus():
@@ -64,12 +64,16 @@ def build_summary(state):
     pushups = ex.get("pushups", 0)
     squats = ex.get("squats", 0)
     situps = ex.get("situps", 0)
-    avg = ((pushups + squats + situps) / 3 / goal * 100) if goal else 0
+    leg_rises = ex.get("leg_rises", 0)
+    superman = ex.get("superman", 0)
+    avg = ((pushups + squats + situps + leg_rises + superman) / 5 / goal * 100) if goal else 0
     lines = [
         f"Rounds: {rounds}",
-        f"Pushups: {pushups}/{goal} ({pushups/goal*100:.1f}%)",
-        f"Squats:  {squats}/{goal} ({squats/goal*100:.1f}%)",
-        f"Situps:  {situps}/{goal} ({situps/goal*100:.1f}%)",
+        f"Pushups:   {pushups}/{goal} ({pushups/goal*100:.1f}%)",
+        f"Squats:    {squats}/{goal} ({squats/goal*100:.1f}%)",
+        f"Situps:    {situps}/{goal} ({situps/goal*100:.1f}%)",
+        f"Leg rises: {leg_rises}/{goal} ({leg_rises/goal*100:.1f}%)",
+        f"Superman:  {superman}/{goal} ({superman/goal*100:.1f}%)",
         f"Average: {avg:.1f}%",
     ]
     return "\n".join(lines)
@@ -195,6 +199,8 @@ def do_track(state_file=None, prompt_file=None):
 
     if button == "Log":
         sets = text.strip() if text.strip() else str(state.get("number_of_sets", 10))
+        if not re.fullmatch(r'[1-9][0-9]*', sets):
+            sets = str(state.get("number_of_sets", 10))
         fitness_track = os.path.join(SCRIPT_DIR, "fitness-track")
         subprocess.run([fitness_track, "-l", sets], capture_output=True, text=True)
         reset_prompt_counter(prompt_file)
