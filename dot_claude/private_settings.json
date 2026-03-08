@@ -126,7 +126,8 @@
     "pyright-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "claude-mermaid@claude-mermaid": true,
-    "skill-creator@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   },
   "sandbox": {
     "enabled": true
