@@ -5,15 +5,22 @@ allow git log
 allow git diff
 allow git show
 allow git branch -l
+allow git diff
+allow wc -l
+allow tail
 ask git
-deny git push --force "Force push is disabled"
-deny git reset --hard "Hard reset is disabled"
+deny git push --force 
+deny git reset --hard 
 allow docker ps
 allow docker images
 allow docker inspect
 allow docker logs
 ask docker
 
-deny * /etc/* "Don't modify system config"
-deny * /usr/* "Don't modify system files"
-deny * ~/.ssh/* "Don't touch SSH keys"
+deny * /etc/* 
+deny * /usr/* 
+deny * ~/.ssh/* 
+
+
+pnpm test
+pnpm lint
