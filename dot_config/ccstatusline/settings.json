@@ -19,7 +19,7 @@
       },
       {
         "id": "1dbe7b57-7831-44af-a042-79ff88313680",
-        "type": "context-percentage",
+        "type": "context-percentage-usable",
         "color": "brightRed",
         "rawValue": true
       },
