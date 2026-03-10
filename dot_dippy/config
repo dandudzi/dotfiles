@@ -16,11 +16,9 @@ allow docker images
 allow docker inspect
 allow docker logs
 ask docker
-
 deny * /etc/* 
 deny * /usr/* 
 deny * ~/.ssh/* 
-
-
-pnpm test
-pnpm lint
+allow pnpm test
+allow pnpm lint
+allow pnpm check-types 
