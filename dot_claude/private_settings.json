@@ -66,6 +66,17 @@
     "defaultMode": "default"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/jcodemunch-reindex.sh session-start"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
@@ -88,6 +99,10 @@
           {
             "type": "command",
             "command": "osascript -e 'display notification \"Claude completed the task\" with title \"Claude Code\" sound name \"Glass\"'"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/jcodemunch-reindex.sh stop"
           }
         ]
       }
