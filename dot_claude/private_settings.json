@@ -147,5 +147,6 @@
   "sandbox": {
     "enabled": true
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "voiceEnabled": true
 }
