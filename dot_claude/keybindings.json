@@ -20,6 +20,7 @@
         "meta+o": "chat:fastMode",
         "meta+t": "chat:thinkingToggle",
         "enter": "chat:submit",
+        "shift+enter": "chat:newline",
         "up": "history:previous",
         "down": "history:next",
         "ctrl+_": "chat:undo",
