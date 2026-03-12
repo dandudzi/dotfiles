@@ -23,3 +23,6 @@ allow pnpm test
 allow pnpm lint
 allow pnpm check-types 
 allow rtk *
+allow mvn -v
+allow mvn clean compile
+allow mvn test
