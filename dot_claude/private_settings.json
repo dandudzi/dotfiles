@@ -1,11 +1,14 @@
 {
   "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80",
-    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1"
-  },
-  "attribution": {
-    "commit": "",
-    "pr": ""
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
+    "ENABLE_TOOL_SEARCH": "auto:5",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
   },
   "permissions": {
     "allow": [
@@ -13,6 +16,39 @@
       "mcp__context7__query-docs",
       "mcp__plugin_playwright_*",
       "mcp__plugin_claude-mem_*",
+      "mcp__context-mode__ctx_execute",
+      "mcp__context-mode__ctx_execute_file",
+      "mcp__context-mode__ctx_batch_execute",
+      "mcp__context-mode__ctx_search",
+      "mcp__context-mode__ctx_index",
+      "mcp__context-mode__ctx_fetch_and_index",
+      "mcp__context-mode__ctx_stats",
+      "mcp__context-mode__ctx_doctor",
+      "mcp__context-mode__ctx_upgrade",
+      "mcp__jcodemunch__get_symbol",
+      "mcp__jcodemunch__get_symbols",
+      "mcp__jcodemunch__search_symbols",
+      "mcp__jcodemunch__search_text",
+      "mcp__jcodemunch__get_file_content",
+      "mcp__jcodemunch__get_file_outline",
+      "mcp__jcodemunch__get_file_tree",
+      "mcp__jcodemunch__get_repo_outline",
+      "mcp__jcodemunch__index_folder",
+      "mcp__jcodemunch__index_repo",
+      "mcp__jcodemunch__invalidate_cache",
+      "mcp__jcodemunch__list_repos",
+      "mcp__jcodemunch__find_importers",
+      "mcp__jcodemunch__find_references",
+      "mcp__jdocmunch__index_local",
+      "mcp__jdocmunch__index_repo",
+      "mcp__jdocmunch__list_repos",
+      "mcp__jdocmunch__get_toc",
+      "mcp__jdocmunch__get_toc_tree",
+      "mcp__jdocmunch__get_document_outline",
+      "mcp__jdocmunch__search_sections",
+      "mcp__jdocmunch__get_section",
+      "mcp__jdocmunch__get_sections",
+      "mcp__jdocmunch__delete_index",
       "WebSearch",
       "Bash(ls:*)",
       "Bash(tail:*)",
@@ -61,10 +97,22 @@
       "Read(.env.*)",
       "Read(~/.aws/*)",
       "Read(~/.config/gcloud/*)",
-      "Read(~/.ssh/*)"
+      "Read(~/.ssh/*)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.git-credentials)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.kube/**)",
+      "Read(~/.npmrc)",
+      "Read(~/.npm/**)",
+      "Read(~/.pypirc)",
+      "Read(~/.gem/credentials)",
+      "Read(~/Library/Keychains/**)"
     ],
     "defaultMode": "default"
   },
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -72,7 +120,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/jcodemunch-reindex.sh session-start"
+            "command": "bash ~/.claude/hooks/jmunch-session-start.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/sessionstart.mjs"
           }
         ]
       }
@@ -109,15 +166,28 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/daniel/.local/bin/dcg"
+            "command": "bash ~/.claude/hooks/jmunch-session-gate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/jcodemunch-nudge.sh"
           },
           {
             "type": "command",
-            "command": "dippy"
+            "command": "bash ~/.claude/hooks/jdocmunch-nudge.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/context-mode-nudge.sh"
           }
         ]
       },
@@ -126,7 +196,102 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/daniel/.claude/hooks/rtk-rewrite.sh"
+            "command": "~/.local/bin/dcg"
+          },
+          {
+            "type": "command",
+            "command": "dippy"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/rtk-rewrite.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/context-mode-bash-nudge.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/agent-jcodemunch-gate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|WebFetch|Read|Grep|Agent|Task|mcp__plugin_context-mode_context-mode__ctx_execute|mcp__plugin_context-mode_context-mode__ctx_execute_file|mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/pretooluse.mjs"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__jcodemunch__index_folder",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/jmunch-sentinel-writer.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__jdocmunch__index_local",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/jmunch-sentinel-writer.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/reindex-after-commit.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__context-mode__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/track-genuine-savings-ctx.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__jdocmunch__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/track-genuine-savings.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__jcodemunch__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/track-genuine-savings.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__context-mode__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/track-genuine-savings-ctx.sh"
           }
         ]
       }
@@ -134,19 +299,42 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'L=$(npx -y ccstatusline@latest 2>/dev/null);J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); [ -n \"$J\" ] && echo \"$L\n$J\" || echo \"$L\"'",
+    "command": "bash -c 'DATA=$(cat); L=$(printf \"%s\" \"$DATA\" | npx -y ccstatusline@latest 2>/dev/null); J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); S=$(printf \"%s\" \"$DATA\" | bash \"$HOME/.claude/statusline-standalone.sh\"); [ -n \"$J\" ] && printf \"%s\\n%s\\n%s\\n\" \"$L\" \"$J\" \"$S\" || printf \"%s\\n%s\\n\" \"$L\" \"$S\"'",
     "padding": 0
   },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "claude-mermaid@claude-mermaid": true,
-    "skill-creator@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "claude-mermaid@claude-mermaid": false,
+    "skill-creator@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true,
+    "context-mode@context-mode": true,
+    "claude-mem@thedotmack": true
+  },
+  "extraKnownMarketplaces": {
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    }
   },
   "sandbox": {
-    "enabled": true
+    "enabled": false
   },
   "effortLevel": "high",
-  "voiceEnabled": true
+  "voiceEnabled": false,
+  "autoCompact": {
+    "customInstructions": "Preserve all file paths, function names, error messages, debugging steps, and architectural decisions."
+  },
+  "gattributiong": {
+    "commit": "",
+    "pr": ""
+  }
 }
