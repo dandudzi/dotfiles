@@ -128,6 +128,18 @@ useEffect(() => {
 {items.map(item => <ListItem key={item.id} item={item} />)}
 ```
 
+### Java/Spring Boot Patterns (HIGH)
+
+When reviewing Java/Spring Boot code, also check:
+
+- **N+1 queries** — JPA lazy loading triggering extra selects in loops; use `JOIN FETCH` or `@EntityGraph`
+- **Missing `@Transactional` scope** — Read operations without `readOnly=true`, write operations without explicit boundary
+- **Field injection** — `@Autowired` on fields instead of constructor injection
+- **Mutable entities in responses** — Returning JPA entities directly; use DTOs/records
+- **Missing validation** — `@Valid` not applied on `@RequestBody` parameters
+
+For detailed Java review, delegate to the **java-reviewer** agent.
+
 ### Node.js/Backend Patterns (HIGH)
 
 When reviewing backend code:
