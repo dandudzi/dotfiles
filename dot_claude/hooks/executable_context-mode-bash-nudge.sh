@@ -3,11 +3,15 @@
 # Exit 2 = block with instruction to use ctx_execute
 # Exit 0 = allow (small/simple commands)
 #
-# This hook completes the three-tier token savings:
-#   jcodemunch-nudge.sh      -> blocks Read on .py/.ts/.tsx (use get_symbol)
-#   jdocmunch-nudge.sh       -> blocks Read on large .md (use get_section)
-#   context-mode-nudge.sh    -> blocks Read on large .json/.html (use ctx_execute_file)
-#   context-mode-bash-nudge.sh -> blocks Bash on large-output commands (use ctx_execute)
+# Four-tier navigation:
+#   jcodemunch-nudge.sh      -> blocks Read on code files (.py .js .ts .go .rs .java .rb + more)
+#   jdocmunch-nudge.sh       -> blocks Read on doc files (.md .mdx .rst .txt .adoc .html + more)
+#   context-mode-nudge.sh    -> blocks Read on large JSON data files (.json .jsonc)
+#   context-mode-bash-nudge.sh -> blocks Bash on large-output commands (this file)
+#
+# Note: gradle/mvn/curl/wget are hard-redirected by the official context-mode pretooluse.mjs.
+# RTK rewrites: go test, docker logs, kubectl logs/describe — no need to block here.
+# This hook covers what neither RTK nor context-mode pretooluse.mjs handles.
 
 INPUT=$(cat)
 CMD=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null)
@@ -80,6 +84,7 @@ case "$CMD" in
 *"pytest"* | *"npm test"* | *"npm run test"*) IS_TEST=1 ;;
 *"jest "* | *"vitest"* | *"mocha"* | *"cargo test"*) IS_TEST=1 ;;
 *"python -m pytest"* | *"python -m unittest"*) IS_TEST=1 ;;
+*"bun test"* | *"deno test"*) IS_TEST=1 ;;
 esac
 
 # git log/diff without limits

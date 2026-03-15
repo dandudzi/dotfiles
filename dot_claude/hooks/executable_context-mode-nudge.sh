@@ -1,19 +1,52 @@
 #!/bin/bash
-# PreToolUse:Bash hook — redirect large-output commands to context-mode ctx_execute
-# Exit 2 = block with instruction to use ctx_execute
-# Exit 0 = allow (small/simple commands)
+# PreToolUse:Read hook — redirect large JSON data files to context-mode ctx_execute_file
+# Exit 2 = block the tool call with message shown to the model
+# Exit 0 = allow (small files, non-JSON files)
 #
-# This hook completes the three-tier token savings:
-#   jcodemunch-nudge.sh      -> blocks Read on .py/.ts/.tsx (use get_symbol)
-#   jdocmunch-nudge.sh       -> blocks Read on large .md (use get_section)
-#   context-mode-nudge.sh    -> blocks Read on large .json/.html (use ctx_execute_file)
-#   context-mode-bash-nudge.sh -> blocks Bash on large-output commands (use ctx_execute)
+# Four-tier navigation:
+#   jcodemunch-nudge.sh      -> blocks Read on code files (.py .js .ts .go .rs .java .rb + more)
+#   jdocmunch-nudge.sh       -> blocks Read on doc files (.md .mdx .rst .txt .adoc .html + more)
+#   context-mode-nudge.sh    -> blocks Read on large JSON data files (.json .jsonc)
+#   context-mode-bash-nudge.sh -> blocks Bash on large-output commands
 
 INPUT=$(cat)
-CMD=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null)
+FILE_PATH=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)
 
-# No command = allow
-[ -z "$CMD" ] && exit 0
+# Only enforce for JSON/JSONC data files
+if [[ ! "$FILE_PATH" =~ \.(json|jsonc)$ ]]; then
+  exit 0
+fi
+
+BASENAME=$(basename "$FILE_PATH")
+
+# File must exist to size-check it
+if [ ! -f "$FILE_PATH" ]; then
+  exit 0
+fi
+
+LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null)
+
+# Allow small files (<100 lines) — covers package.json, tsconfig.json, etc.
+if [ "${LINE_COUNT:-0}" -lt 100 ] 2>/dev/null; then
+  exit 0
+fi
+
+# Block with instruction to use context-mode
+echo "BLOCKED: '$BASENAME' is ${LINE_COUNT} lines. Use context-mode instead of Read for large JSON files.
+
+To analyze without flooding context:
+  mcp__plugin_context-mode_context-mode__ctx_execute_file(
+    path=\"$FILE_PATH\",
+    language=\"python\",
+    code=\"import json; data = json.loads(FILE_CONTENT); print(...)\"
+  )
+
+To index and search:
+  mcp__plugin_context-mode_context-mode__ctx_index(path=\"$FILE_PATH\", source=\"data\")
+  mcp__plugin_context-mode_context-mode__ctx_search(queries=[\"...\"], source=\"data\")
+
+Read is allowed for small JSON files (<100 lines) like package.json or tsconfig.json."
+exit 2
 
 # ─── ALWAYS ALLOW (small/safe commands) ───────────────────────────
 # git status, git add, git commit, git push, git checkout, git branch

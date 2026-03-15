@@ -9,8 +9,8 @@
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)
 
-# Only enforce for Python and TypeScript code files
-if [[ "$FILE_PATH" == *.py || "$FILE_PATH" == *.ts || "$FILE_PATH" == *.tsx ]]; then
+# Enforce for all JCM-supported languages
+if [[ "$FILE_PATH" =~ \.(py|js|jsx|ts|tsx|go|rs|java|php|dart|cs|c|cpp|cc|cxx|hpp|hh|hxx|h|ex|exs|rb|rake|sql|xml|xul)$ ]]; then
   BASENAME=$(basename "$FILE_PATH")
 
   # Allow exceptions: config-like files, test fixtures
@@ -21,6 +21,16 @@ if [[ "$FILE_PATH" == *.py || "$FILE_PATH" == *.ts || "$FILE_PATH" == *.tsx ]]; 
   # Allow files in non-code directories (config, docs, planning)
   if [[ "$FILE_PATH" == */.vbw-planning/* || "$FILE_PATH" == */.planning/* || "$FILE_PATH" == */.claude/* ]]; then
     exit 0
+  fi
+
+  # Allow small files for header/sql/c — often tiny guards, migrations, or stubs
+  if [[ "$FILE_PATH" =~ \.(h|hpp|hh|hxx|sql|c)$ ]]; then
+    if [ -f "$FILE_PATH" ]; then
+      LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null)
+      if [ "$LINE_COUNT" -lt 50 ] 2>/dev/null; then
+        exit 0
+      fi
+    fi
   fi
 
   # Fallback: if jCodeMunch index doesn't exist, allow Read (MCP server may be down)

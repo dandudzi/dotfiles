@@ -9,8 +9,8 @@
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null)
 
-# Only enforce for documentation files
-if [[ "$FILE_PATH" == *.md || "$FILE_PATH" == *.mdx || "$FILE_PATH" == *.rst ]]; then
+# Enforce for all JDM-supported documentation formats
+if [[ "$FILE_PATH" =~ \.(md|markdown|mdx|rst|txt|adoc|ipynb|html|svg|xhtml)$ ]]; then
   BASENAME=$(basename "$FILE_PATH")
 
   # Always allow instruction/config files that should be read fully
