@@ -1,155 +1,138 @@
+# Operating Principles
+
+1. **Tool-Route First** — Use jCodeMunch for code, jDocMunch for docs, context-mode for large outputs. Never let raw data flood context.
+2. **Test-Driven** — Every change needs a failing test first. See `tdd-workflow` skill for enforcement rules.
+3. **Agent-First** — Delegate complex work to specialized agents. Run independent agents in parallel.
+4. **Research Before Code** — Search GitHub, Context7, and package registries before writing new code.
+5. **Security Always** — No hardcoded secrets, validate inputs, never compromise.
+
+## Privacy
+
+- Always redact logs before sharing — strip secrets, tokens, passwords, JWTs
+- Review command output before including in responses — remove sensitive data
+- Never paste credentials, API keys, or auth tokens into conversation context
+
 # Code Search — Strict Policy
 
 ## (Mandatory) Internet search tool for docs and code generations
 
 Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
-## (Mandatory) jcodemunch MCP for indexed repos
+## Code Navigation — jCodeMunch (MANDATORY when available)
 
-jcodemunch indexes codebases using tree-sitter AST parsing, letting agents retrieve specific symbols instead of loading entire files — cutting code-reading token costs by up to 99%.
+When jCodeMunch MCP tools (`mcp__jcodemunch__*`) are available in a project, they are the **primary tool for all code exploration**. Do NOT use `Read` on code files unless you explicitly need full file context.
 
-When working in a repo indexed by jcodemunch (`list_repos` to check), **always prefer jcodemunch tools first**.
+Supported languages: Python (`.py`), JavaScript (`.js`, `.jsx`), TypeScript (`.ts`, `.tsx`), Go (`.go`), Rust (`.rs`), Java (`.java`), PHP (`.php`), Dart (`.dart`), C# (`.cs`), C (`.c`), C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh`, `.hxx`, `.h`), Elixir (`.ex`, `.exs`), Ruby (`.rb`, `.rake`), SQL (`.sql`), XML/XUL (`.xml`, `.xul`)
 
-### Available tools
+### Rules
 
-| Tool | Purpose |
-|---|---|
-| `index_repo` | Index a GitHub repository |
-| `index_folder` | Index a local folder |
-| `list_repos` | List indexed repositories |
-| `get_file_tree` | Repository file structure |
-| `get_file_outline` | Symbol hierarchy for a file |
-| `get_file_content` | Retrieve cached file content (with line ranges) |
-| `get_symbol` | Retrieve full symbol source by stable ID |
-| `get_symbols` | Batch retrieve multiple symbols |
-| `search_symbols` | Search symbols with filters (name, kind, language) |
-| `search_text` | Full-text search with context lines |
-| `get_repo_outline` | High-level repo overview |
-| `invalidate_cache` | Remove cached index |
+- **ALWAYS** use `get_symbol` to fetch specific functions/classes — never read an entire file to find one function
+- **ALWAYS** use `search_symbols` instead of `Grep` when looking for function/class definitions — skip `get_file_outline` when you already know the name
+- **ALWAYS** run `index_folder` (incremental) at the start of each session to keep the index fresh
+- **ALWAYS** re-run `index_folder` after compaction/autocompact to refresh the index with any files changed during the session
+- **Sliced edit workflow (CRITICAL):** To edit a function, do NOT read the full file. Instead: `get_symbol` (find line range) → `get_file_content(start_line=line-4, end_line=end_line+3)` → `Edit`. This saves ~85% vs full Read.
+- For 6+ functions in the same file, full `Read` is cheaper — skip jCodeMunch
+- Fall back to `Read` ONLY for non-code files (JSON, MD, HTML, config) or when full file context is explicitly required
+- When delegating to subagents, direct them to specific symbols and include jCodeMunch instructions + sliced edit workflow in prompts
+- Subagents MUST follow these same rules — include jCodeMunch instructions in agent prompts
 
-### When to use (instead of built-in tools)
+### When Read is correct
 
-- **Finding classes/methods/functions** — `search_symbols` / `get_symbol` / `get_symbols` instead of Grep.
-- **Understanding project structure** — `get_repo_outline` / `get_file_tree` instead of Glob/ls.
-- **Viewing a file's API surface** — `get_file_outline` instead of reading the entire file.
-- **Reading file content** — `get_file_content` instead of Read when only specific lines are needed.
-- **Full-text search** — `search_text` instead of Grep.
-- **Indexing new repos** — `index_repo` (GitHub) or `index_folder` (local). Use `invalidate_cache` to force re-indexing.
+- Non-code files (JSON, MD, HTML, YAML, config)
+- Full file context needed (imports, globals, module-level flow)
+- Very small files (<50 lines)
+- Files not yet indexed (newly created before next `index_folder`)
+- Editing 6+ functions in the same file (batch edit — full Read is cheaper)
 
-### Best suited for
+### Why this matters
 
-- Large multi-module repositories
-- Agent-driven refactors
-- Architecture exploration
-- Faster onboarding
-- Token-efficient multi-agent workflows
+Reading a full file consumes the entire content as tokens. `get_symbol` returns only the function body — typically 85-98% fewer tokens. This preserves context window for conversation history and reasoning.
 
-### Not intended for
+## Documentation Navigation — jDocMunch (MANDATORY when available)
 
-- LSP diagnostics or completions
-- Real-time editing workflows
-- Cross-repository global indexing
+When jDocMunch MCP tools (`mcp__jdocmunch__*`) are available in a project, they are the **primary tool for exploring documentation files** (`.md`, `.mdx`, `.rst`). Do NOT use `Read` on large documentation files unless you explicitly need the full document.
 
-### Stable symbol ID format
+### Rules
 
-`{file_path}::{qualified_name}#{kind}` — e.g. `src/main.py::UserService.login#method`
+- **ALWAYS** use `search_sections` to find relevant documentation sections — never read an entire doc to find one section
+- **ALWAYS** use `get_toc` or `get_toc_tree` to understand a document's structure before reading it
+- **ALWAYS** use `get_section` to retrieve specific sections by ID — not full file reads
+- **ALWAYS** run `index_local` at the start of each session to keep the doc index fresh
+- **ALWAYS** re-run `index_local` after compaction/autocompact to refresh the index with any docs changed during the session
+- Fall back to `Read` ONLY for small docs (<50 lines), non-indexed file types, or when full document context is explicitly required
+- When delegating to subagents, direct them to specific sections (e.g., "search for 'authentication' in docs using jDocMunch `search_sections`") rather than telling them to read whole files
+- Subagents MUST follow these same rules — include jDocMunch instructions in agent prompts
 
-Fall back to Grep/Glob/Read only for repos that are not indexed or when jcodemunch results are insufficient.
+### When Read is correct
+
+- Small documentation files (<50 lines)
+- Non-doc files (JSON, YAML, config, code)
+- Full document context needed (cross-references, overall structure)
+- Files not yet indexed (newly created before next `index_local`)
+- CLAUDE.md and other instruction files (always read fully)
+
+## Command Output & Data File Navigation — context-mode (when available)
+
+When context-mode MCP tools (`mcp__context-mode__*`) are available, use them for **large command outputs** and **large data files** instead of letting raw content flood the context window.
+
+### Command Output Isolation (primary use case)
+
+Use `ctx_execute(language="shell", code="...")` instead of `Bash` for commands that produce large output:
+
+- **Test suites:** `ctx_execute(language="shell", code="pytest ...")` — not `Bash("pytest ...")`
+- **git log/diff (unbounded):** `ctx_execute(language="shell", code="git log ...")` — not `Bash("git log")`
+- **Recursive search:** `ctx_execute(language="shell", code="find . -name ...")` — not `Bash("find ...")`
+- **API calls:** `ctx_execute(language="shell", code="curl ...")` — not `Bash("curl ...")`
+- **Build output:** `ctx_execute(language="shell", code="make ...")` — not `Bash("make ...")`
+
+Outputs >5KB are automatically filtered by intent — only relevant portions enter context (98% savings).
+
+**When Bash IS correct:** git status/add/commit/push, file management (ls/mkdir/mv/cp), package installs, inline one-liners, commands with output redirected to a file.
+
+### Data File Rules
+
+- **Large JSON/HTML files (>100 lines):** Use `ctx_execute_file(path, language, code)` — file content available as `FILE_CONTENT` variable in code, raw content never enters context
+- **Index a file for search:** Use `ctx_index(path="file.json", source="label")` — indexes without reading into context
+- **Batch operations:** Use `ctx_batch_execute(commands=[...], queries=[...])` — runs commands AND searches results in one call (queries is required)
+- **Search previous outputs:** Use `ctx_search(queries=["terms"])` to find data from earlier in the session
+- **Index external docs:** Use `ctx_fetch_and_index` for URLs, then `ctx_search` to query
+- **Small config JSON** (package.json, tsconfig.json, <100 lines): Direct Read is fine
+
+### Four-tier navigation
+
+1. Code files (.py/.js/.ts/.go/.rs/.java/.rb + more) → jCodeMunch
+2. Doc files (.md/.mdx/.rst/.txt/.adoc/.html + more) → jDocMunch
+3. Data files (.json/.html, large) → context-mode (`ctx_execute_file`)
+4. Command outputs (tests, logs, builds) → context-mode (`ctx_execute`)
+
+### When Bash/Read is correct (not context-mode)
+
+- Small commands with predictable output (git status, ls, pwd, echo)
+- Git operations that modify state (add, commit, push, checkout)
+- Package installs (npm install, pip install)
+- Small JSON/HTML files (<100 lines) or config files
+- Files that need full context for editing (e.g., append-only files)
+- Code files → use jCodeMunch instead
+- Doc files → use jDocMunch instead
 
 # Testing
 
-### Test-Driven Development (Mandatory)
+TDD rules, test double strategy, coverage requirements, and plan execution rules are in the **tdd-workflow** skill (`~/.claude/skills/tdd-workflow/SKILL.md`). That skill is the single source of truth for all testing policy.
 
-**Every change requires a failing test first. No exceptions.**
+## Knowledge Capture
 
-The cycle:
+- Debugging notes, personal preferences, temporary context → auto memory (`~/.claude/projects/.../memory/`)
+- Team/project knowledge (architecture decisions, API changes, runbooks) → follow the project's existing docs structure
+- If the current task already produces the relevant docs, comments, or examples, do not duplicate the same knowledge elsewhere
+- If there is no obvious project doc location, ask before creating a new top-level doc
 
-1. **RED** — Write a unit or integration test for the behavior. Run it. Confirm it fails for the right reason.
-2. **GREEN** — Write the minimal production code to make it pass. Run tests. Confirm it passes.
-3. **REFACTOR** — Clean up. Keep tests green.
+# Auto-Compact Instructions
 
-- No production code without a prior failing test
-- The test must fail before you write implementation code — if it passes immediately, it tests nothing
-- After implementation, run the test and confirm it passes
-- Bug fixes also require a failing test that reproduces the bug first
-- **If an implementation plan defers tests to the end, do NOT follow that ordering** — reorder to write each test before its corresponding production code. The plan defines WHAT to build; TDD defines HOW.
-- When executing a plan, **actually run** the failing test and show its output before writing production code — don't just describe that you will
-- When removing a feature, first update/remove the tests that assert the old behavior, then remove the implementation
+When compacting, preserve:
 
-**TDD exemptions** — these do NOT require a prior failing test:
-
-- Dependency version bumps (`pom.xml`, `package.json`)
-- Docker/compose config, `.gitignore`, CI/CD config
-- OpenAPI/Swagger annotation-only changes (no runtime behavior)
-- Pure file moves/renames where existing tests verify behavior before and after
-
-**This list is closed.** You may NOT self-authorize new exemptions. If you believe a situation requires skipping TDD, state this explicitly and ask the user before proceeding.
-
-**If a project has no test runner or test files for the affected code,** state this explicitly to the user. Do not silently skip TDD — ask whether to add a test framework or proceed without tests.
-
-For all exemptions: run the existing test suite after the change to confirm no regressions.
-
-### Test Double Strategy (Mandatory)
-
-**Never mock what you can use for real.** Prefer the highest-fidelity test double available:
-
-1. **Real infrastructure first** — If the project has test containers, in-memory databases, or similar test infra, use them. Write integration tests that hit real databases over unit tests that stub repositories.
-2. **Mock only at trust boundaries** — External HTTP services (OAuth providers, third-party APIs), cross-module ports in hexagonal/DDD architecture, and things you genuinely cannot run locally.
-3. **Integration tests must go full-stack** — Do NOT mock application services in controller/endpoint integration tests. Let requests flow through the real service → repository → database. Only mock external adapters.
-4. **When a mock IS appropriate**, prefer the narrowest scope: mock the specific port/adapter, not the entire service.
-
-**Acceptable mocks:**
-- External API clients (OAuth2, payment gateways, email services)
-- Cross-module ports that enforce bounded-context isolation
-- Time, randomness, and other non-deterministic sources
-
-**Not acceptable (when real infra exists):**
-- Repositories / data-access layers when a test database is available
-- Application services in integration tests
-- Domain services that have no external dependencies
-
-### Plan Execution
-
-- **If you believe a plan step is unnecessary or already satisfied, state this explicitly and ask the user before skipping it.** Never silently omit a step from an approved plan.
-- **Verification commands in a plan are mandatory.** Run them, show their output, and confirm they pass before declaring the task complete. Do not skip or defer verification steps.
-
-# Model Routing
-
-**Use `sonnet` as the default model.**
-
-When the user's request is clearly a simple/mechanical task, **proactively switch to a cheaper model** before starting work. Use this guidance:
-
-### Use Sonnet (`/model sonnet`) for
-
-- Reading/summarizing files or documentation
-- Simple file searches and grep operations
-- Generating boilerplate code from clear templates
-- Formatting, linting suggestions, or style fixes
-- Simple rename/move operations
-- Answering quick factual questions about the codebase
-- Writing commit messages
-- Simple config file edits
-- Standard feature implementation with clear requirements
-- Writing tests for well-defined behavior
-- Code refactoring with known patterns
-- Bug fixes with obvious root causes
-- Documentation generation
-- Code review of small-to-medium changes
-
-### Stay on Opus for
-
-- Architecture design and system planning
-- Complex debugging with unclear root causes
-- Multi-file refactoring affecting many components
-- Security analysis and vulnerability assessment
-- Performance optimization requiring deep analysis
-- Any task where you're uncertain about the approach
-- Brainstorming and strategic decisions
-
-### How to switch
-
-When you identify a task that could use a lighter model, say:
-
-> "This looks like a [simple/standard] task. Switching to [haiku/sonnet] to save tokens. `/model haiku`"
+- All file modifications with exact paths
+- Error messages verbatim
+- Debugging steps taken
+- Code patterns and architectural decisions
 
 @RTK.md
