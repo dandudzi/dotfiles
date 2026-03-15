@@ -89,14 +89,14 @@ def process_user(
     return User(user_id, data)
 ```
 
-### Modern Type Hints (Python 3.9+)
+### Modern Type Hints (Python 3.10+)
 
 ```python
-# Python 3.9+ - Use built-in types
+# Python 3.10+ - Use built-in types
 def process_items(items: list[str]) -> dict[str, int]:
     return {item: len(item) for item in items}
 
-# Python 3.8 and earlier - Use typing module
+# Python 3.9 - Use typing module
 from typing import List, Dict
 
 def process_items(items: List[str]) -> Dict[str, int]:
@@ -648,7 +648,7 @@ safety check
 [project]
 name = "mypackage"
 version = "1.0.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31.0",
     "pydantic>=2.0.0",
@@ -665,14 +665,14 @@ dev = [
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py310', 'py311', 'py312']
 
 [tool.ruff]
 line-length = 88
 select = ["E", "F", "I", "N", "W"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

@@ -6,6 +6,8 @@ origin: ECC
 
 # E2E Testing Patterns
 
+> **Version**: Playwright 1.58+ (Feb 2026). Examples use current stable API.
+
 Comprehensive Playwright patterns for building stable, fast, and maintainable E2E test suites.
 
 ## Test File Organization

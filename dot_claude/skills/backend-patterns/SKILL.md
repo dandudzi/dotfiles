@@ -595,4 +595,547 @@ export async function GET(request: Request) {
 }
 ```
 
+## Middleware Patterns
+
+### Request Validation Middleware
+
+```typescript
+import { z } from 'zod'
+
+const createMarketSchema = z.object({
+  name: z.string().min(1).max(255),
+  status: z.enum(['active', 'archived']),
+  volume: z.number().min(0)
+})
+
+export function validateBody(schema: z.ZodSchema) {
+  return async (req: Request, res: Response, next: Function) => {
+    try {
+      const validated = schema.parse(await req.json())
+      req.body = validated
+      next()
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.flatten()
+        })
+      }
+      throw error
+    }
+  }
+}
+
+// Usage
+app.post('/markets', validateBody(createMarketSchema), createMarket)
+```
+
+### Authentication Middleware
+
+```typescript
+// JWT extraction and validation
+export async function authMiddleware(req: Request, res: Response, next: Function) {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing token' })
+  }
+
+  try {
+    const user = await verifyToken(token)
+    req.user = user
+    next()
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' })
+  }
+}
+
+// Session lookup (for cookie-based auth)
+export async function sessionMiddleware(req: Request, res: Response, next: Function) {
+  const sessionId = req.cookies.sessionId
+
+  if (!sessionId) {
+    return res.status(401).json({ error: 'No session' })
+  }
+
+  const session = await redis.get(`session:${sessionId}`)
+  if (!session) {
+    return res.status(401).json({ error: 'Session expired' })
+  }
+
+  req.session = JSON.parse(session)
+  next()
+}
+```
+
+### Authorization Middleware (RBAC)
+
+```typescript
+export function requireRole(...roles: string[]) {
+  return (handler: Handler) => async (req: Request, res: Response) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+    return handler(req, res)
+  }
+}
+
+// Usage
+export const DELETE = requireRole('admin', 'moderator')(
+  async (req: Request) => {
+    return NextResponse.json({ success: true })
+  }
+)
+```
+
+### Error Handling Middleware
+
+```typescript
+// Centralized error formatter
+export function errorMiddleware(err: Error, req: Request, res: Response, next: Function) {
+  const status = err instanceof ApiError ? err.statusCode : 500
+  const message = err instanceof ApiError ? err.message : 'Internal server error'
+
+  // Log server errors
+  if (status >= 500) {
+    console.error('[ERROR]', {
+      timestamp: new Date().toISOString(),
+      message: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method
+    })
+  }
+
+  return res.status(status).json({
+    success: false,
+    error: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  })
+}
+
+// Async error wrapper (catches thrown errors in async handlers)
+export function asyncHandler(fn: Handler): Handler {
+  return (req: Request, res: Response, next: Function) => {
+    Promise.resolve(fn(req, res)).catch(next)
+  }
+}
+
+// Usage
+app.get('/data', asyncHandler(async (req, res) => {
+  const data = await fetchData()  // If throws, errorMiddleware catches it
+  return res.json(data)
+}))
+```
+
+### Request Logging Middleware
+
+```typescript
+export function loggingMiddleware(req: Request, res: Response, next: Function) {
+  const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID()
+  const startTime = Date.now()
+
+  res.on('finish', () => {
+    const duration = Date.now() - startTime
+    console.log(JSON.stringify({
+      level: 'info',
+      timestamp: new Date().toISOString(),
+      correlationId,
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration_ms: duration,
+      user_id: req.user?.id,
+      ip: req.ip
+    }))
+  })
+
+  req.correlationId = correlationId
+  next()
+}
+```
+
+### Rate Limiting Middleware
+
+```typescript
+// Sliding window counter
+class SlidingWindowLimiter {
+  private requests = new Map<string, number[]>()
+
+  isAllowed(key: string, maxRequests: number, windowMs: number): boolean {
+    const now = Date.now()
+    const times = this.requests.get(key) || []
+
+    // Remove timestamps outside window
+    const valid = times.filter(t => now - t < windowMs)
+
+    if (valid.length >= maxRequests) {
+      return false
+    }
+
+    valid.push(now)
+    this.requests.set(key, valid)
+    return true
+  }
+}
+
+// Token bucket (allows burst traffic)
+class TokenBucketLimiter {
+  private buckets = new Map<string, { tokens: number; lastRefill: number }>()
+
+  isAllowed(key: string, capacity: number, refillRate: number): boolean {
+    const now = Date.now()
+    let bucket = this.buckets.get(key) || { tokens: capacity, lastRefill: now }
+
+    // Refill tokens based on elapsed time
+    const elapsed = (now - bucket.lastRefill) / 1000
+    bucket.tokens = Math.min(capacity, bucket.tokens + (refillRate * elapsed))
+    bucket.lastRefill = now
+
+    if (bucket.tokens < 1) {
+      return false
+    }
+
+    bucket.tokens -= 1
+    this.buckets.set(key, bucket)
+    return true
+  }
+}
+
+export function rateLimitMiddleware(limiter: SlidingWindowLimiter) {
+  return (req: Request, res: Response, next: Function) => {
+    const key = req.user?.id || req.ip
+    const allowed = limiter.isAllowed(key, 100, 60000)  // 100 req/min
+
+    if (!allowed) {
+      return res.status(429).json({ error: 'Rate limit exceeded' })
+    }
+
+    next()
+  }
+}
+```
+
+## Transaction Management
+
+### Unit of Work Pattern
+
+```typescript
+// Tracks all changes and commits them atomically
+class UnitOfWork {
+  private changes: Array<() => Promise<void>> = []
+
+  async add(operation: () => Promise<void>) {
+    this.changes.push(operation)
+  }
+
+  async commit() {
+    try {
+      for (const change of this.changes) {
+        await change()
+      }
+    } catch (error) {
+      // Rollback on error
+      this.changes = []
+      throw error
+    }
+  }
+}
+
+// Usage
+export async function transferFunds(fromId: string, toId: string, amount: number) {
+  const uow = new UnitOfWork()
+
+  await uow.add(() => db.accounts.update(fromId, { balance: db.raw('balance - ?', [amount]) }))
+  await uow.add(() => db.accounts.update(toId, { balance: db.raw('balance + ?', [amount]) }))
+  await uow.add(() => db.transactions.create({ fromId, toId, amount }))
+
+  await uow.commit()
+}
+```
+
+### Optimistic Locking
+
+```typescript
+// Add version field to entities
+interface Market {
+  id: string
+  name: string
+  version: number  // Increment on each update
+}
+
+async function updateMarketOptimistic(id: string, updates: Partial<Market>, currentVersion: number) {
+  const result = await db.markets.update(
+    { id, version: currentVersion },  // WHERE clause includes version
+    { ...updates, version: currentVersion + 1 }
+  )
+
+  if (result.rowsAffected === 0) {
+    throw new Error('Market was updated by another process (stale version)')
+  }
+
+  return result
+}
+
+// Usage: fetch current version, attempt update
+const market = await db.markets.findUnique({ where: { id } })
+try {
+  await updateMarketOptimistic(market.id, { name: 'New Name' }, market.version)
+} catch (error) {
+  // Retry with fresh data
+  console.log('Version conflict, retrying...')
+}
+```
+
+### Pessimistic Locking
+
+```typescript
+// SELECT FOR UPDATE - lock row until transaction ends
+async function updateMarketPessimistic(id: string, updates: Partial<Market>) {
+  return db.transaction(async (trx) => {
+    // Lock the row
+    const market = await trx.markets
+      .where({ id })
+      .forUpdate()
+      .first()
+
+    if (!market) throw new Error('Not found')
+
+    // Update locked row
+    await trx.markets.where({ id }).update(updates)
+
+    return market
+  })
+}
+```
+
+### Saga Pattern (Distributed Transactions)
+
+```typescript
+// Orchestrates multi-step transactions with compensating actions
+class Saga {
+  private steps: Array<{ forward: () => Promise<void>; compensate: () => Promise<void> }> = []
+
+  addStep(forward: () => Promise<void>, compensate: () => Promise<void>) {
+    this.steps.push({ forward, compensate })
+  }
+
+  async execute() {
+    const completed: number[] = []
+
+    try {
+      for (let i = 0; i < this.steps.length; i++) {
+        await this.steps[i].forward()
+        completed.push(i)
+      }
+    } catch (error) {
+      // Compensate in reverse order
+      for (let i = completed.length - 1; i >= 0; i--) {
+        try {
+          await this.steps[completed[i]].compensate()
+        } catch (compensateError) {
+          console.error('Compensation failed:', compensateError)
+        }
+      }
+      throw error
+    }
+  }
+}
+
+// Usage: Order placement with payment and inventory
+const saga = new Saga()
+
+saga.addStep(
+  () => paymentService.charge(userId, amount),  // forward
+  () => paymentService.refund(transactionId)    // compensate
+)
+
+saga.addStep(
+  () => inventoryService.reserve(itemId, quantity),
+  () => inventoryService.release(itemId, quantity)
+)
+
+await saga.execute()
+```
+
+### Idempotency Keys
+
+```typescript
+// Prevents duplicate operations from retries
+export async function createOrderIdempotent(
+  idempotencyKey: string,
+  data: CreateOrderDto
+) {
+  // Check if request already processed
+  const existing = await redis.get(`idempotency:${idempotencyKey}`)
+  if (existing) {
+    return JSON.parse(existing)
+  }
+
+  // Process request
+  const order = await db.orders.create(data)
+
+  // Cache result with expiration (24 hours)
+  await redis.setex(
+    `idempotency:${idempotencyKey}`,
+    86400,
+    JSON.stringify(order)
+  )
+
+  return order
+}
+
+// Usage: Client provides Idempotency-Key header
+export async function POST(request: Request) {
+  const idempotencyKey = request.headers.get('Idempotency-Key')
+  if (!idempotencyKey) {
+    return res.status(400).json({ error: 'Missing Idempotency-Key' })
+  }
+
+  const data = await request.json()
+  const order = await createOrderIdempotent(idempotencyKey, data)
+  return NextResponse.json(order)
+}
+```
+
+## Advanced Caching Strategies
+
+### Read-Through Cache Pattern
+
+```typescript
+class ReadThroughCache<T> {
+  constructor(
+    private loader: (key: string) => Promise<T>,
+    private redis: RedisClient
+  ) {}
+
+  async get(key: string, ttlSeconds = 300): Promise<T> {
+    // Check cache
+    const cached = await this.redis.get(key)
+    if (cached) {
+      return JSON.parse(cached)
+    }
+
+    // Load from source on miss
+    const data = await this.loader(key)
+
+    // Populate cache
+    await this.redis.setex(key, ttlSeconds, JSON.stringify(data))
+
+    return data
+  }
+}
+```
+
+### Write-Through Cache Pattern
+
+```typescript
+class WriteThroughCache<T> {
+  constructor(
+    private db: Database,
+    private redis: RedisClient
+  ) {}
+
+  async set(key: string, value: T): Promise<void> {
+    // Write to database first
+    await this.db.set(key, value)
+
+    // Then update cache
+    await this.redis.set(key, JSON.stringify(value))
+  }
+
+  async delete(key: string): Promise<void> {
+    // Delete from database
+    await this.db.delete(key)
+
+    // Then invalidate cache
+    await this.redis.del(key)
+  }
+}
+```
+
+### TTL Strategy
+
+```typescript
+// Short TTL for volatile data (user sessions: 5-10 min)
+await redis.setex(`session:${userId}`, 300, JSON.stringify(session))
+
+// Medium TTL for computed data (search results: 1-30 min)
+await redis.setex(`search:${query}`, 1800, JSON.stringify(results))
+
+// Long TTL for reference data (categories: 1-24 hours)
+await redis.setex(`categories`, 86400, JSON.stringify(categories))
+
+// Very long for static data (config: 1 week)
+await redis.setex(`config:${key}`, 604800, JSON.stringify(config))
+```
+
+### Event-Driven Cache Invalidation
+
+```typescript
+// Listen to domain events and invalidate relevant caches
+class CacheInvalidator {
+  constructor(private redis: RedisClient, private eventBus: EventBus) {
+    this.setup()
+  }
+
+  private setup() {
+    this.eventBus.on('MarketCreated', (event) => {
+      this.redis.del('markets:list')
+    })
+
+    this.eventBus.on('MarketUpdated', (event) => {
+      this.redis.del(`market:${event.marketId}`)
+      this.redis.del('markets:list')
+    })
+
+    this.eventBus.on('UserUpdated', (event) => {
+      this.redis.del(`user:${event.userId}`)
+    })
+  }
+}
+```
+
+### Redis Data Structures
+
+```typescript
+// Strings: counters, sessions
+await redis.incr('api:requests:today')
+await redis.setex(`session:${id}`, 3600, JSON.stringify(user))
+
+// Hashes: objects (more efficient than JSON strings)
+await redis.hset(`user:${id}`, 'name', 'John', 'email', 'john@example.com')
+const user = await redis.hgetall(`user:${id}`)
+
+// Sorted Sets: leaderboards, time-series
+await redis.zadd('leaderboard', score, userId)
+const top10 = await redis.zrange('leaderboard', 0, 9, 'WITHSCORES')
+
+// Lists: queues, activity streams
+await redis.rpush(`queue:${jobType}`, JSON.stringify(job))
+const job = await redis.lpop(`queue:${jobType}`)
+```
+
+### Cache Decision Matrix
+
+```
+In-Memory (node-cache):
+  Use: Small, hot datasets (< 100MB)
+  Pros: Fast, no network latency
+  Cons: Not shared across instances, memory pressure
+  Example: Feature flags, config caches
+
+Redis (distributed):
+  Use: Shared cache across services
+  Pros: Distributed, supports complex data types, TTL
+  Cons: Network latency, extra infrastructure
+  Example: Sessions, user data, search results
+
+CDN Cache (CloudFlare, Cloudfront):
+  Use: Static assets, JSON responses
+  Pros: Geographic distribution, edge caching
+  Cons: Hard to invalidate, not suitable for personalized data
+  Example: Public APIs, static content
+```
+
 **Remember**: Backend patterns enable scalable, maintainable server-side applications. Choose patterns that fit your complexity level.

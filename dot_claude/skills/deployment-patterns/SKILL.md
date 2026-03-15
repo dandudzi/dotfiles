@@ -425,3 +425,122 @@ Before any production deployment:
 - [ ] Database migration tested against production-sized data
 - [ ] Runbook for common failure scenarios
 - [ ] On-call rotation and escalation path defined
+
+## GitOps Workflows
+
+### GitOps Principles
+
+Git as the single source of truth for infrastructure and application state. All changes flow through version control.
+
+```
+Git Repository
+    ↓
+    ├─ Application code (app-repo)
+    └─ Configuration (config-repo)
+         ↓
+    Continuous Deployment
+         ↓
+    Live Infrastructure (always matches Git state)
+```
+
+### Sync Policies and Rollback
+
+```yaml
+# Automatic sync: Always pull latest from Git
+spec:
+  syncPolicy:
+    automated:
+      prune: true              # Delete resources not in Git
+      selfHeal: true           # Revert manual cluster changes
+```
+
+Rollback by reverting commit: Git revert automatically redeploys previous state.
+
+### GitOps Tooling
+
+**ArgoCD:** Application-centric, push-based, web UI (visual ops teams)
+**Flux v2:** Lightweight, declarative, GitOps-native (cloud teams)
+
+## Progressive Delivery
+
+### Canary Release with Health Gates
+
+```yaml
+# Flagger config: Monitor metrics, auto-rollback if thresholds exceeded
+analysis:
+  interval: 30s
+  threshold: 5           # Max 5 failed checks before rollback
+  maxWeight: 50
+  stepWeight: 10         # Increment by 10% every 30 seconds
+  metrics:
+  - name: error-rate
+    thresholdRange:
+      max: 1             # Fail if error rate > 1%
+  - name: latency
+    thresholdRange:
+      max: 500           # Fail if p99 latency > 500ms
+```
+
+### Blue-Green with Database Migration
+
+Deploy to green, run migrations (blue still serving), smoke tests, switch traffic, blue becomes standby for rollback.
+
+### Feature Flags
+
+```typescript
+// LaunchDarkly: Flag state with user context
+const enableNewUI = await client.variation('new-ui', user, false)
+
+// Environment-based: Simple alternative
+const FLAGS = { newCheckout: process.env.ENABLE_NEW_CHECKOUT === 'true' }
+```
+
+### Traffic Shifting (Argo Rollouts)
+
+Progressive weight increment: 20% → 50% → 100% with metric validation between steps.
+
+### Automated Rollback Triggers
+
+Rollback if error-rate > 1%, p99 latency > 1sec, or custom metrics exceed thresholds.
+
+## Supply Chain Security
+
+### Image Scanning in CI
+
+```yaml
+- name: Scan with Trivy
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: myapp:${{ github.sha }}
+    severity: CRITICAL,HIGH
+    exit-code: 1  # Fail build on findings
+```
+
+When to fail the build:
+- CRITICAL: Always fail
+- HIGH: Fail in regulated environments (finance, healthcare)
+- MEDIUM/LOW: Log for awareness, don't block
+
+### SBOM Generation
+
+```bash
+syft myapp:latest -o spdx-json > sbom.spdx.json
+cosign generate-sbom myapp:latest > sbom.json
+```
+
+### Image Signing and Verification
+
+```bash
+cosign sign --key cosign.key myapp:latest
+cosign verify --key cosign.pub myapp:latest || exit 1
+```
+
+### Dependency Scanning
+
+Dependabot (GitHub), Snyk (multi-cloud), enable automated PRs for CVEs.
+
+### SLSA Framework
+
+Maturity levels: L1 (provenance) → L2 (signed) → L3 (hermetic) → L4 (reproducible)
+
+**Practical L3 path:** Use GitHub Actions + slsa-ghrunner + cosign + Kyverno admission controller.

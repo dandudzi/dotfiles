@@ -97,6 +97,37 @@ get_code_context_exa(query: "WebAssembly component model examples", tokensNum: 4
 - Lower `tokensNum` (1000-2000) for focused code snippets, higher (5000+) for comprehensive context
 - Use `get_code_context_exa` when you need API usage or code examples rather than general web pages
 
+## Query Security and Rate Limiting
+
+**Input Validation — Sanitize user-supplied queries:**
+- Maximum query length: 500 characters (enforce at application boundary)
+- Strip control characters and null bytes from user input before forwarding to Exa
+- Log all queries with user ID / session ID for audit trail and abuse detection
+- Validate query format: reject queries with only special characters or excessive whitespace
+
+**Rate Limiting — Implement client-side limits:**
+- Use exponential backoff on 429 (Too Many Requests) responses
+- Cache results for identical queries with TTL: 1 hour minimum
+- Track query volume per user/API key; alert on anomalies (e.g., 10x normal volume)
+- NEVER expose Exa API keys in frontend code — proxy all requests through backend service
+- Implement per-user/session rate limits: e.g., 10 queries/minute for free tier, 100/minute for premium
+
+**Result Handling — Treat results as untrusted external content:**
+- Sanitize content before rendering in UI (prevent XSS injection)
+- If passing search results to an LLM, wrap in untrusted content delimiters (e.g., `<untrusted>...</untrusted>`)
+- Validate domain/URL format in results before following or displaying
+- Strip executable content (script tags, iframes) from search snippets
+- Example:
+  ```python
+  # WRONG: Direct HTML rendering
+  html = render_html(search_result.snippet)  # XSS risk!
+
+  # CORRECT: Sanitize before rendering
+  from markupsafe import escape
+  safe_snippet = escape(search_result.snippet)
+  html = render_html(safe_snippet)
+  ```
+
 ## Related Skills
 
 - `deep-research` — Full research workflow using firecrawl + exa together

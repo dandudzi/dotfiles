@@ -158,31 +158,47 @@ class UserControllerTest {
 
 ## Phase 4: Security Scan
 
+Complete security scan suite with SAST, dependency checks, deserialization, licenses, and secrets:
+
 ```bash
-# Dependency CVEs
-mvn org.owasp:dependency-check-maven:check
+# 1. SAST — Static Analysis Security Testing
+mvn spotbugs:check -Dspotbugs.includeFilterFile=spotbugs-security.xml
+
+# 2. Dependency vulnerability scan
+mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
 # or
 ./gradlew dependencyCheckAnalyze
 
-# Secrets in source
-grep -rn "password\s*=\s*\"" src/ --include="*.java" --include="*.yml" --include="*.properties"
-grep -rn "sk-\|api_key\|secret" src/ --include="*.java" --include="*.yml"
+# 3. Dangerous deserialization check (ObjectInputStream, readObject)
+grep -r "ObjectInputStream\|readObject" src/ | grep -v "//.*REVIEWED" && echo "WARN: Unsafe deserialization found" || echo "OK: No unsafe deserialization"
 
-# Secrets (git history)
+# 4. License compliance
+mvn license:check
+
+# 5. Secret scanning (source code)
+grep -rn "password\s*=\s*\"" src/ --include="*.java" --include="*.yml" --include="*.properties" && echo "WARN: Hardcoded passwords found" || echo "OK: No hardcoded passwords"
+grep -rn "sk-\|api_key\|secret" src/ --include="*.java" --include="*.yml" && echo "WARN: Secret patterns found" || echo "OK: No secret patterns"
+
+# 6. Secret scanning (git history)
 git secrets --scan  # if configured
+trufflehog filesystem --directory=. --only-verified  # alternative: deep secret scanning
 ```
 
 ### Common Security Findings
 
-```
+```bash
 # Check for System.out.println (use logger instead)
 grep -rn "System\.out\.print" src/main/ --include="*.java"
 
 # Check for raw exception messages in responses
 grep -rn "e\.getMessage()" src/main/ --include="*.java"
 
-# Check for wildcard CORS
-grep -rn "allowedOrigins.*\*" src/main/ --include="*.java"
+# Check for wildcard CORS in production config
+grep -r "allowedOrigins\|cors.allowed" src/main/resources/ \
+  | grep "\*" && echo "WARN: Wildcard CORS detected — use specific origins only" || echo "OK: No wildcard CORS"
+
+# Verify no wildcard CORS in code
+grep -rn "allowedOrigins.*\*" src/main/java/ --include="*.java" && echo "WARN: Code-level wildcard CORS found" || echo "OK: No code-level wildcard CORS"
 ```
 
 ## Phase 5: Lint/Format (optional gate)

@@ -343,3 +343,90 @@ npm test && npm run lint
 - name: Upload Coverage
   uses: codecov/codecov-action@v3
 ```
+
+## Advanced TDD Schools
+
+Brief overview of approaches — helps choose the right strategy:
+
+- **London School (Mockist)**: Mock all collaborators at unit level. Maximises isolation, reveals design issues early. Risk: brittle tests that test implementation.
+- **Chicago School (Classicist)**: Use real objects; mock only at trust boundaries (external services, DB, filesystem). Our default.
+- **Outside-In TDD**: Start with E2E/acceptance test (failing), drive inward to unit tests. Good for new features.
+- **Inside-Out TDD**: Build domain models first, surface API later. Good for complex domain logic.
+- **ATDD (Acceptance TDD)**: Tests come from acceptance criteria in user stories.
+- **BDD**: Gherkin syntax (Given-When-Then) for business-readable tests. Use with Cucumber/Jest-Cucumber when stakeholders write tests.
+
+When to use which:
+- Default: Chicago School (classicist) + outside-in for new features
+- Complex domain logic: inside-out
+- Stakeholder collaboration: BDD/ATDD
+
+## Legacy Code Techniques
+
+Making untested code testable without full rewrites:
+
+- **Characterization Tests**: Write tests that document *current* behaviour before touching code. Commit them. Now you have a safety net.
+- **Seams Model**: A seam is a place where you can change program behaviour without editing that code (constructor injection, interface extraction, virtual methods).
+- **Golden Master Testing**: Capture full output from legacy code to a file. Run it as regression. Useful for rendering, reporting, or complex transformations.
+- **Approval Testing**: Like golden master but with structured diff tools (ApprovalTests library).
+- **Incremental Adoption**: (1) Characterise → (2) extract small piece → (3) write tests for extracted piece → (4) replace original with tested version → repeat.
+
+Reference: Michael Feathers, "Working Effectively with Legacy Code"
+
+## Multi-Language Support
+
+The RED-GREEN-REFACTOR cycle is universal. Framework mapping:
+
+| Language | Test Runner | Mocking | Coverage |
+|----------|-------------|---------|----------|
+| TypeScript/JS | Vitest / Jest | vi.fn() / jest.fn() | c8 / istanbul |
+| Python | pytest | unittest.mock / pytest-mock | coverage.py |
+| Java | JUnit 5 | Mockito | JaCoCo |
+| C# | xUnit / NUnit | Moq | Coverlet |
+| Go | testing/T | testify/mock | go test -cover |
+
+Language-specific agents:
+- Java: use `java-reviewer` agent (JUnit 5, Mockito, TestContainers)
+- Python: use `python-reviewer` agent (pytest, fixtures, parametrize)
+- TypeScript: use `vitest-expert` agent (vi.mock, MSW, testing-library)
+
+## Test Metrics Beyond Coverage
+
+80% line coverage is the floor, not the goal. Additional metrics:
+
+- **Mutation Score**: Run Stryker (JS) or mutmut (Python) to validate test quality. Target >70% mutants killed. Coverage without mutation testing can hide weak tests.
+- **Test Execution Speed**: Unit <5s, integration <30s, full suite <5min. Slow tests → fewer runs → less confidence.
+- **Test Maintenance Ratio**: Lines of test code / lines of production code. >2:1 suggests over-specified tests (testing implementation, not behaviour).
+- **Cycle Time**: Time from first failing test to green. Long cycles indicate insufficient decomposition.
+- **Flake Rate**: Track intermittent failures. >1% flake rate degrades team trust. Fix or quarantine immediately.
+
+Tools: `stryker-mutator` (JS/TS), `mutmut` (Python), `pitest` (Java), `codecov` (trends).
+
+## Property-Based Testing
+
+Generate hundreds of inputs automatically to find edge cases humans miss.
+
+When to use: pure functions, parsers, serializers, mathematical operations, data transformations.
+
+```typescript
+// Vitest + fast-check example
+import fc from "fast-check";
+
+test("encode then decode is identity", () => {
+  fc.assert(
+    fc.property(fc.string(), (s) => {
+      expect(decode(encode(s))).toBe(s);
+    })
+  );
+});
+```
+
+```python
+# pytest + hypothesis example
+from hypothesis import given, strategies as st
+
+@given(st.lists(st.integers()))
+def test_sort_is_idempotent(xs):
+    assert sorted(sorted(xs)) == sorted(xs)
+```
+
+Libraries: `fast-check` (TypeScript), `hypothesis` (Python), `junit-quickcheck` (Java).
