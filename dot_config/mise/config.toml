@@ -14,5 +14,6 @@ rust = "latest"
 "npm:@vtsls/language-server" = "latest"
 "npm:pyright" = "latest"
 "pipx:jcodemunch-mcp" = "latest"
+"pipx:jdocmunch-mcp" = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
