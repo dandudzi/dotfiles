@@ -182,8 +182,11 @@ Use Zod for schema-based validation and infer types from the schema:
 ```typescript
 import { z } from 'zod'
 
+// Zod v4 (released Aug 2025): string format validators are now top-level
 const userSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),          // v4: was z.string().email()
+  id: z.uuid(),              // v4: was z.string().uuid()
+  url: z.url(),              // v4: was z.string().url()
   age: z.number().int().min(0).max(150)
 })
 
@@ -192,8 +195,21 @@ type UserInput = z.infer<typeof userSchema>
 const validated: UserInput = userSchema.parse(input)
 ```
 
+> **Zod v3 → v4 migration:** `z.string().email()` / `.uuid()` / `.url()` are deprecated in v4. Use top-level `z.email()`, `z.uuid()`, `z.url()` instead. For legacy UUID validation (v3-compatible), use `z.guid()`.
+
 ## Console.log
 
 - No `console.log` statements in production code
 - Use proper logging libraries instead
 - See hooks for automatic detection
+
+## Agent Support
+
+- **typescript-expert** — TypeScript type system design, generics, utility types
+- **react-expert** — React component patterns, hooks, state management
+- **nextjs-expert** — Next.js App Router, RSC, framework patterns
+
+## Skill Reference
+
+- `python-patterns` skill — Pythonic idioms (for cross-language reference)
+- `api-design-principles` skill — REST API design patterns and production API patterns

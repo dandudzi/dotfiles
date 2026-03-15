@@ -11,9 +11,14 @@ paths:
 
 Configure in `~/.claude/settings.json`:
 
-- **black/ruff**: Auto-format `.py` files after edit
+- **ruff format**: Auto-format `.py` files after edit (primary; replaces black for new projects)
+- **black**: Auto-format for projects already using black
 - **mypy/pyright**: Run type checking after editing `.py` files
 
 ## Warnings
 
 - Warn about `print()` statements in edited files (use `logging` module instead)
+
+## Agent Support
+
+- **python-reviewer** — Python-specific code review

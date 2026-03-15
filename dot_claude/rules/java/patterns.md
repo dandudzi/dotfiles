@@ -101,6 +101,15 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 }
 ```
 
+### JPA Entity Immutability
+
+JPA entities require a no-arg constructor and mutable setters for hydration, which conflicts with immutability principles. Practical approach:
+
+- **Domain layer:** Use immutable records/value objects for business logic
+- **Persistence layer:** JPA entities may use package-private setters; keep mutation contained
+- **Never expose mutable entities** to controllers — map to DTOs/records at the service boundary
+- Use `@Immutable` (Hibernate) for read-only entities (e.g., views, lookup tables)
+
 ## Optional Usage
 
 ```java
@@ -239,9 +248,81 @@ class OrderService(
 }
 ```
 
-## Reference
+## Exception Handling
 
-See skill: `java-coding-standards` for Java coding standards.
-See skill: `springboot-patterns` for Spring Boot patterns.
-See skill: `jpa-patterns` for JPA/Hibernate patterns.
-See skill: `kotlin-patterns` for idiomatic Kotlin patterns.
+```java
+// Define a base exception hierarchy per domain
+public abstract class DomainException extends RuntimeException {
+    private final String code;
+
+    protected DomainException(String code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    public String code() { return code; }
+}
+
+public class NotFoundException extends DomainException {
+    public NotFoundException(String resource, Object id) {
+        super("NOT_FOUND", resource + " not found: " + id);
+    }
+}
+
+public class BusinessRuleException extends DomainException {
+    public BusinessRuleException(String message) {
+        super("BUSINESS_RULE", message);
+    }
+}
+```
+
+```java
+// Spring @ControllerAdvice for centralized mapping
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse(ex.code(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(new ErrorResponse(ex.code(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse("VALIDATION_ERROR", message));
+    }
+}
+
+public record ErrorResponse(String code, String message) {}
+```
+
+## Records vs Lombok Decision Matrix
+
+| Scenario | Use | Why |
+|----------|-----|-----|
+| Immutable DTO / value object (Java 16+) | **Record** | Built-in, zero annotation overhead, native IDE support |
+| Mutable domain object with builder | **Lombok `@Builder`** | `@Builder` + `@Data` or `@Value` for mutable/builder patterns |
+| Backward compatibility with Java < 16 | **Lombok** | Records require Java 16+ |
+| JPA entity (mutable, needs no-arg constructor) | **Lombok `@Entity` + `@Data`** | JPA hydration requires mutability |
+| Type-safe wrapper with zero overhead (Kotlin) | **`@JvmInline value class`** | No Lombok needed in Kotlin |
+
+**Rule of thumb:** Prefer Records for immutable data transfer in Java 17+ projects. Use Lombok only for mutable objects, JPA entities, or legacy Java projects.
+
+## Agent Support
+
+- **java-reviewer** — Java/Kotlin-specific code review
+
+## Skill Reference
+
+- `java-coding-standards` skill — Java coding standards
+- `springboot-patterns` skill — Spring Boot patterns

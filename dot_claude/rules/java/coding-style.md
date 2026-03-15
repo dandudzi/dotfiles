@@ -9,6 +9,12 @@ paths:
 
 > This file extends [common/coding-style.md](../common/coding-style.md) with Java/Kotlin-specific content.
 
+## Java Version Baseline
+
+- **Minimum: Java 21 LTS** — required baseline for all new projects (virtual threads, pattern matching, sealed classes, records all stable)
+- **Greenfield (2025+): Java 25 LTS** — released September 2025; includes virtual thread pinning fixes and performance improvements
+- Java 21 LTS enters paid-only Oracle support in September 2026; plan migration to Java 25 for long-running projects
+
 ## Formatting
 
 - **Google Java Style Guide** is the baseline for Java formatting
@@ -204,7 +210,29 @@ import org.springframework.stereotype.Service;
 import com.example.domain.User;
 ```
 
-## Reference
+## File Organization
 
-See skill: `java-coding-standards` for comprehensive Java coding standards.
-See skill: `kotlin-patterns` for idiomatic Kotlin patterns.
+Organize by **feature/domain** (not by type), consistent with common/coding-style.md:
+
+```
+src/main/java/com/example/
+├── order/              # Feature module
+│   ├── OrderService.java
+│   ├── OrderRepository.java
+│   ├── OrderController.java
+│   └── OrderDto.java
+├── user/               # Feature module
+│   ├── UserService.java
+│   └── ...
+└── shared/             # Cross-cutting only
+    ├── ErrorResponse.java
+    └── GlobalExceptionHandler.java
+```
+
+## Agent Support
+
+- **java-reviewer** — Java/Kotlin-specific code review
+
+## Skill Reference
+
+- `java-coding-standards` skill — Comprehensive Java coding standards

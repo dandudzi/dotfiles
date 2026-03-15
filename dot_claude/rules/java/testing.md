@@ -192,7 +192,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class OrderRepositoryIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine")
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test");
@@ -238,7 +238,31 @@ gradle test jacocoTestReport
 
 Target: 80%+ line coverage on business logic. Exclude generated code, DTOs, and configuration.
 
-## Reference
+## JUnit 5.11+ Modern Features
 
-See skill: `springboot-tdd` for Spring Boot test-driven development workflow.
-See skill: `tdd-workflow` for general TDD methodology.
+JUnit 5.11 (2024) added opt-in enhancements for advanced use cases:
+
+- **`@AutoClose`** — automatically close fields implementing `AutoCloseable` after test class lifecycle
+- **`@FieldSource`** — use static fields as parameterized test data sources (simpler than `@MethodSource` for simple lists)
+- **Failure thresholds** — `@RepeatedTest` now supports `failureThreshold` to stop on N failures
+- **`TestInstancePreConstructCallback`** — new extension point for pre-construction logic
+
+```java
+// @FieldSource example (simpler than @MethodSource for static data)
+static List<String> validEmails = List.of("a@b.com", "user@example.org");
+
+@ParameterizedTest
+@FieldSource("validEmails")
+void shouldAcceptValidEmail(String email) {
+    assertThat(EmailValidator.isValid(email)).isTrue();
+}
+```
+
+## Agent Support
+
+- **java-reviewer** — Java/Kotlin-specific code review
+
+## Skill Reference
+
+- `springboot-tdd` skill — Spring Boot test-driven development workflow
+- `tdd-workflow` skill — General TDD methodology and enforcement

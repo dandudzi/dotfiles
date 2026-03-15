@@ -14,7 +14,7 @@ paths:
 Configure in `~/.claude/settings.json`:
 
 - **Spotless/google-java-format**: Auto-format `.java` files after edit
-- **ktlint**: Auto-format `.kt` files after edit
+- **ktlint** (latest: 1.8.0, Nov 2025): Auto-format `.kt` files after edit
 - **Checkstyle**: Run style checks on modified `.java` files
 - **Detekt**: Run static analysis on modified `.kt` files
 
@@ -93,7 +93,8 @@ elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
 fi
 ```
 
-## Reference
+## Skill Reference
+
+- `springboot-verification` skill — Spring Boot build and verification hooks
 
 See [common/hooks.md](../common/hooks.md) for shared hook patterns.
-See skill: `springboot-verification` for Spring Boot build and verification hooks.

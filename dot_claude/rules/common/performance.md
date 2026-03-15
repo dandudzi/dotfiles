@@ -3,17 +3,17 @@
 ## Model Selection Strategy
 
 **Haiku 4.5** (90% of Sonnet capability, 3x cost savings):
-- Lightweight agents with frequent invocation
+- Technology expert agents (css-expert, docker-expert, sql-expert, etc.)
 - Pair programming and code generation
 - Worker agents in multi-agent systems
 
 **Sonnet 4.6** (Best coding model):
-- Main development work
-- Orchestrating multi-agent workflows
+- code-reviewer, java-reviewer, python-reviewer (need nuanced judgement)
+- Main development work and orchestrating multi-agent workflows
 - Complex coding tasks
 
-**Opus 4.5** (Deepest reasoning):
-- Complex architectural decisions
+**Opus 4.6** (Deepest reasoning):
+- architect agent (complex architectural decisions)
 - Maximum reasoning requirements
 - Research and analysis tasks
 
@@ -32,12 +32,12 @@ Lower context sensitivity tasks:
 
 ## Extended Thinking + Plan Mode
 
-Extended thinking is enabled by default, reserving up to 31,999 tokens for internal reasoning.
+Extended thinking is enabled by default. Budget varies by model: up to 128K tokens (Opus 4.6), up to 64K tokens (Sonnet 4.6). Default budget cap is 10K tokens; override with `export MAX_THINKING_TOKENS=10000`.
 
 Control extended thinking via:
 - **Toggle**: Option+T (macOS) / Alt+T (Windows/Linux)
 - **Config**: Set `alwaysThinkingEnabled` in `~/.claude/settings.json`
-- **Budget cap**: `export MAX_THINKING_TOKENS=10000`
+- **Budget cap**: `export MAX_THINKING_TOKENS=<tokens>` (min 1,024)
 - **Verbose mode**: Ctrl+O to see thinking output
 
 For complex tasks requiring deep reasoning:

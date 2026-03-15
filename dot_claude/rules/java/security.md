@@ -159,7 +159,7 @@ mapper.setPolymorphicTypeValidator(
 <plugin>
     <groupId>org.owasp</groupId>
     <artifactId>dependency-check-maven</artifactId>
-    <version>9.0.0</version>
+    <version>12.2.0</version>
     <configuration>
         <failBuildOnCVSS>7</failBuildOnCVSS>
     </configuration>
@@ -169,7 +169,7 @@ mapper.setPolymorphicTypeValidator(
 ```groovy
 // Gradle: OWASP Dependency-Check Plugin
 plugins {
-    id 'org.owasp.dependencycheck' version '9.0.0'
+    id 'org.owasp.dependencycheck' version '12.2.0'
 }
 
 dependencyCheck {
@@ -192,7 +192,35 @@ mvn spotbugs:check -Dspotbugs.plugins=com.h3xstream.findsecbugs:findsecbugs-plug
 snyk test --all-projects
 ```
 
-## Reference
+## SBOM Generation
 
-See skill: `springboot-security` for Spring Security configuration patterns.
-See skill: `security-review` for general security review workflow.
+```xml
+<!-- Maven: CycloneDX SBOM plugin -->
+<plugin>
+    <groupId>org.cyclonedx</groupId>
+    <artifactId>cyclonedx-maven-plugin</artifactId>
+    <version>2.9.1</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals><goal>makeAggregateBom</goal></goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+```groovy
+// Gradle: CycloneDX SBOM plugin
+plugins {
+    id 'org.cyclonedx.bom' version '1.10.0'
+}
+```
+
+## Agent Support
+
+- **java-reviewer** — Java/Kotlin-specific code review
+- **owasp-top10-expert** — Security vulnerability assessment
+
+## Skill Reference
+
+- `springboot-security` skill — Spring Security configuration patterns
