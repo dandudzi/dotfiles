@@ -1,0 +1,22 @@
+{
+  "version": "2.1",
+  "observation": {
+    "enabled": true,
+    "store_path": "~/.claude/homunculus/observations.jsonl",
+    "max_file_size_mb": 10,
+    "archive_after_days": 7
+  },
+  "instincts": {
+    "min_confidence": 0.3,
+    "auto_approve_threshold": 0.8,
+    "confidence_decay_rate": 0.05
+  },
+  "observer": {
+    "enabled": true,
+    "model": "haiku",
+    "run_interval_minutes": 5
+  },
+  "evolution": {
+    "cluster_threshold": 3
+  }
+}
