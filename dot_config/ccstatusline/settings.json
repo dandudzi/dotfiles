@@ -105,7 +105,7 @@
         "id": "158c1608-ff22-4d0e-9961-a0581205ce66",
         "type": "custom-command",
         "commandPath": "context-window-time",
-        "timeout": 3000
+        "timeout": 8000
       },
       {
         "id": "92d1d802-84c2-4a19-90b4-57959e8eb5e9",
