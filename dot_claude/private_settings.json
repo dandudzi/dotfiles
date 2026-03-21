@@ -112,7 +112,6 @@
     ],
     "defaultMode": "default"
   },
-  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -171,6 +170,10 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/jmunch-session-gate.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
           }
         ]
       },
@@ -226,7 +229,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/pretooluse.mjs"
+            "command": "node /Users/daniel/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/pretooluse.mjs"
           }
         ]
       }
@@ -294,6 +297,15 @@
             "command": "bash ~/.claude/hooks/track-genuine-savings-ctx.sh"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
+          }
+        ]
       }
     ]
   },
@@ -316,13 +328,15 @@
       "source": {
         "source": "github",
         "repo": "mksglu/context-mode"
-      }
+      },
+      "autoUpdate": true
     },
     "thedotmack": {
       "source": {
         "source": "github",
         "repo": "thedotmack/claude-mem"
-      }
+      },
+      "autoUpdate": true
     }
   },
   "sandbox": {
@@ -336,5 +350,6 @@
   "gattributiong": {
     "commit": "",
     "pr": ""
-  }
+  },
+  "model": "sonnet"
 }
