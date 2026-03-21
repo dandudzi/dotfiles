@@ -8,6 +8,7 @@ local apple = sbar.add("item", {
 	icon = {
 		font = {
 			family = settings.font.icons,
+			style = settings.font.style_map["Regular"],
 			size = 24.0,
 		},
 		string = "",

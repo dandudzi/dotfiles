@@ -55,7 +55,7 @@ local wifi = sbar.add("item", "widgets.wifi.padding", {
 	position = "right",
 	label = { drawing = false },
 	background = {
-		colors = colors.background,
+		color = colors.background,
 	},
 })
 
