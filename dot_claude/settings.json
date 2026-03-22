@@ -1,14 +1,15 @@
 {
   "env": {
-    "MAX_THINKING_TOKENS": "10000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60",
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
     "ENABLE_TOOL_SEARCH": "auto:5",
     "DISABLE_TELEMETRY": "1",
     "DISABLE_ERROR_REPORTING": "1",
-    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
   },
   "permissions": {
     "allow": [
@@ -16,15 +17,11 @@
       "mcp__context7__query-docs",
       "mcp__plugin_playwright_*",
       "mcp__plugin_claude-mem_*",
-      "mcp__context-mode__ctx_execute",
-      "mcp__context-mode__ctx_execute_file",
-      "mcp__context-mode__ctx_batch_execute",
-      "mcp__context-mode__ctx_search",
-      "mcp__context-mode__ctx_index",
-      "mcp__context-mode__ctx_fetch_and_index",
-      "mcp__context-mode__ctx_stats",
-      "mcp__context-mode__ctx_doctor",
-      "mcp__context-mode__ctx_upgrade",
+      "mcp__plugin_context-mode_*",
+      "mcp__exa__*",
+      "mcp__claude_ai_exa__*",
+      "mcp__claude_ai_Excalidraw__*",
+      "mcp__claude_ai_excalidraw_mcp__*",
       "mcp__jcodemunch__get_symbol",
       "mcp__jcodemunch__get_symbols",
       "mcp__jcodemunch__search_symbols",
@@ -57,7 +54,14 @@
       "Bash(/usr/bin/open:*)",
       "Bash(node:*)",
       "Bash(unzip:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)"
     ],
     "deny": [
       "WebFetch(domain:example.com)",
@@ -112,10 +116,11 @@
     ],
     "defaultMode": "default"
   },
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -124,18 +129,27 @@
         ]
       },
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
             "command": "node ~/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/sessionstart.mjs"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/openwolf-init.sh"
+          }
+        ]
       }
     ],
     "Notification": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -146,7 +160,7 @@
     ],
     "Stop": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -199,14 +213,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.local/bin/dcg"
-          },
-          {
-            "type": "command",
-            "command": "dippy"
-          },
-          {
-            "type": "command",
             "command": "~/.claude/hooks/rtk-rewrite.sh"
           },
           {
@@ -229,7 +235,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node /Users/daniel/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/pretooluse.mjs"
+            "command": "node /Users/daniel/.claude/plugins/cache/context-mode/context-mode/1.0.49/hooks/pretooluse.mjs"
           }
         ]
       }
@@ -342,14 +348,14 @@
   "sandbox": {
     "enabled": false
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "voiceEnabled": false,
+  "autoMemoryEnabled": false,
   "autoCompact": {
     "customInstructions": "Preserve all file paths, function names, error messages, debugging steps, and architectural decisions."
   },
   "gattributiong": {
     "commit": "",
     "pr": ""
-  },
-  "model": "sonnet"
+  }
 }
