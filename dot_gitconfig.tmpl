@@ -1,11 +1,7 @@
 [user]
 	name = Daniel Dudziak
-	email = {{ .email }}
-{{- if .work }}
-	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOhOBKJKhwfQ9ZR52PSiEHSCcv7srnwdH1EngDjIAwM
-{{- else }}
+	email = 20063579+dandudzi@users.noreply.github.com
 	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5
-{{- end }}
 
 [alias]
 	amen = commit --amend
@@ -13,10 +9,14 @@
 	ui = auto
 [interactive]
 	diffFilter = delta --color-only
+[init]
+	defaultBranch = main
+
 [core]
-	excludesFile = $HOME/.gitignore_global
+	excludesFile = ~/.gitignore_global
 	untrackedCache = true
 	fsmonitor = true
+	preloadindex = true
 	pager = delta
 	# Make `git rebase` safer on macOS.
 	# More info: <http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/>
@@ -93,12 +93,15 @@
 [gc]
 	# Write commit graph to speed up some repositories when GC
 	writeCommitGraph = true
+
+[index]
+	version = 4
 [protocol]
 	# Use Git v2 protocol for better performance
 	version = 2
 [help]
 	# Automatically correct and execute mistyped commands.
-	autocorrect = 1
+	autocorrect = 10
 [include]
 	path = ~/.config/git/catppuccin.gitconfig
 [delta]
