@@ -15,5 +15,6 @@ rust = "latest"
 "npm:pyright" = "latest"
 "pipx:jcodemunch-mcp" = "latest"
 "pipx:jdocmunch-mcp" = "latest"
+"npm:openwolf"="latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
