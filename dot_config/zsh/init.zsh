@@ -27,8 +27,8 @@ bindkey '^y' autosuggest-toggle
 
 #🗄️ better history
 HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=50000
+SAVEHIST=50000
 # Append history instead of overwriting
 setopt APPEND_HISTORY
 # Immediately append commands to the history file
