@@ -1,2 +1,8 @@
 [manager]
 show_hidden = true
+sort_by = "natural"
+sort_dir_first = true
+scrolloff = 5
+mouse_events = ["click", "scroll", "drag"]
+linemode = "size"
+title_format = "Yazi: {cwd}"
