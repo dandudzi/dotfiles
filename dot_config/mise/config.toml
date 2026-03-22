@@ -18,3 +18,7 @@ rust = "latest"
 "npm:openwolf"="latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
+always_keep_download = false
+always_keep_install = false
+jobs = 8
+http_timeout = "30s"
