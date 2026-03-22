@@ -26,3 +26,17 @@ allow rtk *
 allow mvn -v
 allow mvn clean compile
 allow mvn test
+
+# MCP tools - auto-allow all installed servers
+allow-mcp mcp__context7__*
+allow-mcp mcp__exa__*
+allow-mcp mcp__claude_ai_exa__*
+allow-mcp mcp__claude_ai_Excalidraw__*
+ask-mcp mcp__claude_ai_Gmail__* "Gmail access"
+ask-mcp mcp__claude_ai_Google_Calendar__* "Google Calendar access"
+allow-mcp mcp__claude_ai_Notion__*
+allow-mcp mcp__claude_ai_excalidraw_mcp__*
+allow-mcp mcp__jcodemunch__*
+allow-mcp mcp__jdocmunch__*
+allow-mcp mcp__plugin_claude-mem_mcp-search__*
+allow-mcp mcp__plugin_context-mode_context-mode__*
