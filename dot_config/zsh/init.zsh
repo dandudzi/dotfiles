@@ -205,4 +205,3 @@ zle -N zle-keymap-select
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-source $HOME/.config/scripts/check_dsg.zsh
