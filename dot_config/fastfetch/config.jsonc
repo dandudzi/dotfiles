@@ -7,8 +7,9 @@
   "logo": {
     // If working with tmux, you need to use kitty-icat instead of kitty-direct
     // https://discord.com/channels/1005603569187160125/1324828708128821271/1327261766014599218
+    // "type": "iterm",
     // "type": "kitty-direct",
-    "type": "iterm",
+    "type": "kitty-icat",
     "source": "~/.config/images/fastfetch.png",
     "height": 20,
     "width": 45,
