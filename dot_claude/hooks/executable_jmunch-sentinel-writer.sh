@@ -27,6 +27,7 @@ case "$TOOL" in
 esac
 
 # Check if both are now ready
+BLOCK_COUNTER="/tmp/jmunch-blocks-${HASH}"
 if [ -f "$SENTINEL" ]; then
   HAS_CODE=$(grep -c '^code$' "$SENTINEL" 2>/dev/null | head -1 || echo 0)
   HAS_DOC=$(grep -c '^doc$' "$SENTINEL" 2>/dev/null | head -1 || echo 0)
@@ -35,6 +36,8 @@ if [ -f "$SENTINEL" ]; then
     if grep -q '^stale$' "$SENTINEL" 2>/dev/null; then
       grep -v '^stale$' "$SENTINEL" > "${SENTINEL}.tmp" && mv "${SENTINEL}.tmp" "$SENTINEL"
     fi
+    # Reset block counter — indexes are ready
+    rm -f "$BLOCK_COUNTER" 2>/dev/null
     echo "jCodeMunch + jDocMunch indexes refreshed — all tools unblocked."
     exit 0
   fi
