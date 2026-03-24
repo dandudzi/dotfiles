@@ -1,9 +1,8 @@
 {
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60",
-    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
     "ENABLE_TOOL_SEARCH": "auto:5",
     "DISABLE_TELEMETRY": "1",
@@ -46,6 +45,8 @@
       "mcp__jdocmunch__get_section",
       "mcp__jdocmunch__get_sections",
       "mcp__jdocmunch__delete_index",
+      "Bash(rtk:*)",
+      "Skill(superpowers:*)",
       "WebSearch",
       "Bash(ls:*)",
       "Bash(tail:*)",
@@ -64,6 +65,8 @@
       "Bash(git branch *)"
     ],
     "deny": [
+      "Bash(rtk init*)",
+      "Bash(rtk proxy*)",
       "WebFetch(domain:example.com)",
       "Bash(*bitwarden*)",
       "Bash(bw:*)",
@@ -116,7 +119,6 @@
     ],
     "defaultMode": "default"
   },
-  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -133,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/plugins/cache/context-mode/context-mode/1.0.22/hooks/sessionstart.mjs"
+            "command": "bash ~/.claude/hooks/context-mode-session-start.sh"
           }
         ]
       },
@@ -142,7 +144,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/openwolf-init.sh"
+            "command": "bash ~/.claude/hooks/plugin-drift-check.sh"
           }
         ]
       }
@@ -177,6 +179,17 @@
         ]
       }
     ],
+    "WorktreeCreate": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uvx jcodemunch-mcp hook-event create"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "*",
@@ -196,15 +209,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/jcodemunch-nudge.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/jdocmunch-nudge.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/context-mode-nudge.sh"
+            "command": "bash ~/.claude/hooks/unified-read-router.sh"
           }
         ]
       },
@@ -213,11 +218,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/rtk-rewrite.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/context-mode-bash-nudge.sh"
+            "command": "bash ~/.claude/hooks/unified-bash-router.sh"
           }
         ]
       },
@@ -226,16 +227,43 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/agent-jcodemunch-gate.sh"
+            "command": "bash ~/.claude/hooks/agent-gate-strict.sh"
           }
         ]
       },
       {
-        "matcher": "Bash|WebFetch|Read|Grep|Agent|Task|mcp__plugin_context-mode_context-mode__ctx_execute|mcp__plugin_context-mode_context-mode__ctx_execute_file|mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+        "matcher": "WebFetch",
         "hooks": [
           {
             "type": "command",
-            "command": "node /Users/daniel/.claude/plugins/cache/context-mode/context-mode/1.0.49/hooks/pretooluse.mjs"
+            "command": "bash ~/.claude/hooks/webfetch-block.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/websearch-block.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/grep-observe.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__exa__*|mcp__context7__*|mcp__claude_ai_exa__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/mcp-observe.sh"
           }
         ]
       }
@@ -269,15 +297,6 @@
         ]
       },
       {
-        "matcher": "mcp__context-mode__*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/track-genuine-savings-ctx.sh"
-          }
-        ]
-      },
-      {
         "matcher": "mcp__jdocmunch__*",
         "hooks": [
           {
@@ -296,16 +315,16 @@
         ]
       },
       {
-        "matcher": "mcp__context-mode__*",
+        "matcher": "mcp__plugin_context-mode_context-mode__*",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/track-genuine-savings-ctx.sh"
+            "command": "bash ~/.claude/hooks/track-genuine-savings.sh"
           }
         ]
       },
       {
-        "matcher": "*",
+        "matcher": "Bash|Read|Edit|Write|Agent|Grep",
         "hooks": [
           {
             "type": "command",
@@ -317,17 +336,16 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'DATA=$(cat); L=$(printf \"%s\" \"$DATA\" | npx -y ccstatusline@latest 2>/dev/null); J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); S=$(printf \"%s\" \"$DATA\" | bash \"$HOME/.claude/statusline-standalone.sh\"); [ -n \"$J\" ] && printf \"%s\\n%s\\n%s\\n\" \"$L\" \"$J\" \"$S\" || printf \"%s\\n%s\\n\" \"$L\" \"$S\"'",
+    "command": "bash -c 'DATA=$(cat); printf \"%s\" \"$DATA\" | python3 -c \"import sys,json; d=json.load(sys.stdin); r=d.get(\\\"rate_limits\\\",{}).get(\\\"five_hour\\\",{}).get(\\\"resets_at\\\"); r and open(\\\"/tmp/claude-resets-at\\\",\\\"w\\\").write(str(r))\" 2>/dev/null; L=$(printf \"%s\" \"$DATA\" | npx -y ccstatusline@latest 2>/dev/null); J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); S=$(printf \"%s\" \"$DATA\" | bash \"$HOME/.claude/statusline-standalone.sh\"); [ -n \"$J\" ] && printf \"%s\\n%s\\n%s\\n\" \"$L\" \"$J\" \"$S\" || printf \"%s\\n%s\\n\" \"$L\" \"$S\"'",
     "padding": 0
   },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "claude-mermaid@claude-mermaid": false,
-    "skill-creator@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "context-mode@context-mode": true,
-    "claude-mem@thedotmack": true
+    "context-mode@context-mode": true
   },
   "extraKnownMarketplaces": {
     "context-mode": {
@@ -348,7 +366,7 @@
   "sandbox": {
     "enabled": false
   },
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "voiceEnabled": false,
   "autoMemoryEnabled": false,
   "autoCompact": {
