@@ -5,6 +5,7 @@ description: >
   templates, tsconfig configuration, environment patterns, and tooling setup
   for Next.js, Node.js API, library, and CLI projects using pnpm and
   TypeScript 5.5+ (6.0 RC as of March 2026).
+model: sonnet
 ---
 
 # TypeScript 5.5+ Project Scaffolding
@@ -259,3 +260,91 @@ ls dist/
 ## Skill References
 - **typescript-advanced-types** — Advanced type patterns for complex scenarios
 - **modern-javascript** — ES2022+ features and patterns
+
+---
+
+## React Props
+
+- Define component props with a named `interface` or `type`
+- Type callback props explicitly
+- Do not use `React.FC` unless there is a specific reason to do so
+
+```typescript
+interface UserCardProps {
+  user: User
+  onSelect: (id: string) => void
+}
+
+function UserCard({ user, onSelect }: UserCardProps) {
+  return <button onClick={() => onSelect(user.id)}>{user.email}</button>
+}
+```
+
+## JSDoc for JavaScript Files
+
+In `.js` and `.jsx` files, use JSDoc when types improve clarity and a TypeScript migration is not practical:
+
+```javascript
+/**
+ * @param {{ firstName: string, lastName: string }} user
+ * @returns {string}
+ */
+export function formatUser(user) {
+  return `${user.firstName} ${user.lastName}`
+}
+```
+
+## Immutability
+
+Use spread operator for object/array updates. Use `Readonly<T>` for immutable type contracts:
+
+```typescript
+const updated = { ...user, name: 'new' }
+```
+
+## Error Handling
+
+Use try-catch with `catch (error: unknown)` and type narrowing:
+
+```typescript
+async function loadUser(userId: string): Promise<User> {
+  try {
+    return await riskyOperation(userId)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unexpected error'
+    logger.error('Operation failed', message)
+    throw new Error(message)
+  }
+}
+```
+
+## Input Validation
+
+Use Zod for schema-based validation and infer types from the schema:
+
+```typescript
+const userSchema = z.object({ email: z.email(), age: z.number().int().min(0) })
+type User = z.infer<typeof userSchema>
+const user = userSchema.parse(input)
+```
+
+## Logging
+
+Never use `console.log()` in production — use a structured logger:
+- Prefer `pino` (fastest) or `winston` for Node.js services
+- Output JSON in production, human-readable in development
+- Include `level`, `timestamp`, `message`, and structured context fields
+
+## Formatting
+
+Use Prettier for all formatting:
+- Configuration: 2-space indent, single quotes, semicolons required
+- Run `prettier --check` in CI — fail on unformatted files
+- Use ESLint for linting (separate concern from formatting)
+
+## TypeScript Code Quality Checklist
+
+- [ ] No `any` types — use `unknown` or generics
+- [ ] No `console.log()` — use structured logger
+- [ ] Strict mode enabled in tsconfig
+- [ ] All public API exports have explicit types

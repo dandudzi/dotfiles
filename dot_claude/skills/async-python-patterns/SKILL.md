@@ -2,19 +2,16 @@
 name: async-python-patterns
 description: Asyncio fundamentals, async/await patterns, concurrent I/O, and event loop management for building high-performance, non-blocking Python applications.
 origin: ECC
+model: sonnet
 ---
 
 # Async Python Patterns
 
 ## When to Activate
 
-- Building async web APIs (FastAPI, Quart, aiohttp)
-- Implementing concurrent I/O operations (database, file, network)
-- Creating web scrapers and data fetchers
-- Developing real-time applications (WebSocket servers, chat systems)
-- Processing multiple independent tasks simultaneously
-- Optimizing I/O-bound workloads
-- Building async background tasks and queues
+- Building concurrent I/O operations (web APIs, database, file, network)
+- Creating web scrapers, data fetchers, and real-time applications
+- Processing multiple independent tasks with asyncio, gather(), or TaskGroup
 
 ## Concurrency Model Decision Matrix
 
@@ -31,43 +28,25 @@ Choose the right concurrency model for your workload.
 ### When Async is Wrong
 
 ```python
-# BAD: Mixing sync/async in same call path (hidden blocking)
-async def fetch_and_process(url: str):
-    data = await fetch(url)  # Non-blocking
-    result = compute(data)   # BLOCKING! Stalls all tasks
-    return result
-
-# GOOD: Offload blocking work
+# WRONG: Blocking code stalls event loop
 async def fetch_and_process(url: str):
     data = await fetch(url)
-    result = await asyncio.to_thread(compute, data)
+    result = compute(data)  # BLOCKS! Use asyncio.to_thread() instead
     return result
 
-# BAD: Using sync libraries in async context
-async def fetch_api(url: str):
-    import requests
-    return requests.get(url)  # BLOCKING! Stalls event loop
-
-# GOOD: Use async-native libraries
-async def fetch_api(url: str):
-    import httpx
-    async with httpx.AsyncClient() as client:
-        return await client.get(url)
+# RIGHT: Use async-native libraries and offload blocking work
+async def fetch_and_process(url: str):
+    data = await fetch(url)
+    result = await asyncio.to_thread(compute, data)  # Offload to thread pool
+    return result
 ```
 
 ## Core Concepts
 
-### Event Loop
-Single-threaded cooperative multitasking scheduler managing coroutines and I/O.
-
-### Coroutines
-Functions defined with `async def` that yield control with `await`.
-
-### Tasks
-Scheduled coroutines running concurrently on the event loop.
-
-### Futures
-Low-level objects representing eventual results of async operations.
+**Event Loop:** Single-threaded cooperative scheduler managing coroutines and I/O.
+**Coroutines:** Functions defined with `async def`, yield control with `await`.
+**Tasks:** Scheduled coroutines running on the event loop.
+**Futures:** Low-level objects representing eventual async results.
 
 ## Fundamental Patterns
 
@@ -92,24 +71,17 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from typing import List
 
 async def fetch_user(user_id: int) -> dict:
-    """Fetch single user."""
     await asyncio.sleep(0.5)
     return {"id": user_id, "name": f"User {user_id}"}
 
-async def fetch_all_users(user_ids: List[int]) -> List[dict]:
-    """Fetch multiple users concurrently."""
-    # Create tasks without waiting (they start immediately)
-    tasks = [fetch_user(uid) for uid in user_ids]
-    # Wait for all tasks to complete
-    results = await asyncio.gather(*tasks)
-    return results
-
 async def main():
-    users = await fetch_all_users([1, 2, 3, 4, 5])
-    print(f"Fetched {len(users)} users")
+    # Run all tasks concurrently
+    results = await asyncio.gather(
+        fetch_user(1), fetch_user(2), fetch_user(3)
+    )
+    print(f"Fetched {len(results)} users")
 
 asyncio.run(main())
 ```
@@ -143,40 +115,27 @@ async def main():
 asyncio.run(main())
 ```
 
-### Pattern 4: Error Handling in Async Code
+### Pattern 4: Error Handling with gather()
 
 ```python
 import asyncio
-from typing import List, Optional
 
-async def risky_operation(item_id: int) -> dict:
-    """Operation that might fail."""
+async def risky_op(item_id: int) -> dict:
     await asyncio.sleep(0.1)
     if item_id % 3 == 0:
         raise ValueError(f"Item {item_id} failed")
     return {"id": item_id, "status": "success"}
 
-async def safe_operation(item_id: int) -> Optional[dict]:
-    """Wrapper with error handling."""
-    try:
-        return await risky_operation(item_id)
-    except ValueError as e:
-        print(f"Error: {e}")
-        return None
+async def main():
+    # return_exceptions=True allows continue-on-error
+    results = await asyncio.gather(
+        *(risky_op(i) for i in [1, 2, 3, 4, 5, 6]),
+        return_exceptions=True
+    )
+    errors = [r for r in results if isinstance(r, Exception)]
+    print(f"Errors: {len(errors)}")
 
-async def process_items(item_ids: List[int]):
-    """Process multiple items, continuing on errors."""
-    tasks = [safe_operation(iid) for iid in item_ids]
-    # return_exceptions=True prevents one failure from canceling all
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    successful = [r for r in results if r is not None and not isinstance(r, Exception)]
-    failed = [r for r in results if isinstance(r, Exception)]
-
-    print(f"Success: {len(successful)}, Failed: {len(failed)}")
-    return successful
-
-asyncio.run(process_items([1, 2, 3, 4, 5, 6]))
+asyncio.run(main())
 ```
 
 ### Pattern 5: Timeout Handling
@@ -202,15 +161,7 @@ asyncio.run(with_timeout())
 
 ## Advanced Patterns
 
-### Pattern 6: asyncio.gather() vs asyncio.wait() vs TaskGroup
-
-Decision matrix for concurrent execution.
-
-| Method | When | Trade-Off |
-|--------|------|-----------|
-| `gather(*tasks)` | Simple concurrent execution, early return on first exception | Exception stops gathering; use `return_exceptions=True` to collect all |
-| `wait(tasks)` | Fine-grained control over completion (FIRST_COMPLETED, FIRST_EXCEPTION, ALL_COMPLETED) | More verbose, lower-level |
-| `TaskGroup` (Python 3.11+) | Modern, structured concurrency, automatic cleanup | Requires Python 3.11+, exceptions wrapped in ExceptionGroup |
+### Pattern 6: Task Coordination (gather vs wait vs TaskGroup)
 
 ```python
 import asyncio
@@ -223,21 +174,20 @@ async def task_b():
     await asyncio.sleep(2)
     return "B"
 
-# gather() - simplest, exceptions stop execution
-results = await asyncio.gather(task_a(), task_b())  # [A, B]
-results = await asyncio.gather(task_a(), task_b(), return_exceptions=True)  # Collect all, even errors
+# gather() - simplest
+results = await asyncio.gather(task_a(), task_b(), return_exceptions=True)
 
-# wait() - fine-grained control
-done, pending = await asyncio.wait([task_a(), task_b()], return_when=asyncio.FIRST_COMPLETED)
-# Process done tasks, cancel pending if needed
-for task in pending:
-    task.cancel()
-
-# TaskGroup (Python 3.11+) - structured concurrency
+# TaskGroup (Python 3.11+) - structured concurrency with auto cleanup
 async with asyncio.TaskGroup() as tg:
     t1 = tg.create_task(task_a())
     t2 = tg.create_task(task_b())
-    # Automatically awaits and handles exceptions when exiting context
+    # Awaits all, handles exceptions on exit
+
+# wait() - fine-grained control (rarely needed)
+done, pending = await asyncio.wait(
+    [task_a(), task_b()],
+    return_when=asyncio.FIRST_COMPLETED
+)
 ```
 
 ### Pattern 7: Async Context Managers
@@ -274,34 +224,23 @@ async def query_database():
 asyncio.run(query_database())
 ```
 
-### Pattern 8: Async Iterators and Generators
+### Pattern 8: Async Generators
 
 ```python
 import asyncio
 from typing import AsyncIterator
 
-async def async_range(start: int, end: int) -> AsyncIterator[int]:
-    """Async generator yielding numbers."""
-    for i in range(start, end):
-        await asyncio.sleep(0.1)
-        yield i
-
 async def fetch_pages(url: str, max_pages: int) -> AsyncIterator[dict]:
-    """Async generator fetching paginated data."""
+    """Async generator yielding paginated data."""
     for page in range(1, max_pages + 1):
-        await asyncio.sleep(0.2)  # API call
+        await asyncio.sleep(0.2)  # Simulate API call
         yield {"page": page, "items": [f"item_{page}_{i}" for i in range(5)]}
 
-async def consume_async_iterator():
-    """Consume async generators."""
-    async for number in async_range(1, 5):
-        print(f"Number: {number}")
-
-    print("\nFetching pages:")
-    async for page_data in fetch_pages("https://api.example.com/items", 3):
+async def main():
+    async for page_data in fetch_pages("https://api.example.com", 3):
         print(f"Page {page_data['page']}: {len(page_data['items'])} items")
 
-asyncio.run(consume_async_iterator())
+asyncio.run(main())
 ```
 
 ### Pattern 9: Backpressure with Semaphore
@@ -363,166 +302,55 @@ asyncio.run(mixed_operations())
 
 ## Production Patterns
 
-### Real-World: Web Scraping with aiohttp
+### Real-World: Web Scraping
 
 ```python
 import asyncio
 import aiohttp
-from typing import List, Dict
 
-async def fetch_url(session: aiohttp.ClientSession, url: str) -> Dict:
-    """Fetch single URL with timeout."""
+async def fetch_url(session: aiohttp.ClientSession, url: str) -> dict:
     try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
-            text = await response.text()
-            return {"url": url, "status": response.status, "length": len(text)}
-    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            return {"url": url, "status": resp.status, "length": len(await resp.text())}
+    except aiohttp.ClientError as e:
         return {"url": url, "error": str(e)}
 
-async def scrape_urls(urls: List[str]) -> List[Dict]:
-    """Scrape multiple URLs concurrently."""
+async def scrape_urls(urls: list[str]) -> list[dict]:
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_url(session, url) for url in urls]
-        results = await asyncio.gather(*tasks)
+        results = await asyncio.gather(*(fetch_url(session, url) for url in urls))
         return results
 
-async def main():
-    urls = ["https://httpbin.org/delay/1", "https://httpbin.org/status/404"]
-    results = await scrape_urls(urls)
-    for result in results:
-        print(result)
-
-asyncio.run(main())
+asyncio.run(scrape_urls(["https://httpbin.org/delay/1", "https://httpbin.org/status/404"]))
 ```
 
 ### Real-World: Async Database Operations
 
 ```python
 import asyncio
-from typing import List, Optional
 
-class AsyncDB:
-    """Simulated async database client."""
-    async def fetch_one(self, query: str) -> Optional[dict]:
-        await asyncio.sleep(0.1)
-        return {"id": 1, "name": "Example"}
-
-    async def execute(self, query: str) -> List[dict]:
-        await asyncio.sleep(0.1)
-        return [{"id": 1, "name": "Item 1"}]
-
-async def get_user_data(db: AsyncDB, user_id: int) -> dict:
-    """Fetch user and related data concurrently."""
+async def get_user_data(db, user_id: int) -> dict:
+    """Fetch user, orders, and profile concurrently."""
     user, orders, profile = await asyncio.gather(
         db.fetch_one(f"SELECT * FROM users WHERE id = {user_id}"),
         db.execute(f"SELECT * FROM orders WHERE user_id = {user_id}"),
         db.fetch_one(f"SELECT * FROM profiles WHERE user_id = {user_id}"),
     )
     return {"user": user, "orders": orders, "profile": profile}
-
-async def main():
-    db = AsyncDB()
-    user_data = await get_user_data(db, 1)
-    print(user_data)
-
-asyncio.run(main())
 ```
 
 ## Common Pitfalls
 
-### Pitfall 1: Forgetting await
-
-```python
-# WRONG - returns coroutine object, doesn't execute
-result = async_function()
-print(result)  # <coroutine object>
-
-# RIGHT - actually waits for result
-result = await async_function()
-print(result)  # Actual result
-```
-
-### Pitfall 2: Blocking the Event Loop
-
-```python
-# WRONG - blocks entire event loop, stalls all tasks
-async def bad_function():
-    import time
-    time.sleep(1)  # BLOCKS!
-
-# RIGHT - yields control
-async def good_function():
-    await asyncio.sleep(1)  # Non-blocking
-```
-
-### Pitfall 3: Not Handling Cancellation
-
-```python
-# WRONG - ignores cancellation
-async def bad_task():
-    while True:
-        await asyncio.sleep(1)
-
-# RIGHT - handles cancellation gracefully
-async def good_task():
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except asyncio.CancelledError:
-        print("Task cancelled, cleaning up...")
-        raise  # Re-raise to propagate cancellation
-```
-
-### Pitfall 4: Mixing Sync and Async Directly
-
-```python
-# WRONG - can't call async from sync context directly
-def sync_function():
-    result = await async_function()  # SyntaxError!
-
-# RIGHT - use asyncio.run()
-def sync_function():
-    result = asyncio.run(async_function())
-```
+1. **Forgetting await** — Returns unawaited coroutine. Use `result = await async_func()`.
+2. **Blocking event loop** — Use `await asyncio.sleep()`, not `time.sleep()`.
+3. **Ignoring cancellation** — Wrap long tasks: `try/except asyncio.CancelledError: raise`.
+4. **Mixed sync/async** — Use `asyncio.run(async_func())` only at entry point.
 
 ## Anti-Patterns
 
-```python
-# ANTI-PATTERN 1: Using asyncio.sleep(0) for yielding
-async def bad_yield():
-    await asyncio.sleep(0)  # Doesn't actually yield control
+- Don't manually create event loops; use `asyncio.run()` at entry point
+- Don't use `asyncio.gather()` without `return_exceptions=True` for error resilience
+- Libraries should expose async APIs, not manage event loops
+- Don't mix `sync` and `async` without using threads: `await asyncio.to_thread()`
 
-# ANTI-PATTERN 2: Creating event loop manually (unnecessary)
-import asyncio
-loop = asyncio.get_event_loop()
-result = loop.run_until_complete(my_coroutine())
-# Use asyncio.run() instead
-
-# ANTI-PATTERN 3: Bare asyncio.gather() without return_exceptions
-await asyncio.gather(task1, task2)  # First exception cancels all
-# Use return_exceptions=True to collect all results and errors
-await asyncio.gather(task1, task2, return_exceptions=True)
-
-# ANTI-PATTERN 4: Event loop management in library code
-# DON'T: Libraries creating/managing event loops
-class MyClient:
-    def __init__(self):
-        self.loop = asyncio.new_event_loop()  # Wrong!
-
-# DO: Library provides async API, caller manages event loop
-class MyClient:
-    async def fetch(self, url: str):
-        ...
-```
-
-## Agent Support
-
-- **python-expert** — Async design patterns and type hints
-- **react-expert** — Async patterns in async frameworks (FastAPI, aiohttp)
-- **nodejs-expert** — Comparison with Node.js async patterns
-
-## Skill References
-
-- **python-patterns** — Complementary sync patterns, decorators, concurrency models
-- **python-resilience** — Timeouts and retry patterns with async
-- **postgresql-patterns** — Using asyncpg for async database operations
+**Agent Support:** python-expert, python-resilience
+**Related:** python-patterns, python-resilience (timeouts/retries), postgresql-patterns (asyncpg)

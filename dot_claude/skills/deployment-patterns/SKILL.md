@@ -2,105 +2,39 @@
 name: deployment-patterns
 description: Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.
 origin: ECC
+model: sonnet
 ---
 
 # Deployment Patterns
 
-Production deployment workflows and CI/CD best practices.
-
-## When to Activate
-
-- Setting up CI/CD pipelines
-- Dockerizing an application
-- Planning deployment strategy (blue-green, canary, rolling)
-- Implementing health checks and readiness probes
-- Preparing for a production release
-- Configuring environment-specific settings
+Production deployment workflows and CI/CD best practices for web applications.
 
 ## Deployment Strategies
 
-### Rolling Deployment (Default)
+**Rolling:** Gradually replace instances with zero downtime; both versions coexist (requires backward compatibility).
 
-Replace instances gradually — old and new versions run simultaneously during rollout.
+**Blue-Green:** Run two identical environments; switch traffic atomically for instant rollback. Needs 2x infrastructure during deployment.
 
-```
-Instance 1: v1 → v2  (update first)
-Instance 2: v1        (still running v1)
-Instance 3: v1        (still running v1)
-
-Instance 1: v2
-Instance 2: v1 → v2  (update second)
-Instance 3: v1
-
-Instance 1: v2
-Instance 2: v2
-Instance 3: v1 → v2  (update last)
-```
-
-**Pros:** Zero downtime, gradual rollout
-**Cons:** Two versions run simultaneously — requires backward-compatible changes
-**Use when:** Standard deployments, backward-compatible changes
-
-### Blue-Green Deployment
-
-Run two identical environments. Switch traffic atomically.
-
-```
-Blue  (v1) ← traffic
-Green (v2)   idle, running new version
-
-# After verification:
-Blue  (v1)   idle (becomes standby)
-Green (v2) ← traffic
-```
-
-**Pros:** Instant rollback (switch back to blue), clean cutover
-**Cons:** Requires 2x infrastructure during deployment
-**Use when:** Critical services, zero-tolerance for issues
-
-### Canary Deployment
-
-Route a small percentage of traffic to the new version first.
-
-```
-v1: 95% of traffic
-v2:  5% of traffic  (canary)
-
-# If metrics look good:
-v1: 50% of traffic
-v2: 50% of traffic
-
-# Final:
-v2: 100% of traffic
-```
-
-**Pros:** Catches issues with real traffic before full rollout
-**Cons:** Requires traffic splitting infrastructure, monitoring
-**Use when:** High-traffic services, risky changes, feature flags
+**Canary:** Route small traffic percentage to new version first, expanding gradually if metrics pass. Requires traffic splitting and monitoring.
 
 ## Docker
 
 ### Multi-Stage Dockerfile (Node.js)
 
 ```dockerfile
-# Stage 1: Install dependencies
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --production=false
 
-# Stage 2: Build
 FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
-RUN npm prune --production
+RUN npm run build && npm prune --production
 
-# Stage 3: Production image
 FROM node:22-alpine AS runner
 WORKDIR /app
-
 RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001
 USER appuser
 
@@ -110,80 +44,21 @@ COPY --from=builder --chown=appuser:appgroup /app/package.json ./
 
 ENV NODE_ENV=production
 EXPOSE 3000
-
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
-
 CMD ["node", "dist/server.js"]
-```
-
-### Multi-Stage Dockerfile (Go)
-
-```dockerfile
-FROM golang:1.22-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /server ./cmd/server
-
-FROM alpine:3.19 AS runner
-RUN apk --no-cache add ca-certificates
-RUN adduser -D -u 1001 appuser
-USER appuser
-
-COPY --from=builder /server /server
-
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8080/health || exit 1
-CMD ["/server"]
-```
-
-### Multi-Stage Dockerfile (Python/Django)
-
-```dockerfile
-FROM python:3.12-slim AS builder
-WORKDIR /app
-RUN pip install --no-cache-dir uv
-COPY requirements.txt .
-RUN uv pip install --system --no-cache -r requirements.txt
-
-FROM python:3.12-slim AS runner
-WORKDIR /app
-
-RUN useradd -r -u 1001 appuser
-USER appuser
-
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY . .
-
-ENV PYTHONUNBUFFERED=1
-EXPOSE 8000
-
-HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')" || exit 1
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
 ```
 
 ### Docker Best Practices
 
-```
-# GOOD practices
-- Use specific version tags (node:22-alpine, not node:latest)
+- Use specific version tags (not `:latest`)
 - Multi-stage builds to minimize image size
 - Run as non-root user
-- Copy dependency files first (layer caching)
-- Use .dockerignore to exclude node_modules, .git, tests
-- Add HEALTHCHECK instruction
+- Copy dependency files first for layer caching
+- Use `.dockerignore` to exclude `node_modules`, `.git`, tests
+- Add `HEALTHCHECK` instruction
 - Set resource limits in docker-compose or k8s
-
-# BAD practices
-- Running as root
-- Using :latest tags
-- Copying entire repo in one COPY layer
-- Installing dev dependencies in production image
-- Storing secrets in image (use env vars or secrets manager)
-```
+- Never store secrets in image; use env vars or secrets manager
 
 ## CI/CD Pipeline
 
@@ -251,15 +126,6 @@ jobs:
           echo "Deploying ${{ github.sha }}"
 ```
 
-### Pipeline Stages
-
-```
-PR opened:
-  lint → typecheck → unit tests → integration tests → preview deploy
-
-Merged to main:
-  lint → typecheck → unit tests → integration tests → build image → deploy staging → smoke tests → deploy production
-```
 
 ## Health Checks
 
@@ -363,184 +229,62 @@ const envSchema = z.object({
 export const env = envSchema.parse(process.env);
 ```
 
-## Rollback Strategy
-
-### Instant Rollback
+## Rollback
 
 ```bash
-# Docker/Kubernetes: point to previous image
+# Kubernetes
 kubectl rollout undo deployment/app
 
-# Vercel: promote previous deployment
+# Vercel
 vercel rollback
 
-# Railway: redeploy previous commit
+# Railway
 railway up --commit <previous-sha>
 
-# Database: rollback migration (if reversible)
+# Database migrations
 npx prisma migrate resolve --rolled-back <migration-name>
 ```
 
-### Rollback Checklist
+Ensure: previous images tagged, migrations backward-compatible, feature flags available to disable features, error rate monitoring in place, rollback tested in staging.
 
-- [ ] Previous image/artifact is available and tagged
-- [ ] Database migrations are backward-compatible (no destructive changes)
-- [ ] Feature flags can disable new features without deploy
-- [ ] Monitoring alerts configured for error rate spikes
-- [ ] Rollback tested in staging before production release
+## Monitoring & Observability
+
+**Metrics to Export:**
+- Request rate (requests/sec)
+- Latency (p50, p95, p99 response times)
+- Error rate (5xx, 4xx counts)
+- Deployment frequency (deploys/week)
+- Lead time for changes (time from commit to production)
+- Mean time to recovery (MTTR on incidents)
+
+**Alerting Strategy:**
+- Alert on error rate > 1% (or SLO burn rate > acceptable)
+- Alert on p99 latency > 500ms
+- Alert on pod restart loops (liveness probe failures)
+- Alert on disk usage > 80% (prevents out-of-space crashes)
+
+**Log Aggregation:** Ship logs to centralized system (ELK, Datadog, CloudWatch). Structure logs as JSON for machine parsing: `{ "timestamp", "level", "message", "trace_id", "user_id", "duration_ms" }`. Never log PII.
 
 ## Production Readiness Checklist
 
-Before any production deployment:
+**Application:** All tests pass, no hardcoded secrets, error handling complete, structured logging (no PII), health check endpoint ready
 
-### Application
-- [ ] All tests pass (unit, integration, E2E)
-- [ ] No hardcoded secrets in code or config files
-- [ ] Error handling covers all edge cases
-- [ ] Logging is structured (JSON) and does not contain PII
-- [ ] Health check endpoint returns meaningful status
+**Infrastructure:** Reproducible Docker builds (pinned versions), environment variables validated at startup, resource limits set (CPU/memory), auto-scaling configured (min/max), SSL/TLS enabled
 
-### Infrastructure
-- [ ] Docker image builds reproducibly (pinned versions)
-- [ ] Environment variables documented and validated at startup
-- [ ] Resource limits set (CPU, memory)
-- [ ] Horizontal scaling configured (min/max instances)
-- [ ] SSL/TLS enabled on all endpoints
+**Monitoring:** Metrics exported (request rate, latency, errors), alerts for error rate threshold, log aggregation ready, uptime monitoring on health endpoint
 
-### Monitoring
-- [ ] Application metrics exported (request rate, latency, errors)
-- [ ] Alerts configured for error rate > threshold
-- [ ] Log aggregation set up (structured logs, searchable)
-- [ ] Uptime monitoring on health endpoint
+**Security:** CVE scanning enabled, CORS configured, rate limiting on public endpoints, auth verified, security headers (CSP, HSTS, X-Frame-Options) set
 
-### Security
-- [ ] Dependencies scanned for CVEs
-- [ ] CORS configured for allowed origins only
-- [ ] Rate limiting enabled on public endpoints
-- [ ] Authentication and authorization verified
-- [ ] Security headers set (CSP, HSTS, X-Frame-Options)
-
-### Operations
-- [ ] Rollback plan documented and tested
-- [ ] Database migration tested against production-sized data
-- [ ] Runbook for common failure scenarios
-- [ ] On-call rotation and escalation path defined
-
-## GitOps Workflows
-
-### GitOps Principles
-
-Git as the single source of truth for infrastructure and application state. All changes flow through version control.
-
-```
-Git Repository
-    ↓
-    ├─ Application code (app-repo)
-    └─ Configuration (config-repo)
-         ↓
-    Continuous Deployment
-         ↓
-    Live Infrastructure (always matches Git state)
-```
-
-### Sync Policies and Rollback
-
-```yaml
-# Automatic sync: Always pull latest from Git
-spec:
-  syncPolicy:
-    automated:
-      prune: true              # Delete resources not in Git
-      selfHeal: true           # Revert manual cluster changes
-```
-
-Rollback by reverting commit: Git revert automatically redeploys previous state.
-
-### GitOps Tooling
-
-**ArgoCD:** Application-centric, push-based, web UI (visual ops teams)
-**Flux v2:** Lightweight, declarative, GitOps-native (cloud teams)
-
-## Progressive Delivery
-
-### Canary Release with Health Gates
-
-```yaml
-# Flagger config: Monitor metrics, auto-rollback if thresholds exceeded
-analysis:
-  interval: 30s
-  threshold: 5           # Max 5 failed checks before rollback
-  maxWeight: 50
-  stepWeight: 10         # Increment by 10% every 30 seconds
-  metrics:
-  - name: error-rate
-    thresholdRange:
-      max: 1             # Fail if error rate > 1%
-  - name: latency
-    thresholdRange:
-      max: 500           # Fail if p99 latency > 500ms
-```
-
-### Blue-Green with Database Migration
-
-Deploy to green, run migrations (blue still serving), smoke tests, switch traffic, blue becomes standby for rollback.
-
-### Feature Flags
-
-```typescript
-// LaunchDarkly: Flag state with user context
-const enableNewUI = await client.variation('new-ui', user, false)
-
-// Environment-based: Simple alternative
-const FLAGS = { newCheckout: process.env.ENABLE_NEW_CHECKOUT === 'true' }
-```
-
-### Traffic Shifting (Argo Rollouts)
-
-Progressive weight increment: 20% → 50% → 100% with metric validation between steps.
-
-### Automated Rollback Triggers
-
-Rollback if error-rate > 1%, p99 latency > 1sec, or custom metrics exceed thresholds.
+**Operations:** Rollback plan tested, migrations tested with production data, runbook for failures, on-call defined
 
 ## Supply Chain Security
 
-### Image Scanning in CI
+**Image Scanning:** Use Trivy in CI; fail on CRITICAL/HIGH (or HIGH only in regulated environments).
 
-```yaml
-- name: Scan with Trivy
-  uses: aquasecurity/trivy-action@master
-  with:
-    image-ref: myapp:${{ github.sha }}
-    severity: CRITICAL,HIGH
-    exit-code: 1  # Fail build on findings
-```
+**SBOM Generation:** `syft myapp:latest -o spdx-json > sbom.spdx.json` or `cosign generate-sbom`
 
-When to fail the build:
-- CRITICAL: Always fail
-- HIGH: Fail in regulated environments (finance, healthcare)
-- MEDIUM/LOW: Log for awareness, don't block
+**Image Signing:** `cosign sign --key cosign.key myapp:latest` and verify before deployment
 
-### SBOM Generation
+**Dependency Scanning:** Enable Dependabot (GitHub) or Snyk (multi-cloud) for automated CVE PRs
 
-```bash
-syft myapp:latest -o spdx-json > sbom.spdx.json
-cosign generate-sbom myapp:latest > sbom.json
-```
-
-### Image Signing and Verification
-
-```bash
-cosign sign --key cosign.key myapp:latest
-cosign verify --key cosign.pub myapp:latest || exit 1
-```
-
-### Dependency Scanning
-
-Dependabot (GitHub), Snyk (multi-cloud), enable automated PRs for CVEs.
-
-### SLSA Framework
-
-Maturity levels: L1 (provenance) → L2 (signed) → L3 (hermetic) → L4 (reproducible)
-
-**Practical L3 path:** Use GitHub Actions + slsa-ghrunner + cosign + Kyverno admission controller.
+**SLSA Framework:** Maturity levels: L1 (provenance) → L2 (signed) → L3 (hermetic) → L4 (reproducible). Practical L3: GitHub Actions + slsa-ghrunner + cosign + Kyverno admission controller.

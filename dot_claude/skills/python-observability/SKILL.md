@@ -2,20 +2,18 @@
 name: python-observability
 description: Structured logging, metrics collection, distributed tracing, and health checks for production Python applications.
 origin: ECC
+model: sonnet
 ---
 
 # Python Observability Patterns
 
-Instrument Python applications with structured logs, metrics, and traces to diagnose production issues without deploying new code.
+Instrument Python applications with structured logs, metrics, and traces to diagnose production issues.
 
 ## When to Activate
 
-- Adding structured logging to applications
-- Implementing metrics collection with Prometheus
+- Adding structured logging or metrics collection
 - Setting up distributed tracing across services
-- Propagating correlation IDs through request chains
-- Building health check endpoints
-- Designing alerting strategies
+- Building health check endpoints or designing alerting
 
 ## Core Concepts
 
@@ -89,33 +87,26 @@ from contextvars import ContextVar
 import uuid
 import structlog
 from fastapi import Request
+import httpx
 
-# Context variable for request-scoped correlation ID
 correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
-logger = structlog.get_logger()
 
 def set_correlation_id(cid: str | None = None) -> str:
-    """Set correlation ID and bind to logger context."""
     cid = cid or str(uuid.uuid4())
     correlation_id.set(cid)
     structlog.contextvars.bind_contextvars(correlation_id=cid)
     return cid
 
-# FastAPI middleware to extract or generate correlation ID
+# Middleware: extract or generate correlation ID
 async def correlation_id_middleware(request: Request, call_next):
-    """Middleware to set and propagate correlation ID."""
     cid = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
     set_correlation_id(cid)
-
     response = await call_next(request)
     response.headers["X-Correlation-ID"] = cid
     return response
 
 # Propagate to downstream services
-import httpx
-
 async def call_downstream(endpoint: str, data: dict) -> dict:
-    """Call downstream service with correlation ID header."""
     async with httpx.AsyncClient() as client:
         response = await client.post(
             endpoint,
@@ -128,225 +119,131 @@ async def call_downstream(endpoint: str, data: dict) -> dict:
 
 ### Pattern 3: Semantic Log Levels
 
-Use consistent log levels to enable filtering and alerting.
-
 ```python
 import structlog
 
 logger = structlog.get_logger()
 
-# DEBUG: Internal diagnostics (variable values, internal state)
-logger.debug("cache_operation", key=user_id, hit=True, ttl_seconds=3600)
+# DEBUG: internal diagnostics
+logger.debug("cache_hit", key=user_id, ttl_seconds=3600)
 
-# INFO: Normal operational events (request lifecycle, job completion)
-logger.info("order_created", order_id="ORD-123", total=99.99, user_tier="premium")
+# INFO: normal operations (requests, completions)
+logger.info("order_created", order_id="ORD-123", total=99.99)
 
-# WARNING: Recoverable anomalies (retry attempts, degraded behavior)
-logger.warning(
-    "rate_limit_approaching",
-    current_rate=950,
-    limit=1000,
-    reset_seconds=30,
-)
+# WARNING: recoverable anomalies (retries, degraded behavior)
+logger.warning("rate_limit_approaching", current=950, limit=1000)
 
-# ERROR: Failures requiring investigation (exceptions, unavailable services)
-logger.error(
-    "payment_failed",
-    order_id="ORD-123",
-    error_type="stripe_error",
-    status_code=502,
-)
+# ERROR: failures requiring investigation (exceptions, unavailable services)
+logger.error("payment_failed", order_id="ORD-123", error_type="stripe_error")
 ```
 
-Never log expected behavior (e.g., wrong password) at ERROR level. Distinguish between user error (INFO) and system failure (ERROR).
+Use INFO for user errors (wrong password), ERROR for system failures only.
 
 ### Pattern 4: Prometheus Metrics - Four Golden Signals
 
-Instrument endpoints with Counter, Gauge, and Histogram metrics.
-
 ```python
 from prometheus_client import Counter, Histogram, Gauge
-import time
 from functools import wraps
-from fastapi import FastAPI, Request
+import time
 
-app = FastAPI()
-
-# Latency: Request duration distribution
+# Latency: histogram with percentile buckets
 REQUEST_LATENCY = Histogram(
     "http_request_duration_seconds",
     "Request latency in seconds",
     ["method", "endpoint", "status"],
-    buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+    buckets=[0.01, 0.05, 0.1, 0.5, 1, 2.5, 5],
 )
 
-# Traffic: Total request count
+# Traffic: total request count
 REQUEST_COUNT = Counter(
     "http_requests_total",
     "Total HTTP requests",
     ["method", "endpoint", "status"],
 )
 
-# Errors: Error count
+# Errors: error count
 ERROR_COUNT = Counter(
     "http_errors_total",
     "Total HTTP errors",
     ["method", "endpoint", "error_type"],
 )
 
-# Saturation: Resource utilization
+# Saturation: resource utilization
 DB_CONNECTIONS_USED = Gauge(
     "db_connections_used",
-    "Number of active database connections",
+    "Active database connections",
 )
 
-# Decorator to instrument endpoints
 def track_metrics(func):
     @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs):
-        method = request.method
-        endpoint = request.url.path
+    async def wrapper(request, *args, **kwargs):
         start = time.perf_counter()
-
         try:
             response = await func(request, *args, **kwargs)
             status = str(response.status_code)
             return response
         except Exception as e:
-            status = "500"
-            ERROR_COUNT.labels(
-                method=method,
-                endpoint=endpoint,
-                error_type=type(e).__name__,
-            ).inc()
+            ERROR_COUNT.labels(method=request.method, endpoint=request.url.path, error_type=type(e).__name__).inc()
             raise
         finally:
             duration = time.perf_counter() - start
-            REQUEST_COUNT.labels(method=method, endpoint=endpoint, status=status).inc()
-            REQUEST_LATENCY.labels(method=method, endpoint=endpoint, status=status).observe(duration)
-
+            REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path, status=status).inc()
+            REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path, status=status).observe(duration)
     return wrapper
-
-# Use on endpoints
-@app.get("/users/{user_id}")
-@track_metrics
-async def get_user(request: Request, user_id: str):
-    return {"id": user_id}
 ```
 
 ### Pattern 5: Bounded Cardinality in Metrics
 
-Never use unbounded values (user IDs, request paths with IDs) as metric labels.
+Never use unbounded values (user IDs, request paths with IDs) as metric labels—they explode storage.
 
 ```python
 from prometheus_client import Counter
 
-# BAD: Unbounded label causing metric explosion
-REQUEST_COUNT_WRONG = Counter(
-    "http_requests_total",
-    "Total requests",
-    ["user_id"],  # Millions of unique values!
-)
-REQUEST_COUNT_WRONG.labels(user_id="user-12345").inc()  # Creates new time series
+# WRONG: Unbounded label (millions of unique values)
+REQUEST_COUNT_BAD = Counter("http_requests_total", "Requests", ["user_id"])
 
-# GOOD: Only bounded label values
-REQUEST_COUNT = Counter(
-    "http_requests_total",
-    "Total requests",
-    ["user_tier"],  # Bounded: [free, standard, premium]
-)
+# CORRECT: Only bounded labels [free, standard, premium]
+REQUEST_COUNT = Counter("http_requests_total", "Requests", ["user_tier"])
 REQUEST_COUNT.labels(user_tier="premium").inc()
 
-# If you need per-user metrics, log instead
-import structlog
-logger = structlog.get_logger()
+# For per-user metrics, use structured logs instead
 logger.info("user_request", user_id="user-12345", endpoint="/api/data")
-# Query logs to answer per-user questions
 ```
 
 ### Pattern 6: Health Check Endpoints
 
-Implement liveness and readiness endpoints for Kubernetes/container orchestration.
-
 ```python
 from fastapi import FastAPI, HTTPException
-from enum import Enum
 import httpx
 
 app = FastAPI()
 
-class HealthStatus(Enum):
-    HEALTHY = "healthy"
-    UNHEALTHY = "unhealthy"
-
 async def check_database() -> bool:
-    """Check if database is accessible."""
     try:
-        # Example: simple query
         result = await db.execute("SELECT 1")
         return result is not None
     except Exception:
         return False
 
-async def check_redis() -> bool:
-    """Check if Redis is accessible."""
-    try:
-        result = await redis_client.ping()
-        return result == True
-    except Exception:
-        return False
-
-async def check_upstream_service() -> bool:
-    """Check if upstream service is accessible."""
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get("https://upstream.example.com/health", timeout=5)
-            return response.status_code == 200
-    except Exception:
-        return False
-
 @app.get("/health/live")
 async def liveness() -> dict:
-    """Liveness probe: is the application running?
-
-    Kubernetes kills and restarts if this fails.
-    Only check if the application process is alive.
-    """
+    """Liveness: is the app running? Kubernetes restarts on failure."""
     return {"status": "alive"}
 
 @app.get("/health/ready")
 async def readiness() -> dict:
-    """Readiness probe: can the application handle traffic?
-
-    Kubernetes removes from load balancer if this fails.
-    Check all dependencies: database, cache, external services.
-    """
+    """Readiness: can app handle traffic? Check dependencies."""
     db_ok = await check_database()
-    redis_ok = await check_redis()
-    upstream_ok = await check_upstream_service()
 
-    if not (db_ok and redis_ok and upstream_ok):
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "status": "not_ready",
-                "database": "ok" if db_ok else "down",
-                "redis": "ok" if redis_ok else "down",
-                "upstream": "ok" if upstream_ok else "down",
-            },
-        )
+    if not db_ok:
+        raise HTTPException(status_code=503, detail={"status": "not_ready", "database": "down"})
 
-    return {
-        "status": "ready",
-        "database": "ok",
-        "redis": "ok",
-        "upstream": "ok",
-    }
+    return {"status": "ready", "database": "ok"}
 ```
 
 ### Pattern 7: Distributed Tracing with OpenTelemetry
 
-Set up end-to-end request tracing across services.
+> For full OTel SDK setup, exporters, sampling strategies, and collector pipelines, use the `opentelemetry-setup` skill. The snippet below shows minimal usage; see that skill for production configuration.
 
 ```python
 from opentelemetry import trace
@@ -354,43 +251,27 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 
-# Configure tracing exporter (Jaeger, Zipkin, etc.)
-jaeger_exporter = JaegerExporter(
-    agent_host_name="localhost",
-    agent_port=6831,
-)
-
+# Configure exporter (Jaeger, Zipkin, etc.)
+jaeger_exporter = JaegerExporter(agent_host_name="localhost", agent_port=6831)
 trace_provider = TracerProvider()
 trace_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
 trace.set_tracer_provider(trace_provider)
 
 tracer = trace.get_tracer(__name__)
 
-# Instrument operations with spans
-async def process_order(order_id: str) -> Order:
-    """Process order with tracing."""
+async def process_order(order_id: str):
     with tracer.start_as_current_span("process_order") as span:
         span.set_attribute("order.id", order_id)
 
-        # Validate order
         with tracer.start_as_current_span("validate_order"):
             await validate_order(order_id)
 
-        # Charge payment
         with tracer.start_as_current_span("charge_payment"):
             payment_result = await charge_payment(order_id)
             span.set_attribute("payment.status", payment_result.status)
-
-        # Send confirmation
-        with tracer.start_as_current_span("send_confirmation"):
-            await send_confirmation(order_id)
-
-        return order
 ```
 
 ### Pattern 8: Timing Context Manager
-
-Reusable pattern for logging operation duration and errors.
 
 ```python
 from contextlib import contextmanager
@@ -401,7 +282,6 @@ logger = structlog.get_logger()
 
 @contextmanager
 def timed_operation(operation_name: str, **fields):
-    """Context manager for timing and structured logging of operations."""
     start = time.perf_counter()
     logger.debug("operation_started", operation=operation_name, **fields)
 
@@ -409,22 +289,11 @@ def timed_operation(operation_name: str, **fields):
         yield
     except Exception as e:
         elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
-        logger.error(
-            "operation_failed",
-            operation=operation_name,
-            duration_ms=elapsed_ms,
-            error_type=type(e).__name__,
-            **fields,
-        )
+        logger.error("operation_failed", operation=operation_name, duration_ms=elapsed_ms, error_type=type(e).__name__, **fields)
         raise
     else:
         elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
-        logger.info(
-            "operation_completed",
-            operation=operation_name,
-            duration_ms=elapsed_ms,
-            **fields,
-        )
+        logger.info("operation_completed", operation=operation_name, duration_ms=elapsed_ms, **fields)
 
 # Usage
 with timed_operation("fetch_user_orders", user_id="user-123"):
@@ -435,21 +304,10 @@ with timed_operation("fetch_user_orders", user_id="user-123"):
 
 ### Pattern 9: Alert Design - RED Metrics
 
-Alert on Rate, Errors, and Duration. Avoid alerting on symptoms.
+Alert on Rate, Errors, and Duration—not symptoms like CPU or disk usage.
 
-```python
-# GOOD: Alert on actionable metrics (RED)
-# - Rate: requests/sec drops suddenly (service down?)
-# - Errors: error rate > 5% (bugs in deployment?)
-# - Duration: p99 latency > 500ms (slow downstream?)
-
-# BAD: Alert on derived/symptom metrics
-# - CPU > 80% (might be normal during batch job)
-# - Disk usage > 90% (is it actually a problem?)
-# - Queue depth > 1000 (depends on processing rate)
-
-# Example alerting rules (Prometheus)
-alert_rules = """
+```yaml
+# Prometheus alerting rules
 groups:
 - name: api_alerts
   rules:
@@ -468,60 +326,42 @@ groups:
     for: 5m
     annotations:
       summary: "Request rate dropped below 10/sec"
-"""
 ```
 
 ## Anti-Patterns
 
 ```python
-# ANTI-PATTERN 1: Logging PII
-logger.info("user_login", user_email=email, password_hash=password)  # Don't log passwords!
+# WRONG: Log PII (passwords, tokens)
+logger.info("user_login", user_email=email, password_hash=password)
 
-# CORRECT: Log IDs, not sensitive data
+# CORRECT: Log IDs only
 logger.info("user_login", user_id=user.id, email_domain=email.split("@")[1])
 
-# ANTI-PATTERN 2: Using print() instead of logger
-print("Error occurred:", error)  # Not structured, no timestamps
+# WRONG: Use print() instead of logger
+print("Error occurred:", error)
 
 # CORRECT: Use logger with context
 logger.error("operation_failed", error_type=type(e).__name__, operation="sync_data")
 
-# ANTI-PATTERN 3: Missing correlation IDs
-async def internal_operation():
-    # No way to trace this back to original request
-    result = await downstream_service()
+# WRONG: Missing correlation IDs
+result = await downstream_service()
 
 # CORRECT: Propagate correlation ID
-async def internal_operation():
-    headers = {"X-Correlation-ID": correlation_id.get()}
-    result = await downstream_service(headers=headers)
+result = await downstream_service(headers={"X-Correlation-ID": correlation_id.get()})
 
-# ANTI-PATTERN 4: Unbounded metric labels
-REQUEST_COUNT.labels(endpoint=request.url.path).inc()  # /user/1, /user/2, /user/3...
+# WRONG: Unbounded metric labels (/user/1, /user/2, /user/3...)
+REQUEST_COUNT.labels(endpoint=request.url.path).inc()
 
-# CORRECT: Use bounded labels
+# CORRECT: Use bounded labels only
 REQUEST_COUNT.labels(endpoint_pattern="/user/{id}").inc()
 
-# ANTI-PATTERN 5: Logging without context
-logger.error("Failed to process")  # Which item? Why failed?
+# WRONG: Sparse context in logs
+logger.error("Failed to process")
 
-# CORRECT: Log with full context
+# CORRECT: Full context
 logger.error("item_processing_failed", item_id=item.id, error_type=type(e).__name__)
-
-# ANTI-PATTERN 6: Alerting on every error
-# Alert if ANY error occurs (creates thousands of alerts)
-
-# CORRECT: Alert on rate or aggregate
-# Alert if error rate > 5% for 5 minutes (actionable threshold)
 ```
 
-## Agent Support
+## Related Skills
 
-- **python-expert** — Structlog configuration, asyncio patterns for tracing
-- **rest-expert** — Health check endpoint design, status code semantics
-
-## Skill References
-
-- **python-error-handling** — Structured exception context for logs
-- **python-resilience** — Circuit breaker and retry patterns with logging
-- **opentelemetry-expert** — Advanced tracing instrumentation
+**python-error-handling**, **python-resilience**, **opentelemetry-setup**

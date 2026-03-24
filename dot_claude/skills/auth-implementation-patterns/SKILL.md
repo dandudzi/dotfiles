@@ -2,6 +2,7 @@
 name: auth-implementation-patterns
 description: Authentication and authorization patterns including OAuth2, OIDC, JWT, sessions, RBAC, and multi-tenancy across TypeScript, Python, and JavaScript frameworks.
 origin: ECC
+model: sonnet
 ---
 
 # Authentication & Authorization Patterns
@@ -10,11 +11,7 @@ origin: ECC
 
 - Selecting between sessions vs JWT vs opaque tokens
 - Implementing OAuth2/OIDC flows
-- Designing multi-tenant authentication
-- Setting up NextAuth.js, Auth.js, or FastAPI auth
-- Implementing role-based access control (RBAC)
-- Handling token refresh and key rotation
-- Preventing session fixation, CSRF, and token theft
+- Setting up RBAC and multi-tenancy
 
 ## Auth Strategy Selection
 
@@ -35,20 +32,6 @@ origin: ECC
 ## OAuth2 Flows
 
 ### Authorization Code + PKCE (SPAs/Mobile)
-
-```
-Client → Auth Server: code_challenge, client_id, redirect_uri
-         ↓
-Auth Server → User: Login form
-         ↓
-User → Auth Server: Credentials
-         ↓
-Auth Server → Client: authorization_code
-         ↓
-Client → Auth Server: authorization_code, code_verifier, client_secret
-         ↓
-Auth Server → Client: access_token, refresh_token, id_token
-```
 
 **TypeScript (React + PKCE)**:
 
@@ -98,38 +81,11 @@ const response = await fetch('https://auth.example.com/token', {
 const { access_token } = await response.json();
 ```
 
-### Device Flow (Smart TVs, IoT)
-
-```typescript
-// Step 1: Request device code
-const deviceResponse = await fetch('https://auth.example.com/device', {
-  method: 'POST',
-  body: new URLSearchParams({
-    client_id: CLIENT_ID,
-    scope: 'user:read'
-  })
-});
-const { device_code, user_code, verification_uri } = await deviceResponse.json();
-
-// Step 2: Display user_code to user, poll for token
-const tokenResponse = await poll(
-  'https://auth.example.com/token',
-  {
-    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    device_code,
-    client_id: CLIENT_ID
-  },
-  interval=5000
-);
-```
-
 ## OIDC (OpenID Connect)
 
-**ID Token** (user identity): Contains user claims (sub, name, email, aud, iat, exp)
-**Access Token** (API authorization): Bearer token for API requests
-**UserInfo Endpoint**: Retrieve additional user details
+ID Token contains user identity (sub, name, email, aud, iat, exp). Access Token authorizes API requests.
 
-**Claims mapping example:**
+**Claims verification:**
 
 ```typescript
 // ID Token structure
@@ -157,25 +113,18 @@ const decoded = jwt.verify(idToken, publicKey, {
 
 ## Session Management (Cookies)
 
-**Secure cookie flags:**
-
 ```typescript
-// Express.js example
 app.use(session({
   store: new RedisStore(),
   cookie: {
-    httpOnly: true,        // Not accessible via JavaScript
+    httpOnly: true,        // Block JavaScript access
     secure: true,          // HTTPS only
     sameSite: 'strict',    // Prevent CSRF
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));
-```
 
-**Session fixation prevention:**
-
-```typescript
-// Regenerate session ID after login
+// Regenerate ID after login to prevent fixation
 req.session.regenerate((err) => {
   if (err) return next(err);
   req.session.userId = user.id;
@@ -185,17 +134,9 @@ req.session.regenerate((err) => {
 
 ## JWT Patterns
 
-### Token Structure
+Use RS256 (asymmetric) with short-lived access tokens (15m) + refresh tokens (30d).
 
-```
-header.payload.signature
-
-header: { alg: "RS256", typ: "JWT" }
-payload: { sub: "user123", role: "admin", exp: 1234567890 }
-signature: HMACSHA256(header.payload, secret)
-```
-
-### RS256 (Asymmetric, Recommended)
+### RS256 (Asymmetric)
 
 ```typescript
 import jwt from 'jsonwebtoken';
@@ -216,32 +157,6 @@ const decoded = jwt.verify(token, publicKey, {
   algorithms: ['RS256'],
   issuer: 'https://auth.example.com'
 });
-```
-
-### Short-lived Access Token + Refresh Token
-
-```typescript
-// Access token: 15 minutes
-const accessToken = jwt.sign(
-  { sub: user.id, type: 'access' },
-  privateKey,
-  { expiresIn: '15m', algorithm: 'RS256' }
-);
-
-// Refresh token: 30 days (stored in secure HTTP-only cookie)
-const refreshToken = jwt.sign(
-  { sub: user.id, type: 'refresh', tokenFamily: uuid() },
-  privateKey,
-  { expiresIn: '30d', algorithm: 'RS256' }
-);
-
-// Client-side refresh flow
-if (tokenExpired) {
-  const newAccessToken = await fetch('/api/refresh', {
-    method: 'POST',
-    credentials: 'include' // Send refresh token cookie
-  });
-}
 ```
 
 ### Token Family Rotation (Detect Token Theft)
@@ -368,30 +283,23 @@ async def protected_route(current_user: TokenData = Depends(get_current_user)):
 
 ## RBAC (Role-Based Access Control)
 
-**Granular roles:**
+Use role + permission model (not boolean flags). Enforce at middleware and resource level.
 
 ```typescript
-// Don't: Boolean flags
-user.isAdmin, user.canWrite
-
-// Do: Role-based with permissions
 interface User {
   roles: ['admin', 'editor', 'viewer'];
-  permissions: ['post:read', 'post:write', 'post:delete', 'user:manage'];
+  permissions: ['post:read', 'post:write', 'post:delete'];
 }
 
-// Permission mapping
 const rolePermissions = {
-  admin: ['post:*', 'user:*', 'settings:*'],
+  admin: ['post:*', 'user:*'],
   editor: ['post:read', 'post:write'],
   viewer: ['post:read']
 };
 
-// Middleware
 function requirePermission(permission: string) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as User;
-    if (!user.permissions.includes(permission)) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user.permissions.includes(permission)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     next();
@@ -401,7 +309,7 @@ function requirePermission(permission: string) {
 app.post('/posts', requirePermission('post:write'), createPost);
 ```
 
-**Resource-level authorization:**
+**Resource-level check:**
 
 ```typescript
 @Post('/posts/:id/publish')
@@ -420,52 +328,27 @@ async publishPost(@Param('id') id: string, @Req() req) {
 
 ## Multi-Tenancy
 
-**Tenant isolation in JWT claims:**
+Include tenantId in JWT claims. Enforce at middleware + database level.
 
 ```typescript
+// Include tenant context in token
 interface Token {
-  sub: string;      // user ID
-  tenantId: string; // tenant/organization ID
-  iat: number;
-  exp: number;
+  sub: string;
+  tenantId: string;
 }
 
-// Middleware enforces tenant boundary
+// Middleware validates tenant boundary
 app.use((req, res, next) => {
-  const token = req.user as Token;
-  const requestedTenantId = req.params.tenantId;
-
-  if (token.tenantId !== requestedTenantId) {
+  if (req.user.tenantId !== req.params.tenantId) {
     throw new ForbiddenException('Invalid tenant');
   }
   next();
 });
-```
 
-**Row-level security (Database):**
-
-```sql
--- PostgreSQL RLS example
+// Database-level: PostgreSQL RLS
 CREATE POLICY tenant_isolation ON posts
   USING (tenant_id = current_setting('app.current_tenant')::uuid);
-
--- Before query, set tenant context
 SET app.current_tenant = '550e8400-e29b-41d4-a716-446655440000';
-SELECT * FROM posts; -- Only returns rows for this tenant
-```
-
-**Subdomain routing:**
-
-```typescript
-// auth.example.com → tenant A
-// acme.example.com → tenant B
-
-app.use((req, res, next) => {
-  const subdomain = req.subdomains[0];
-  const tenant = await Tenant.findBySubdomain(subdomain);
-  req.tenantId = tenant.id;
-  next();
-});
 ```
 
 ## Anti-Patterns
@@ -481,12 +364,3 @@ app.use((req, res, next) => {
 | **Hardcoded JWT secrets** | Compromise exposes all tokens | Use environment variables + key rotation strategy |
 | **No expiry on ID tokens** | Token usable indefinitely | Set `exp` claim, verify expiry on every request |
 
-## Agent Support
-
-- **oauth-oidc-expert**: Delegated auth and provider setup
-- **nodejs-expert**: Node.js/Express session patterns
-- **react-expert**: SPA auth flows and token refresh
-
-## Skill References
-
-- None yet

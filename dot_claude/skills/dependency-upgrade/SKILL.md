@@ -4,6 +4,7 @@ description: >
   Structured dependency upgrade methodology: semver analysis, compatibility
   matrices, staged rollout with checkpoints, and per-ecosystem tooling.
   Use when upgrading major versions or running dependency campaigns.
+model: sonnet
 ---
 
 # Dependency Upgrade

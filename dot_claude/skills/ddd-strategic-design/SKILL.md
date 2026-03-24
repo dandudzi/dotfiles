@@ -5,6 +5,7 @@ description: >
   definition, ubiquitous language glossary, and context relationships.
   Use when mapping business domains, defining service boundaries, or
   establishing shared language between technical and business stakeholders.
+model: opus
 ---
 
 ## When to Activate

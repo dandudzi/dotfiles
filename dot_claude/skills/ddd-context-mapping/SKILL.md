@@ -5,6 +5,7 @@ description: >
   patterns (partnership, customer/supplier, ACL, conformist), assess coupling
   risk, and design integration strategies. Use when defining how services
   or bounded contexts communicate and depend on each other.
+model: opus
 ---
 
 ## When to Activate

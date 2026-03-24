@@ -4,6 +4,7 @@ description: >
   DDD tactical patterns: invariant-first aggregate design, immutable value
   objects, domain event emission, repository patterns, and domain service
   boundaries. Use when implementing business logic within a bounded context.
+model: opus
 ---
 
 ## When to Activate

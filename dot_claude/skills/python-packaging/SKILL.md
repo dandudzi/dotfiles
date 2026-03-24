@@ -2,6 +2,7 @@
 name: python-packaging
 description: Modern Python packaging with uv, Poetry, and setuptools. pyproject.toml structure, dependency management, virtual environments, publishing to PyPI, and Docker integration.
 origin: ECC
+model: sonnet
 ---
 
 # Python Packaging

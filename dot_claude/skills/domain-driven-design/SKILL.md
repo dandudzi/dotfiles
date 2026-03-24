@@ -4,6 +4,7 @@ description: >
   DDD viability check and routing skill. Evaluates whether DDD is appropriate
   for a domain and routes to strategic, tactical, or event-driven sub-skills.
   Use when designing complex business domains.
+model: opus
 ---
 
 # Domain-Driven Design

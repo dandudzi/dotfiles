@@ -2,6 +2,7 @@
 name: springboot-verification
 description: "Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or PR."
 origin: ECC
+model: sonnet
 ---
 
 # Spring Boot Verification Loop
@@ -245,3 +246,6 @@ Issues to Fix:
 - Keep a short loop: `mvn -T 4 test` + spotbugs for quick feedback
 
 **Remember**: Fast feedback beats late surprises. Keep the gate strict—treat warnings as defects in production systems.
+
+> **Scope**: Spring Boot–specific verification (JaCoCo, Checkstyle, Spotbugs, OWASP).
+> For CI/CD pipeline design (blue-green, canary, rolling, GitHub Actions templates), see `deployment-patterns` skill.

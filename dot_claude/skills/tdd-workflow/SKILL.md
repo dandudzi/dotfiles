@@ -2,19 +2,16 @@
 name: tdd-workflow
 description: Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.
 origin: ECC
+model: sonnet
 ---
 
 # Test-Driven Development Workflow
-
-This skill governs how all code changes are made — enforcement rules, the development cycle, test double strategy, and practical patterns.
 
 ## When to Activate
 
 - Writing new features or functionality
 - Fixing bugs or issues
 - Refactoring existing code
-- Adding API endpoints
-- Creating new components
 
 ## The TDD Cycle
 
@@ -35,6 +32,7 @@ Every change requires a failing test first. No exceptions.
 - **If an implementation plan defers tests to the end, do NOT follow that ordering** — reorder to write each test before its corresponding production code. The plan defines WHAT to build; TDD defines HOW.
 - When executing a plan, **actually run** the failing test and show its output before writing production code — don't just describe that you will
 - When removing a feature, first update/remove the tests that assert the old behavior, then remove the implementation
+- **Stop and ask for help if changes cascade.** If a change breaks many existing tests and the only way to make them pass is to restructure or rearchitect the codebase to support one additional flow, STOP immediately. Do not attempt the rearchitecture autonomously. Present the situation to the user: what broke, how many tests failed, and why an architectural change appears necessary. Let the user decide whether to proceed, simplify the requirement, or take a different approach.
 
 ### TDD Exemptions (closed list)
 
@@ -58,21 +56,6 @@ For all exemptions: run the existing test suite after the change to confirm no r
 - Error scenarios tested
 - Boundary conditions verified
 
-### Coverage Thresholds (example config)
-```json
-{
-  "jest": {
-    "coverageThresholds": {
-      "global": {
-        "branches": 80,
-        "functions": 80,
-        "lines": 80,
-        "statements": 80
-      }
-    }
-  }
-}
-```
 
 ## Test Double Strategy
 
@@ -118,60 +101,10 @@ jest.mock('@/lib/redis', () => ({
 
 ## Practical Workflow
 
-### Step 1: Define Behavior as User Journeys
-```
-As a [role], I want to [action], so that [benefit]
-```
-
-### Step 2: Derive Test Cases from Each Journey
-
-```typescript
-describe('Semantic Search', () => {
-  it('returns relevant markets for query', async () => {
-    // Arrange-Act-Assert
-  })
-
-  it('handles empty query gracefully', async () => {
-    // Edge case
-  })
-
-  it('falls back to substring search when Redis unavailable', async () => {
-    // Fallback behavior
-  })
-
-  it('sorts results by similarity score', async () => {
-    // Ordering logic
-  })
-})
-```
-
-### Step 3: RED — Run Tests, Confirm They Fail
-```bash
-npm test  # All new tests should fail
-```
-
-### Step 4: GREEN — Write Minimal Implementation
-```typescript
-export async function searchMarkets(query: string) {
-  // Only enough code to pass the tests
-}
-```
-
-### Step 5: Run Tests, Confirm They Pass
-```bash
-npm test  # All tests green
-```
-
-### Step 6: REFACTOR — Improve While Staying Green
-- Remove duplication
-- Improve naming
-- Optimize performance
-- Enhance readability
-
-### Step 7: Verify Coverage
-```bash
-npm run test:coverage  # Verify 80%+ achieved
-```
+1. **RED** — Write test(s) for desired behavior (happy path, edge cases, errors). Run. Confirm failure.
+2. **GREEN** — Write minimal production code to pass tests. Run. Confirm all pass.
+3. **REFACTOR** — Improve while keeping tests green (remove duplication, improve naming, optimize).
+4. **Verify** — Check coverage ≥80%+. Run full suite. Commit.
 
 ## Test Types
 
@@ -263,63 +196,13 @@ test('user can search and filter markets', async ({ page }) => {
 
 ## Test File Organization
 
-```
-src/
-├── components/
-│   ├── Button/
-│   │   ├── Button.tsx
-│   │   └── Button.test.tsx          # Unit tests
-│   └── MarketCard/
-│       ├── MarketCard.tsx
-│       └── MarketCard.test.tsx
-├── app/
-│   └── api/
-│       └── markets/
-│           ├── route.ts
-│           └── route.test.ts         # Integration tests
-└── e2e/
-    ├── markets.spec.ts               # E2E tests
-    ├── trading.spec.ts
-    └── auth.spec.ts
-```
+Unit tests co-located with source files (`Component.test.tsx`). Integration tests in `app/api/`. E2E tests in `e2e/`.
 
 ## Common Mistakes
 
-### Test implementation details vs user-visible behavior
-```typescript
-// WRONG — testing internal state
-expect(component.state.count).toBe(5)
-
-// CORRECT — test what users see
-expect(screen.getByText('Count: 5')).toBeInTheDocument()
-```
-
-### Brittle selectors vs semantic selectors
-```typescript
-// WRONG — breaks on CSS changes
-await page.click('.css-class-xyz')
-
-// CORRECT — resilient to restyling
-await page.click('button:has-text("Submit")')
-await page.click('[data-testid="submit-button"]')
-```
-
-### Coupled tests vs independent tests
-```typescript
-// WRONG — tests depend on execution order
-test('creates user', () => { /* ... */ })
-test('updates same user', () => { /* depends on previous test */ })
-
-// CORRECT — each test owns its data
-test('creates user', () => {
-  const user = createTestUser()
-  // ...
-})
-test('updates user', () => {
-  const user = createTestUser()
-  // ...
-})
-```
+- **Test implementation, not behavior** — Test what users see (rendered output, API responses), not internal state.
+- **Brittle selectors** — Use `data-testid` and semantic queries; avoid CSS class names.
+- **Coupled tests** — Each test owns its data; never rely on execution order.
 
 ## Plan Execution
 
@@ -328,105 +211,54 @@ test('updates user', () => {
 
 ## Continuous Testing
 
-```bash
-# Watch mode during development
-npm test -- --watch
+Run tests in watch mode during development. Run full suite with coverage in CI/CD before merge.
 
-# Pre-commit hook
-npm test && npm run lint
-```
+## TDD Schools
 
-```yaml
-# CI/CD (GitHub Actions)
-- name: Run Tests
-  run: npm test -- --coverage
-- name: Upload Coverage
-  uses: codecov/codecov-action@v3
-```
-
-## Advanced TDD Schools
-
-Brief overview of approaches — helps choose the right strategy:
-
-- **London School (Mockist)**: Mock all collaborators at unit level. Maximises isolation, reveals design issues early. Risk: brittle tests that test implementation.
-- **Chicago School (Classicist)**: Use real objects; mock only at trust boundaries (external services, DB, filesystem). Our default.
-- **Outside-In TDD**: Start with E2E/acceptance test (failing), drive inward to unit tests. Good for new features.
-- **Inside-Out TDD**: Build domain models first, surface API later. Good for complex domain logic.
-- **ATDD (Acceptance TDD)**: Tests come from acceptance criteria in user stories.
-- **BDD**: Gherkin syntax (Given-When-Then) for business-readable tests. Use with Cucumber/Jest-Cucumber when stakeholders write tests.
-
-When to use which:
-- Default: Chicago School (classicist) + outside-in for new features
-- Complex domain logic: inside-out
-- Stakeholder collaboration: BDD/ATDD
+| School | Approach | When to Use |
+|--------|----------|------------|
+| **Chicago (Classicist)** | Real objects; mock only at boundaries | Default; our standard |
+| **London (Mockist)** | Mock all collaborators | Reveals design issues early; risk: brittle tests |
+| **Outside-In** | E2E test → drive inward | New features |
+| **Inside-Out** | Domain models → API surface | Complex domain logic |
+| **BDD** | Gherkin (Given-When-Then) | Stakeholder collaboration |
 
 ## Legacy Code Techniques
 
-Making untested code testable without full rewrites:
-
-- **Characterization Tests**: Write tests that document *current* behaviour before touching code. Commit them. Now you have a safety net.
-- **Seams Model**: A seam is a place where you can change program behaviour without editing that code (constructor injection, interface extraction, virtual methods).
-- **Golden Master Testing**: Capture full output from legacy code to a file. Run it as regression. Useful for rendering, reporting, or complex transformations.
-- **Approval Testing**: Like golden master but with structured diff tools (ApprovalTests library).
-- **Incremental Adoption**: (1) Characterise → (2) extract small piece → (3) write tests for extracted piece → (4) replace original with tested version → repeat.
-
-Reference: Michael Feathers, "Working Effectively with Legacy Code"
+- **Characterization Tests**: Write tests documenting current behavior before refactoring. Commit. Now you have a safety net.
+- **Seams Model**: Extract seams (inject dependencies) to enable testing without full rewrites.
+- **Golden Master Testing**: Capture baseline output, use as regression test for large transformations.
+- **Incremental Adoption**: Characterize → extract → test extracted piece → replace → repeat.
 
 ## Multi-Language Support
 
-The RED-GREEN-REFACTOR cycle is universal. Framework mapping:
-
-| Language | Test Runner | Mocking | Coverage |
-|----------|-------------|---------|----------|
-| TypeScript/JS | Vitest / Jest | vi.fn() / jest.fn() | c8 / istanbul |
-| Python | pytest | unittest.mock / pytest-mock | coverage.py |
-| Java | JUnit 5 | Mockito | JaCoCo |
-| C# | xUnit / NUnit | Moq | Coverlet |
-| Go | testing/T | testify/mock | go test -cover |
-
-Language-specific agents:
-- Java: use `java-reviewer` agent (JUnit 5, Mockito, TestContainers)
-- Python: use `python-reviewer` agent (pytest, fixtures, parametrize)
-- TypeScript: use `vitest-expert` agent (vi.mock, MSW, testing-library)
+| Language | Test Runner | Framework |
+|----------|-------------|-----------|
+| TypeScript/JS | Vitest / Jest | vi.fn() / jest.fn() |
+| Python | pytest | unittest.mock / pytest-mock |
+| Java | JUnit 5 | Mockito / TestContainers |
+| C# | xUnit / NUnit | Moq |
+| Go | testing/T | testify/mock |
 
 ## Test Metrics Beyond Coverage
 
-80% line coverage is the floor, not the goal. Additional metrics:
-
-- **Mutation Score**: Run Stryker (JS) or mutmut (Python) to validate test quality. Target >70% mutants killed. Coverage without mutation testing can hide weak tests.
-- **Test Execution Speed**: Unit <5s, integration <30s, full suite <5min. Slow tests → fewer runs → less confidence.
-- **Test Maintenance Ratio**: Lines of test code / lines of production code. >2:1 suggests over-specified tests (testing implementation, not behaviour).
-- **Cycle Time**: Time from first failing test to green. Long cycles indicate insufficient decomposition.
-- **Flake Rate**: Track intermittent failures. >1% flake rate degrades team trust. Fix or quarantine immediately.
-
-Tools: `stryker-mutator` (JS/TS), `mutmut` (Python), `pitest` (Java), `codecov` (trends).
+- **Mutation Score**: >70% mutants killed (stryker, mutmut, pitest)
+- **Speed**: Unit <5s, integration <30s, full suite <5min
+- **Flake Rate**: <1%; fix or quarantine intermittent failures immediately
 
 ## Property-Based Testing
 
-Generate hundreds of inputs automatically to find edge cases humans miss.
-
-When to use: pure functions, parsers, serializers, mathematical operations, data transformations.
-
-```typescript
-// Vitest + fast-check example
-import fc from "fast-check";
-
-test("encode then decode is identity", () => {
-  fc.assert(
-    fc.property(fc.string(), (s) => {
-      expect(decode(encode(s))).toBe(s);
-    })
-  );
-});
-```
-
-```python
-# pytest + hypothesis example
-from hypothesis import given, strategies as st
-
-@given(st.lists(st.integers()))
-def test_sort_is_idempotent(xs):
-    assert sorted(sorted(xs)) == sorted(xs)
-```
+Generate hundreds of inputs to find edge cases. Use for: pure functions, parsers, serializers, transformations.
 
 Libraries: `fast-check` (TypeScript), `hypothesis` (Python), `junit-quickcheck` (Java).
+
+## Eval-Driven TDD
+
+Integrate eval-driven development into TDD flow for AI/ML features:
+
+1. Define capability + regression evals before implementation
+2. Run baseline and capture failure signatures
+3. Implement minimum passing change
+4. Re-run tests and evals; report pass@1 and pass@3
+
+Release-critical paths should target pass@3 stability before merge.

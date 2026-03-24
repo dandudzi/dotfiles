@@ -2,22 +2,12 @@
 name: spring-cloud-patterns
 description: Spring Cloud microservices patterns including service discovery, distributed configuration, circuit breakers, gateway routing, and distributed tracing. Use for building resilient, observable distributed systems.
 origin: ECC
+model: sonnet
 ---
 
 # Spring Cloud Microservices Patterns
 
-Spring Cloud patterns for building resilient, observable, and maintainable distributed systems.
-
-## When to Activate
-
-- Building microservices with service discovery (Eureka, Consul)
-- Implementing API Gateway routing and rate limiting
-- Setting up distributed configuration (Spring Cloud Config)
-- Adding circuit breakers with Resilience4j
-- Implementing service-to-service communication (OpenFeign, RestClient, WebClient)
-- Setting up distributed tracing with Micrometer/Zipkin/Jaeger
-- Building event-driven systems with Spring Cloud Stream (Kafka, RabbitMQ)
-- Debugging issues in distributed systems (latency, cascading failures, timeouts)
+Build resilient, observable distributed systems. Use for service discovery, API gateways, circuit breakers, distributed config, tracing, and event-driven architectures.
 
 ## Version Compatibility
 
@@ -32,9 +22,7 @@ Spring Cloud patterns for building resilient, observable, and maintainable distr
 
 ## Service Discovery with Eureka
 
-Register services and enable client-side load balancing.
-
-### Service Registration
+### Client Registration
 
 ```java
 // pom.xml
@@ -59,49 +47,7 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 ```
 
-### Service Discovery Client
-
-```java
-@RestController
-@RequestMapping("/api/orders")
-public class OrderController {
-  private final DiscoveryClient discoveryClient;
-  private final RestTemplate restTemplate;
-
-  public OrderController(DiscoveryClient discoveryClient) {
-    this.discoveryClient = discoveryClient;
-    this.restTemplate = new RestTemplate();
-  }
-
-  @GetMapping("/{id}/details")
-  public ResponseEntity<OrderDetail> getDetails(@PathVariable Long id) {
-    // Discover payment service instance
-    List<ServiceInstance> instances = discoveryClient.getInstances("payment-service");
-    if (instances.isEmpty()) {
-      throw new ServiceUnavailableException("payment-service not available");
-    }
-
-    ServiceInstance instance = instances.get(0); // Client-side load balancing
-    String url = String.format("http://%s:%d/api/payments/%d",
-        instance.getHost(), instance.getPort(), id);
-
-    PaymentResponse payment = restTemplate.getForObject(url, PaymentResponse.class);
-    return ResponseEntity.ok(new OrderDetail(id, payment));
-  }
-}
-
-@Configuration
-public class RestTemplateConfig {
-  @Bean
-  public RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder.setConnectTimeout(Duration.ofSeconds(5))
-        .setReadTimeout(Duration.ofSeconds(10))
-        .build();
-  }
-}
-```
-
-### Eureka Server Setup
+### Server Setup
 
 ```java
 @SpringBootApplication
@@ -129,9 +75,9 @@ server:
 
 ## Spring Cloud Gateway
 
-API Gateway for routing, filtering, and rate limiting.
+Route, filter, and rate-limit requests across microservices.
 
-### Basic Routing Configuration
+### Routing Configuration
 
 ```java
 // application.yml
@@ -175,52 +121,6 @@ spring:
 
 server:
   port: 8080
-```
-
-### Custom Gateway Filters
-
-```java
-@Component
-public class LoggingGatewayFilterFactory extends AbstractGatewayFilterFactory<LoggingGatewayFilterFactory.Config> {
-  private static final Logger log = LoggerFactory.getLogger(LoggingGatewayFilterFactory.class);
-
-  public LoggingGatewayFilterFactory() {
-    super(Config.class);
-  }
-
-  @Override
-  public GatewayFilter apply(Config config) {
-    return (exchange, chain) -> {
-      ServerHttpRequest request = exchange.getRequest();
-      log.info("gateway_request method={} path={} requestId={}",
-          request.getMethod(), request.getPath(),
-          request.getHeaders().getFirst("X-Request-ID"));
-
-      long start = System.currentTimeMillis();
-      return chain.filter(exchange).doFinally(signal -> {
-        long duration = System.currentTimeMillis() - start;
-        log.info("gateway_response path={} status={} durationMs={}",
-            request.getPath(),
-            exchange.getResponse().getStatusCode(),
-            duration);
-      });
-    };
-  }
-
-  public static class Config {
-    // Add custom configuration if needed
-  }
-}
-
-@Component("userKeyResolver")
-public class UserKeyResolver implements KeyResolver {
-  @Override
-  public Mono<String> resolve(ServerWebExchange exchange) {
-    return exchange.getPrincipal()
-        .map(Principal::getName)
-        .defaultIfEmpty("anonymous");
-  }
-}
 ```
 
 ## Distributed Configuration with Spring Cloud Config
@@ -307,72 +207,25 @@ public class RefreshController {
 
 ## Circuit Breakers with Resilience4j
 
-Protect services from cascading failures.
+Protect from cascading failures. Add dependency: `resilience4j-spring-boot3`, `resilience4j-circuitbreaker`, `resilience4j-retry`, `resilience4j-timelimiter`, `resilience4j-bulkhead`.
 
-### Resilience4j Configuration
-
-```java
-// pom.xml
-<dependency>
-  <groupId>io.github.resilience4j</groupId>
-  <artifactId>resilience4j-spring-boot3</artifactId>
-</dependency>
-<dependency>
-  <groupId>io.github.resilience4j</groupId>
-  <artifactId>resilience4j-circuitbreaker</artifactId>
-</dependency>
-<dependency>
-  <groupId>io.github.resilience4j</groupId>
-  <artifactId>resilience4j-retry</artifactId>
-</dependency>
-<dependency>
-  <groupId>io.github.resilience4j</groupId>
-  <artifactId>resilience4j-timelimiter</artifactId>
-</dependency>
-<dependency>
-  <groupId>io.github.resilience4j</groupId>
-  <artifactId>resilience4j-bulkhead</artifactId>
-</dependency>
-
-// application.yml
+Configure in application.yml:
+```yaml
 resilience4j:
   circuitbreaker:
     instances:
       paymentBreaker:
-        register-health-indicator: true
         sliding-window-size: 50
         failure-rate-threshold: 50
-        slow-call-duration-threshold: 2s
-        slow-call-rate-threshold: 50
-        permitted-number-of-calls-in-half-open-state: 3
-        automatic-transition-from-open-to-half-open-enabled: true
         wait-duration-in-open-state: 10s
-
   retry:
     instances:
       paymentRetry:
-        register-health-indicator: false
         max-attempts: 3
         wait-duration: 1s
-        retry-exceptions:
-          - org.springframework.web.client.HttpServerErrorException
-        ignore-exceptions:
-          - org.springframework.web.client.HttpClientErrorException
-
-  timelimiter:
-    instances:
-      paymentTimeout:
-        timeout-duration: 5s
-        cancel-running-future: true
-
-  bulkhead:
-    instances:
-      paymentBulkhead:
-        max-concurrent-calls: 10
-        max-wait-duration: 1s
 ```
 
-### Using Circuit Breaker Annotations
+Use annotations to apply patterns:
 
 ```java
 @Service
@@ -465,83 +318,11 @@ public class PaymentClientFallback implements PaymentClient {
 }
 ```
 
-### RestClient (Spring 6.1+)
-
-```java
-@Service
-public class PaymentService {
-  private final RestClient restClient;
-  private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
-
-  public PaymentService(RestClientBuilder builder) {
-    this.restClient = builder
-        .baseUrl("http://payment-service:8080")
-        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .build();
-  }
-
-  public PaymentResponse charge(PaymentRequest request) {
-    try {
-      log.info("charge_payment orderId={}", request.orderId());
-      return restClient.post()
-          .uri("/api/payments")
-          .body(request)
-          .retrieve()
-          .onStatus(HttpStatusCode::isError, (req, res) -> {
-            log.error("charge_failed orderId={} status={}", request.orderId(), res.getStatusCode());
-            throw new PaymentException("Payment failed: " + res.getStatusCode());
-          })
-          .body(PaymentResponse.class);
-    } catch (Exception ex) {
-      log.error("charge_error orderId={}", request.orderId(), ex);
-      throw ex;
-    }
-  }
-}
-```
-
-### WebClient (Async/Reactive)
-
-```java
-@Service
-public class ReactivPaymentService {
-  private final WebClient webClient;
-  private static final Logger log = LoggerFactory.getLogger(ReactivPaymentService.class);
-
-  public ReactivPaymentService(WebClient.Builder builder) {
-    this.webClient = builder
-        .baseUrl("http://payment-service:8080")
-        .clientConnector(new ReactorNettyClientHttpConnector(
-            HttpClient.create()
-                .responseTimeout(Duration.ofSeconds(10))
-                .connectionTimeout(Duration.ofSeconds(5))
-        ))
-        .filter(ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-          if (clientResponse.getStatusCode().isError()) {
-            log.warn("payment_request_failed status={}", clientResponse.getStatusCode());
-          }
-          return Mono.just(clientResponse);
-        }))
-        .build();
-  }
-
-  public Mono<PaymentResponse> chargeAsync(PaymentRequest request) {
-    return webClient.post()
-        .uri("/api/payments")
-        .bodyValue(request)
-        .retrieve()
-        .bodyToMono(PaymentResponse.class)
-        .timeout(Duration.ofSeconds(5))
-        .doOnError(ex -> log.error("async_charge_failed orderId={}", request.orderId(), ex));
-  }
-}
-```
+See `springboot-patterns` skill for RestClient (Spring 6.1+) and WebClient reactive examples.
 
 ## Distributed Tracing with Micrometer + Zipkin/Jaeger
 
-Enable request tracing across microservices.
-
-### Micrometer Tracing Configuration
+### Configuration
 
 ```java
 // pom.xml
@@ -755,130 +536,14 @@ public class DlqConfig {
 
 ## Anti-Patterns to Avoid
 
-### Distributed Monolith
+**Distributed Monolith**: Avoid long synchronous call chains. Use event-driven async patterns instead—publish events after persisting, let consumers handle side effects asynchronously.
 
-**Problem**: Services call each other synchronously in long chains, creating tight coupling and cascading failures.
+**Chatty Services**: Prevent N+1 requests by batching calls and enriching data at the API Gateway. Use single getUserFull() instead of getUser() + getPreferences() + getAddresses().
 
-```java
-// WRONG: Synchronous chain
-@RestController
-public class OrderController {
-  private final PaymentClient paymentClient;
-  private final ShippingClient shippingClient;
-  private final NotificationClient notificationClient;
+**Missing Timeouts**: Always set timeouts on external calls. Configure in RestTemplate, WebClient, and Feign configs. Default to 5s connect, 10s read timeout.
 
-  @PostMapping("/orders")
-  public ResponseEntity<OrderResponse> create(CreateOrderRequest request) {
-    Order order = saveOrder(request);
+## Related Skills
 
-    PaymentResponse payment = paymentClient.charge(order);  // Blocks
-    if (!payment.success()) {
-      throw new PaymentException("Payment failed");
-    }
-
-    ShippingResponse shipping = shippingClient.ship(order);  // Blocks
-    NotificationResponse notif = notificationClient.notify(order);  // Blocks
-
-    return ResponseEntity.ok(OrderResponse.from(order));
-  }
-}
-
-// CORRECT: Event-driven and async
-@RestController
-public class OrderController {
-  private final OrderService orderService;
-
-  @PostMapping("/orders")
-  public ResponseEntity<OrderResponse> create(CreateOrderRequest request) {
-    Order order = orderService.create(request);
-    // Return immediately; payment, shipping, notification happen asynchronously
-    return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(order));
-  }
-}
-```
-
-### Chatty Services
-
-**Problem**: Services make many small requests to each other, creating latency and network overhead.
-
-```java
-// WRONG: Multiple calls per request
-@Service
-public class OrderService {
-  private final UserClient userClient;
-  private final ProductClient productClient;
-
-  public Order create(CreateOrderRequest request) {
-    UserProfile user = userClient.getUser(request.userId());  // Call 1
-    user = userClient.getPreferences(request.userId());  // Call 2
-    user = userClient.getAddresses(request.userId());  // Call 3
-
-    for (OrderItem item : request.items()) {
-      ProductDetail product = productClient.getProduct(item.productId());  // Call N
-    }
-  }
-}
-
-// CORRECT: Batch operations or data enrichment at API Gateway
-@Service
-public class OrderService {
-  private final UserClient userClient;
-  private final ProductClient productClient;
-
-  public Order create(CreateOrderRequest request) {
-    // Single call with all user data
-    UserDetail user = userClient.getUserFull(request.userId());
-
-    // Batch product lookup
-    List<ProductDetail> products = productClient.getProducts(
-        request.items().stream().map(OrderItem::productId).toList());
-  }
-}
-```
-
-### Missing Timeouts
-
-**Problem**: Services wait indefinitely for responses, leading to resource exhaustion.
-
-```java
-// WRONG: No timeout
-RestTemplate restTemplate = new RestTemplate();
-PaymentResponse response = restTemplate.getForObject(url, PaymentResponse.class);
-
-// CORRECT: Timeouts on all external calls
-@Configuration
-public class RestTemplateConfig {
-  @Bean
-  public RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder
-        .setConnectTimeout(Duration.ofSeconds(5))
-        .setReadTimeout(Duration.ofSeconds(10))
-        .interceptors((request, body, execution) -> {
-          // Add timeout handling
-          return execution.execute(request, body);
-        })
-        .build();
-  }
-}
-
-// WebClient with timeout
-webClient.post()
-    .uri("/api/payments")
-    .retrieve()
-    .bodyToMono(PaymentResponse.class)
-    .timeout(Duration.ofSeconds(5));  // Circuit breaker
-```
-
-## Agent Support
-
-- **java-reviewer**: Code review for Spring Cloud implementations
-- **architect**: Designing microservices architecture and resilience patterns
-- **springframework-expert** (if available): Deep Spring Cloud expertise
-
-## Skill References
-
-- **springboot-patterns**: Foundation for Spring Boot services
-- **springboot-security**: Authentication/authorization in microservices
-- **microservices-patterns**: General microservices architecture
-- **docker**: Containerizing microservices
-- **deployment-patterns**: Kubernetes deployment of distributed systems
+- **springboot-patterns**: REST API design, layered services, data access
+- **microservices-patterns**: Service boundaries, event-driven communication
+- **springboot-security**: Authentication/authorization in distributed systems

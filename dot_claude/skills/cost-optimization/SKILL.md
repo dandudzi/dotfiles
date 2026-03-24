@@ -2,23 +2,16 @@
 name: cost-optimization
 description: Cloud cost visibility and optimization strategies for compute, storage, networking, and databases. Covers tagging, auto-scaling, resource rightsizing, FinOps practices, and cost allocation models.
 origin: ECC
+model: sonnet
 ---
 
 # Cost Optimization
 
-Practical strategies for visibility, rightsizing, and reducing cloud spend across AWS, GCP, and Azure.
-
 ## When to Activate
 
-- Implementing cost visibility and tagging strategy
-- Optimizing compute costs (instances, containers, serverless)
-- Tuning auto-scaling policies and reserved capacity
-- Evaluating storage tiers and lifecycle policies
-- Reducing network egress costs
-- Database cost optimization (RDS, DynamoDB, Firestore)
-- Running FinOps process (cost allocation, chargeback)
-- Setting up cost anomaly detection
-- Kubernetes cluster cost optimization
+- Implementing tagging strategy and cost visibility
+- Optimizing compute (instances, containers, reservations, autoscaling)
+- Optimizing storage tiers, networks, and databases
 
 ## Cost Visibility Foundation
 
@@ -43,136 +36,38 @@ Owner: team or person responsible
 
 ### Cost Explorer & Reports
 
-**AWS Cost Explorer:**
-```bash
-# Console: Services → Cost Explorer
-# Dashboard: Group by Tag → filter by Team
-# Report: Daily costs by service, trend analysis
-# Budget alerts: email when spending exceeds threshold
-```
-
-**GCP Billing:**
-```bash
-# Console: Billing → Reports
-# Filter by label (team, project)
-# Set up BigQuery export for custom analysis
-# Programmatic: `gcloud billing budgets`
-```
-
-**Azure Cost Management:**
-```bash
-# Portal: Cost Management + Billing → Cost Analysis
-# Group by Resource Group, Tag, Service
-# Advisors: Recommendations for rightsizing, reserved instances
-```
+**AWS:** Services → Cost Explorer, group by tags, set budget alerts.
+**GCP:** Billing → Reports, export to BigQuery, use `gcloud billing budgets`.
+**Azure:** Cost Management + Billing → Cost Analysis, use advisors for rightsizing.
 
 ### Cost Allocation Model (Chargeback)
 
 ```yaml
-# Show back cost to teams
 monthly_cost_per_team = (resource_cost * tag_percentage)
-
-Example:
-  API Team Prod Costs:
-  - EC2 (prod-api-*): $2,500
-  - RDS (prod-api-db): $1,200
-  - CloudFront (prod-assets): $800 shared with Frontend
-  ────────────────────────────────
-  Monthly Bill: $4,500
-
-  Chargeback breakdown:
-  - Compute: $2,500 (100% API Team)
-  - Database: $1,200 (100% API Team)
-  - CDN: $400 (50% API Team, tagged by both teams)
-  = Total: $4,100
+# Tag resources by owner; aggregate via Cost Explorer filters
 ```
 
 ## Compute Optimization
 
 ### Instance Sizing: On-Demand vs Commitment
 
-**Use On-Demand for:**
-- Development and test environments
-- Variable or unpredictable workloads
-- New services with unknown capacity needs
+**On-Demand:** dev/test, variable workloads.
+**Reserved (1-3yr):** prod baseline, 30–60% savings.
+**Spot/Preemptible:** batch/CI, 70% savings, 2–5min interruption.
 
-**Use Reserved Instances / Savings Plans:**
-- Baseline production load (predictable minimum)
-- 1-year or 3-year commitment = 30-60% savings
-
-**Use Spot / Preemptible:**
-- Batch jobs, CI/CD, non-critical services
-- Tolerance for 2-5 minute interruption
-- Additional 70% savings vs on-demand
-
-**Right-Sizing Formula:**
-```
-Recommendation = Peak CPU 70th percentile + 20% headroom
-Example: EC2 t3.xlarge at 15% CPU → downsize to t3.small
-Savings: $150/month × 12 months = $1,800/year per instance
-```
+Right-size to 70th percentile CPU + 20% headroom. Example: t3.xlarge at 15% → t3.small, save $1,800/year.
 
 ### AWS Compute Commitment
 
-```
-+─────────────────────────────────────────────────────────────+
-│ On-Demand: $0.42/hour (m6i.large)                          │
-│ RI 1-yr: $0.25/hour (40% discount)                         │
-│ RI 3-yr: $0.20/hour (52% discount)                         │
-│ Savings Plan 1-yr: $0.26/hour (flexible instance type)     │
-│ Savings Plan 3-yr: $0.21/hour                              │
-│ Spot: $0.13/hour (70% discount, 2-5min notice)             │
-│                                                             │
-│ Recommendation: Mix Reserved (70%) + Spot (30%)            │
-│ baseline load on RI, spike capacity from Spot              │
-+─────────────────────────────────────────────────────────────+
-```
+On-Demand: $0.42/hr. RI 1-yr: $0.25 (40%). RI 3-yr: $0.20 (52%). Spot: $0.13 (70%). Recommendation: 70% RI + 30% Spot.
 
-**AWS CLI: Cost Analysis**
-```bash
-# Get instance usage and cost
-aws ce get-cost-and-usage \
-  --time-period Start=2025-01-01,End=2025-01-31 \
-  --granularity MONTHLY \
-  --metrics UnblendedCost \
-  --group-by Type=INSTANCE_TYPE,Key=PURCHASE_TYPE \
-  --filter file://filter.json
-
-# filter.json
-{
-  "Tags": {
-    "Key": "Environment",
-    "Values": ["prod"]
-  }
-}
-
-# Output: On-Demand cost vs Reserved usage gaps
-```
+**AWS CLI:** `aws ce get-cost-and-usage --group-by Type=INSTANCE_TYPE,Key=PURCHASE_TYPE` to analyze on-demand vs reserved gaps.
 
 ### GCP Compute Commitment
 
-```yaml
-Commitment Tiers (1 or 3 year):
-  n2-standard-4: $0.21/hour (3-year = 70% discount)
-  n2-standard-4 On-Demand: $0.25/hour
+CUDs (1-3yr): 70% discount. Preemptible VMs: 70% discount, batch/non-critical. SUDs: automatic for >25% monthly use.
 
-Recommendations:
-  - Committed use discounts (CUDs): stable production workloads
-  - Preemptible VMs (70% discount): batch, non-critical services
-  - Sustained use discounts (SUDs): automatic for >25% monthly usage
-```
-
-**GCP CLI:**
-```bash
-# Identify optimization opportunities
-gcloud compute instances list \
-  --format='table(name, machineType.machine_type(), cpuPlatform, status)' \
-  --filter='status=RUNNING'
-
-# Check CPU utilization
-gcloud monitoring time-series list \
-  --filter='metric.type=compute.googleapis.com/instance/cpu/utilization AND resource.labels.instance_id:INSTANCE_ID'
-```
+**GCP CLI:** `gcloud compute instances list` + `gcloud monitoring time-series list` to find CPU utilization and rightsizing opportunities.
 
 ### Container & Kubernetes Optimization
 
@@ -204,7 +99,7 @@ Pod B:
 
 **Spot in Kubernetes:**
 ```yaml
-# Use nodepool with spot instances for stateless workloads
+# Use spot nodepool for stateless workloads
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -220,25 +115,9 @@ spec:
         operator: Equal
         value: "true"
         effect: NoSchedule
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values: [batch-processor]
-              topologyKey: kubernetes.io/hostname
-            weight: 100
 ```
 
-**Cost Projection:**
-```
-10 replicas × $0.15/hour (spot) = $1.50/hour
-vs 10 × $0.50/hour (on-demand) = $5.00/hour
-Monthly savings: $2,520 (45 days × 24 hours × $2.50)
-```
+Cost: 10 replicas × $0.15/hr (spot) = $1.50/hr vs $5/hr on-demand. Saves $2,520/month.
 
 ## Storage Optimization
 
@@ -295,16 +174,7 @@ S3 Deep Archive:
 }
 ```
 
-**Cost Calculation:**
-```
-Input: 100GB of logs per month, average age 6 months
-- Month 1-3: S3 Standard = 100 × $0.023 × 3 = $6.90
-- Month 4-6: S3 Glacier = 200 × $0.004 × 3 = $2.40
-- Month 7+: S3 Deep Archive = 100 × $0.001 × 12 = $1.20
-Annual cost: ~$45 with intelligent tiering
-Without tiering: 600GB × $0.023 × 12 = $165.60
-Savings: $120.60/year (73% reduction)
-```
+**Cost Example:** 100GB logs/month → Standard (3mo) + Glacier (3mo) + Deep Archive (6mo) = $45/year vs $166/year untiered (73% savings)
 
 **Lifecycle Policy (Terraform):**
 
@@ -364,99 +234,25 @@ Archive:
 
 **Right-Size Database Instances:**
 
-```sql
--- Find actual peak CPU usage (CloudWatch / Cloud SQL Insights)
-SELECT
-  db_instance,
-  MAX(cpu_util) as peak_cpu,
-  PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY cpu_util) as p99_cpu
-FROM cloudwatch_metrics
-WHERE date > CURRENT_DATE - 30
-GROUP BY db_instance;
-
--- If peak <20%: downsize 1-2 instance types (m6i.large → m6i.xlarge)
--- If peak >80%: consider read replica to split read traffic
-```
+Query CloudWatch/Cloud SQL Insights for peak CPU. If peak <20%, downsize. If >80%, add read replica.
 
 **Aurora Serverless v2 vs Provisioned:**
 
-```yaml
-Provisioned RDS:
-  - m6i.large: $0.42/hour = $306/month
-  - Reserved 1-yr: $0.25/hour = $180/month
-  - Assume 30% average CPU = $54/month unused capacity
-
-Aurora Serverless v2:
-  - Scale: 0.5 to 4 ACUs (1 ACU ≈ 2GB RAM)
-  - Pricing: $0.06/ACU-hour (peak) + $0.006/ACU-hour (idle)
-  - Avg load: 1 ACU = $0.06 × 730 × 1 = $43.80/month
-  - Savings: $136/month vs provisioned
-
-Recommendation:
-  - Predictable steady load: Provisioned + Reserved (40% discount)
-  - Bursty/variable: Serverless v2 (save 50-70% vs provisioned)
-  - Dev/test: Aurora Serverless v2 + auto-pause after 5min idle
-```
+Provisioned m6i.large: $306/month. Serverless v2: 1 ACU $43.80/month. Use provisioned for steady load (40% RI discount), serverless v2 for bursty (50–70% savings). Dev: serverless v2 with auto-pause.
 
 **Read Replicas (Only When Needed):**
 
-```
-WRONG:
-  - Create read replicas for every 10% CPU increase
-  - Cost: 2× database expense immediately
-
-RIGHT:
-  1. Optimize queries (indexes, query plan)
-  2. Add read cache (Redis/ElastiCache)
-  3. Only add read replica if queries still >80% CPU
-  4. Read replicas for read-heavy (>90% reads), not write-heavy workloads
-
-Cost comparison:
-  Primary RDS m6i.xlarge: $600/month
-  Add 1 read replica: $600 + $600 = $1,200/month
-  vs ElastiCache t4g.small: $40/month (99% hit rate reduces DB load)
-```
+1. Optimize queries/indexes, 2. add read cache (ElastiCache), 3. add replica only if >80% CPU. ElastiCache t4g.small ($40/month) vs read replica ($600/month).
 
 ### DynamoDB / Firestore Optimization
 
 **DynamoDB Billing Modes:**
 
-```yaml
-Provisioned Mode:
-  - Fixed RCU/WCU capacity (pay always, even when idle)
-  - Useful: predictable traffic, can burst with autoscaling
-  - Example: 100 RCU + 50 WCU = $50 + $25 = $75/month
-
-On-Demand Mode:
-  - Pay per request: $1.25 per million RCU, $6.25 per million WCU
-  - Example: 100M RCU + 30M WCU = $125 + $187.50 = $312.50/month
-  - Useful: variable traffic, spiky workloads, new services
-
-Comparison:
-  - Steady 100 RCU/month → Provisioned ($75/month)
-  - Spiky 10x variance → On-Demand (autoscale cost, reduce overprovisioning)
-  - Break-even: calculate monthly cost for both modes
-```
+Provisioned: fixed RCU/WCU, $75/month for 100 RCU + 50 WCU. On-Demand: $1.25/million RCU, use for spiky workloads. Calculate break-even for both modes.
 
 **Firestore Cost Optimization:**
 
-```yaml
-Billing:
-  Reads: $0.06 per 100K reads
-  Writes: $0.18 per 100K writes
-  Deletes: $0.02 per 100K deletes
-  Storage: $0.18 per GB/month
-
-Cost reduction:
-  1. Batch writes (500K writes: 5 ops vs 500K ops = 100x cost reduction)
-  2. Denormalize frequently accessed data (avoid N+1 reads)
-  3. Archive old collections to Cloud Storage ($0.020/GB/month)
-
-Example:
-  Before: 1M reads + 100K writes/month = $60 + $18 = $78/month
-  After batching + denormalization: 500K reads + 50K writes = $30 + $9 = $39/month
-  Annual savings: $468
-```
+Reads $0.06/100K, writes $0.18/100K. Batch writes (100x cost reduction), denormalize data, archive to Cloud Storage. Example: 1M reads + 100K writes ($78) → 500K reads + 50K writes ($39) = $468/year savings.
 
 ## Network Cost Optimization
 
@@ -493,168 +289,44 @@ Solution 3: Use CloudFront for static assets
 
 **NAT Gateway Cost Analysis:**
 
-```
-Scenario: 3 AZs, 1 NAT gateway per AZ = 3 × $32/month + $0.45/GB processed
+3 AZs = 3 × $32/month + $0.45/GB. Consolidate if uneven traffic (save $32+/month). Use gateway endpoints for S3/DynamoDB (free).
 
-Example: 100GB processed/month
-  - NAT cost: $96 + (100 × $0.45) = $141/month
-
-Optimization:
-  1. Consolidate to 1 NAT (lose AZ failover, save $64/month)
-  2. Use NAT instance (EC2 t3.nano $3 + traffic cost)
-  3. Use VPC endpoints for S3/DynamoDB (free, eliminates NAT traffic)
-     - Measure: 50% of traffic to S3 → VPC endpoint saves $22.50/month
-```
-
-**VPC Endpoint Cost (AWS):**
-
-```yaml
-Gateway Endpoint (S3, DynamoDB):
-  - Cost: Free
-  - Use: All S3/DynamoDB access goes through endpoint (free)
-  - Setup: 5 minutes
-
-Interface Endpoint (other AWS services):
-  - Cost: $7.20/endpoint/month + $0.01/million requests
-  - Use: EC2, SNS, SQS, Secrets Manager, etc.
-  - ROI: Break-even at $400/month NAT egress savings
-
-Recommendation:
-  - S3/DynamoDB: Always use gateway endpoint (free)
-  - Other services: Use endpoint if >$50/month NAT savings
-```
+**VPC Endpoint:** Gateway (free for S3/DynamoDB). Interface ($7.20/month + $0.01/million requests). ROI at >$50/month NAT savings.
 
 ## FinOps Process
 
 ### Monthly Cost Review Workflow
 
-```
-1. Pull cost report (Cost Explorer / Cloud Billing)
-2. Group by team, service, environment
-3. Identify top 5 cost drivers
-   - Is this expected? Any anomalies?
-   - Compare month-over-month
-4. Set optimization targets
-   - Example: 10% reduction in compute for dev environment
-5. Assign ownership and track progress
-```
+Pull cost report, group by team/service, identify top 5 drivers (compare M/M), set targets (e.g., 10% dev compute reduction), assign ownership.
 
 ### Anomaly Detection & Alerts
 
-**AWS Budgets:**
-
-```
-Budget: $10,000/month
-Alert 1: Notify when >80% ($8,000 spent) - early warning
-Alert 2: Notify when >100% ($10,000 spent) - hard limit
-Alert 3: Notify when >125% ($12,500 spent) - escalate
-
-Budget Rules (Auto-response):
-  - Stop untagged instances if spend >threshold
-  - Disable auto-scaling if trend > forecast
-```
-
-**GCP Budget Alerts:**
-
-```bash
-gcloud billing budgets create \
-  --billing-account=ACCOUNT_ID \
-  --display-name="prod-monthly-budget" \
-  --budget-amount=15000 \
-  --threshold-rule percent=50,behavior=ALERT \
-  --threshold-rule percent=100,behavior=ALERT
-```
-
-**CloudWatch Cost Anomaly Detection (ML-based):**
-
-```
-Automatically detects spending spikes:
-  - Baseline: Average spend + historical variance
-  - Alert: Spend deviates >2σ (95% confidence)
-  - Eliminates false positives (predictable seasonal spikes)
-```
+**AWS Budgets:** Set alerts at 50%, 80%, 100%. Auto-responses: stop untagged resources, disable autoscaling if over forecast.
+**GCP:** `gcloud billing budgets create --threshold-rule percent=50,100`.
+**CloudWatch Anomaly:** ML-based detection alerts on spend >2σ (95% confidence).
 
 ## Anti-Patterns
 
 ### Cost Anti-Pattern 1: Over-Provisioning Without Monitoring
 
-```
-WRONG:
-  - EC2 m6i.4xlarge (16 CPU, 64GB) for app averaging 10% CPU
-  - Leftover capacity wasted, 90% of cost unused
-  - Multiply by 50 instances = $180K wasted annually
-
-RIGHT:
-  - Monitor CPU, memory, network for 2 weeks
-  - Right-size to m6i.large (2 CPU, 8GB)
-  - Review quarterly, downsize if still <20% usage
-  - Use auto-scaling to handle spike without permanent overprovisioning
-```
+Monitor 2 weeks, right-size to 70th percentile CPU + 20% headroom. Example: m6i.4xlarge at 10% CPU → downsize to m6i.large, save $180K/year (50 instances).
 
 ### Cost Anti-Pattern 2: Ignoring Data Transfer Costs
 
-```
-WRONG:
-  - Replicate 500GB database across 3 regions quarterly (testing)
-  - Cross-region transfer: 500GB × $0.02 = $10K per copy × 4/year = $40K
-
-RIGHT:
-  - Use database snapshots (1 copy, stored in S3)
-  - Restore from snapshot to test region (free within region)
-  - Delete after testing (1-day lifecycle)
-  - Cost: $3.60 (1 snapshot in S3) + $20 (test instance, 1 day)
-```
+Use snapshots + cross-region restore, not full replication. Snapshot ($3.60) + test instance (1 day, $20) vs 500GB cross-region copy ($10K).
 
 ### Cost Anti-Pattern 3: Multiple NAT Gateways Without Traffic Analysis
 
-```
-WRONG:
-  - NAT gateway per AZ (HA assumption): 3 × $32 + data costs = $300+/month
-  - Most traffic in 1 AZ; others idle
-
-RIGHT:
-  - Analyze traffic per AZ (VPC Flow Logs)
-  - If <10% traffic in AZ-c: remove NAT gateway there
-  - Consolidate to 2 NAT gateways: save $32/month
-  - Use read replicas / cross-region to reduce NAT traffic
-```
+Analyze VPC Flow Logs; consolidate to 1-2 NAT gateways if traffic uneven. Save $32–64/month.
 
 ### Cost Anti-Pattern 4: Reserved Instances for Unpredictable Workloads
 
-```
-WRONG:
-  - Buy 1-year RI for dev environment (developers spin up/down)
-  - 60% of RI unused, no refunds
-
-RIGHT:
-  - On-demand for dev (flexibility > savings)
-  - RI for stable prod baseline (60% discount)
-  - Savings Plans for flexible instance types (30% discount)
-  - Spot for non-critical batch workloads (70% discount)
-```
+Use on-demand for dev (flexibility), RI for stable prod (60% discount), Spot for batch (70% discount).
 
 ### Cost Anti-Pattern 5: Orphaned Resources
 
-```
-WRONG:
-  - Terminate EC2 instance but leave EBS volume (persists)
-  - Delete RDS instance but forget read replicas
-  - Stop EC2 but forget attached Elastic IP ($3.60/month charge)
-
-RIGHT:
-  - Script to find unattached resources monthly
-    aws ec2 describe-volumes --filter Name=status,Values=available
-  - Tag resources with "delete-date" and auto-cleanup after 30 days
-  - Audit stopped instances monthly; terminate if not needed
-```
+Script monthly cleanup: unattached volumes, orphaned replicas, unused Elastic IPs. Tag with "delete-date", auto-cleanup after 30 days.
 
 ## Agent Support
 
-- Delegate cluster cost optimization to **kubernetes-architect** for right-sizing nodes, Spot strategies, and pod density
-- Coordinate with **cloud-architect** for multi-region cost implications and reservation strategies
-- Consult **sql-expert** for database indexing and query optimization to reduce compute costs
-
-## Skill References
-
-- Reference `deployment-patterns` skill for CI/CD cost reduction (spot runners, container reuse)
-- Use cloud provider CLI guides above as operational checklist
+Delegate cluster cost optimization to **cloud-architect** for node rightsizing and Spot strategies. Consult **sql-expert** for query optimization.

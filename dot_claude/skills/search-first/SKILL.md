@@ -1,7 +1,8 @@
 ---
 name: search-first
-description: Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the researcher agent.
+description: Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the research-analyst agent.
 origin: ECC
+model: sonnet
 ---
 
 # /search-first — Research Before You Code
@@ -69,7 +70,7 @@ Before writing a utility or adding functionality, mentally run through:
 
 ### Full Mode (agent)
 
-For non-trivial functionality, launch the researcher agent:
+For non-trivial functionality, launch the research-analyst agent:
 
 ```
 Task(subagent_type="general-purpose", prompt="
@@ -106,8 +107,8 @@ Task(subagent_type="general-purpose", prompt="
 
 ## Integration Points
 
-### With planner agent
-The planner should invoke researcher before Phase 1 (Architecture Review):
+### With architect agent
+The architect should invoke researcher before Phase 1 (Architecture Review):
 - Researcher identifies available tools
 - Planner incorporates them into the implementation plan
 - Avoids "reinventing the wheel" in the plan

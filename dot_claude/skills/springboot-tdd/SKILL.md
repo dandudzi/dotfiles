@@ -2,6 +2,7 @@
 name: springboot-tdd
 description: Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, or refactoring.
 origin: ECC
+model: sonnet
 ---
 
 # Spring Boot TDD Workflow
@@ -523,3 +524,33 @@ View HTML report: `target/pit-reports/index.html`
 - **springboot-security**: Authentication/authorization testing patterns
 - **springboot-verification**: Coverage gates and test quality metrics
 - **tdd-workflow**: TDD discipline rules, exemptions, and coverage requirements
+
+---
+
+## JUnit 5.11+ Modern Features
+
+- **`@AutoClose`** — automatically close `AutoCloseable` fields after test lifecycle; no manual `@AfterEach` teardown needed
+- **`@FieldSource`** — parameterized test data from static fields (simpler than `@MethodSource` for simple lists)
+- **Failure thresholds** — `@RepeatedTest` supports `failureThreshold` to stop on N failures
+- **`TestInstancePreConstructCallback`** — extension point for pre-construction logic before `@BeforeEach`
+
+## Coverage Configuration
+
+Target **80%+ line and branch coverage** on business logic. Exclude generated code, DTOs, and configuration classes.
+
+```bash
+# Maven
+mvn test jacoco:report
+
+# Gradle
+gradle test jacocoTestReport
+```
+
+Configure exclusions in `jacoco.xml` or build file:
+```xml
+<excludes>
+    <exclude>**/dto/**</exclude>
+    <exclude>**/config/**</exclude>
+    <exclude>**/*Application.class</exclude>
+</excludes>
+```

@@ -2,6 +2,7 @@
 name: production-debugging
 description: Systematic debugging methodology, log analysis, metrics correlation, distributed tracing, and live debugging tools for production issues.
 origin: ECC
+model: sonnet
 ---
 
 # Production Debugging

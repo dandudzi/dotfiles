@@ -4,6 +4,7 @@ description: >
   Orchestration patterns, failure modes, and token economics for multi-agent
   Claude Code systems. Use when designing agent workflows, debugging coordination
   failures, or optimising parallel task execution.
+model: opus
 ---
 
 # Multi-Agent Patterns

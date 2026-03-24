@@ -13,6 +13,7 @@ description: >
   a repo, conceptual programming questions, creating new projects from scratch,
   reviewing pasted diffs or clipboard code, editing config files without needing
   codebase context, or reading individual files outside a git repository.
+model: haiku
 ---
 
 # Repo Indexer

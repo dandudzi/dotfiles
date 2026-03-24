@@ -1,6 +1,7 @@
 ---
 name: review-claudemd
 description: Review recent conversations to find improvements for CLAUDE.md files.
+model: sonnet
 ---
 
 # Review CLAUDE.md from conversation history
@@ -43,29 +44,28 @@ done
 ls -lhS "$SCRATCH"
 ```
 
-## Step 3: Spin up Sonnet subagents
+## Step 3: Launch parallel analysis agents
 
-Launch parallel Sonnet subagents to analyze conversations. Each agent should read:
+Use the Agent tool to spawn parallel subagents for conversation analysis. Batch conversations by size and give each agent a clear prompt:
+
+```
+Agent(
+  description="Analyze conversations for CLAUDE.md improvements",
+  prompt="Read these files, then analyze conversations against both CLAUDE.md files...",
+  subagent_type="general-purpose"
+)
+```
+
+Each agent should read:
 - Global CLAUDE.md: `~/.claude/CLAUDE.md`
 - Local CLAUDE.md: `./CLAUDE.md` (if exists)
 - Batch of conversation files
 
-Give each agent this prompt template:
-
-```
-Read:
-1. Global CLAUDE.md: ~/.claude/CLAUDE.md
-2. Local CLAUDE.md: [project]/CLAUDE.md
-3. Conversations: [list of files]
-
-Analyze the conversations against BOTH CLAUDE.md files. Find:
+Analysis targets:
 1. Instructions that exist but were violated (need reinforcement or rewording)
 2. Patterns that should be added to LOCAL CLAUDE.md (project-specific)
 3. Patterns that should be added to GLOBAL CLAUDE.md (applies everywhere)
 4. Anything in either file that seems outdated or unnecessary
-
-Be specific. Output bullet points only.
-```
 
 Batch conversations by size:
 - Large (>100KB): 1-2 per agent
