@@ -38,3 +38,8 @@ tools: ["Read", "Write", "Edit", "Grep", "Glob"]
 - Evaluation suite with RAGAS metrics and prompt regression tests
 - Monitoring setup with tracing and cost analytics
 - Safety guardrails and content filtering configurations
+
+## Skill References
+- **`prompt-engineering-patterns`** — System prompt design, chain-of-thought, output structuring, cost optimization
+- **`multi-agent-patterns`** — Orchestration patterns, failure modes, token economics
+- **`agent-harness-construction`** — Agent action spaces, tool definitions, observation formatting

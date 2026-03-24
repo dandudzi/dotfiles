@@ -1,6 +1,6 @@
 ---
 name: python-reviewer
-description: Expert Python code reviewer specializing in PEP 8 compliance, Pythonic idioms, type hints, security, and performance. Use for all Python code changes. MUST BE USED for Python projects.
+description: Expert Python code reviewer. Replaces code-reviewer for all .py files. Covers PEP 8, type hints, security, Django/FastAPI/Flask.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---
@@ -89,9 +89,11 @@ Fix: What to change
 - **FastAPI**: CORS config, Pydantic validation, response models, no blocking in async
 - **Flask**: Proper error handlers, CSRF protection
 
-## Reference
-
-For detailed Python patterns, security examples, and code samples, see skill: `python-patterns`.
+## Skill References
+- **`python-patterns`** — Pythonic idioms, PEP 8, type hints, best practices
+- **`python-security`** — SQL injection prevention, bandit, pip-audit, secret management
+- **`python-testing`** — pytest patterns, fixtures, conftest.py, parametrize, coverage
+- **`python-error-handling`** — Exception hierarchies, input validation, partial failure handling
 
 ---
 

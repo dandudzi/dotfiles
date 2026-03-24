@@ -3,6 +3,8 @@ name: nextjs-expert
 description: Expert in Next.js 15/16+ development with App Router (RSC/SSR), server actions, streaming, edge functions, and production optimization. Use PROACTIVELY for Next.js development, architecture decisions, or migration from Pages Router.
 model: sonnet
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+skills:
+  - nextjs-16-patterns
 ---
 
 ## Focus Areas
@@ -94,78 +96,7 @@ tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 - Comprehensive documentation with architecture decisions and patterns
 - Migration guides from Pages Router to App Router (if applicable)
 
-## Migration from Pages Router (Deprecated)
-
-**CRITICAL:** Pages Router (`pages/` directory) is deprecated in Next.js 13+. Migrate to App Router (`app/` directory).
-
-**Key Changes**
-- `pages/api/` → Route Handlers in `app/api/route.ts` (export `GET`, `POST`, etc.)
-- `getStaticProps`, `getServerSideProps` → Server Components with `fetch()` caching
-- `_app.tsx`, `_document.tsx` → `app/layout.tsx` (Shared layout wrapper)
-- `next/router` → `next/navigation` (useRouter, usePathname, useSearchParams)
-- API middleware → `middleware.ts` at project root
-
-**Example Pages Router → App Router**
-
-```typescript
-// Pages Router (DEPRECATED)
-// pages/posts/[id].tsx
-export async function getStaticProps({ params }) {
-  const post = await fetch(`/api/posts/${params.id}`).then(r => r.json());
-  return { props: { post }, revalidate: 60 };
-}
-
-export default function PostPage({ post }) {
-  return <h1>{post.title}</h1>;
-}
-
-// App Router (RECOMMENDED)
-// app/posts/[id]/page.tsx
-export default async function PostPage({ params }) {
-  const post = await fetch(`https://api.example.com/posts/${params.id}`, {
-    next: { revalidate: 60 } // ISR
-  }).then(r => r.json());
-  return <h1>{post.title}</h1>;
-}
-```
-
-## Next.js 16 Breaking Changes
-
-### Async Request APIs (Mandatory)
-
-Synchronous access to `cookies`, `headers`, `draftMode`, `params`, and `searchParams` is **fully removed** in Next.js 16 — all must be awaited:
-
-```typescript
-// Next.js 16 — params and cookies are now Promises
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;          // REQUIRED: await params
-  const cookieStore = await cookies();  // REQUIRED: await cookies()
-  const headersList = await headers();  // REQUIRED: await headers()
-  // ...
-}
-```
-
-### Caching Defaults Changed
-
-`fetch()` is **no longer cached by default**. Explicit opt-in required:
-
-```typescript
-// Next.js 16 — no default caching
-const a = await fetch('https://api.example.com/data');                        // NOT cached
-const b = await fetch('https://api.example.com/data', { cache: 'force-cache' }); // cached
-const c = await fetch('https://api.example.com/data', { next: { revalidate: 60 } }); // ISR
-```
-
-### cacheComponents Flag (replaces experimental.dynamicIO)
-
-```js
-// next.config.js — enables Partial Pre-Rendering (PPR)
-module.exports = {
-  cacheComponents: true,  // replaces experimental: { dynamicIO: true }
-}
-```
-
-### Routing Performance (No Code Changes Needed)
-
-- **Layout deduplication**: shared layouts downloaded once across prefetched URLs
-- **Incremental prefetching**: only prefetches parts of a page not already in cache
+## Skill References
+- **`nextjs-16-patterns`** — Breaking changes (async request APIs, caching defaults, cacheComponents), Pages Router migration
+- **`react-19-patterns`** — use() hook, useActionState, useFormStatus, React Compiler, RSC performance
+- **`typescript-scaffold`** — Project setup patterns, tsconfig, directory structure

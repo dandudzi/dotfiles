@@ -1,7 +1,7 @@
 ---
 name: python-expert
 description: Expert in Python architecture, modern patterns, and production practices. Use PROACTIVELY for Python architecture, async design, type system, idiomatic Python patterns, version compatibility, or dependency management.
-model: haiku
+model: sonnet
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 ---
 
@@ -46,3 +46,15 @@ tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 - Profiling results and bottleneck analysis
 - Production-ready error handling and logging
 - Version compatibility notes and dependency lock files
+
+## Skill References
+- **`python-patterns`** — Pythonic idioms, PEP 8, type hints
+- **`python-design-patterns`** — GoF patterns in Python; dataclasses, protocols
+- **`python-packaging`** — uv, Poetry, pyproject.toml, PyPI publishing
+- **`python-testing`** — pytest, TDD, fixtures, mocking, coverage
+- **`python-security`** — Secret management, SQL injection prevention, bandit, pip-audit
+- **`python-error-handling`** — Exception hierarchies, custom error types, partial failures
+- **`python-resilience`** — Retry, circuit breakers, timeouts, backpressure
+- **`python-observability`** — Structured logging, metrics, distributed tracing, health checks
+- **`python-performance`** — Profiling, vectorization, concurrency, C extensions
+- **`async-python-patterns`** — Asyncio, async/await, concurrent I/O, event loop
