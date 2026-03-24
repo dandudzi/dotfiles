@@ -1,16 +1,44 @@
+---
+paths:
+  - "**/*.java"
+  - "**/*.kt"
+  - "**/*.kts"
+  - "**/*.c"
+  - "**/*.cpp"
+  - "**/*.cc"
+  - "**/*.cxx"
+  - "**/*.h"
+  - "**/*.hpp"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.cs"
+  - "**/*.lua"
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.rb"
+  - "**/*.rs"
+  - "**/*.swift"
+  - "**/*.php"
+  - "**/*.scala"
+  - "**/*.ex"
+  - "**/*.exs"
+  - "**/*.sh"
+  - "**/*.bash"
+  - "**/Makefile"
+---
+
 # Coding Style
 
 ## Immutability (CRITICAL)
 
-ALWAYS create new objects, NEVER mutate existing ones:
-
+ALWAYS create new objects, NEVER mutate:
 ```
-// Pseudocode
-WRONG:  modify(original, field, value) → changes original in-place
-CORRECT: update(original, field, value) → returns new copy with change
+WRONG:  modify(original, field, value)    // mutates in-place
+CORRECT: update(original, field, value)   // returns new copy
 ```
-
-Rationale: Immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency.
+Prevents side effects, enables safe concurrency.
 
 ## File Organization
 
