@@ -744,3 +744,9 @@ luac.out
 
 # OpenWolf
 .wolf/*
+.rtk/*
+node-compile-cache/
+.git_signing_key_tmp*
+
+# Claude Code plans
+plans/
