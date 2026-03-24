@@ -16,12 +16,23 @@
 # Register: PreToolUse matcher "*" in project .claude/settings.json
 # Paired with: jmunch-session-start.sh, jmunch-sentinel-writer.sh
 
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/lib/log.sh" 2>/dev/null
+hook_guard "jmunch-session-gate"
+hook_timer_start 2>/dev/null
+
 RETRY_AT=2
 MAX_BLOCKS=4
 
 # Read stdin once — we need it for both sentinel hash and tool name
 INPUT=$(cat)
-CWD=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('cwd',''))" 2>/dev/null)
+
+# Use jq instead of python3 for JSON parsing (fail-open if jq missing)
+if command -v jq &>/dev/null; then
+  CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
+else
+  CWD=""
+fi
 if [ -z "$CWD" ]; then
   CWD=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 fi
@@ -36,21 +47,24 @@ if [ -f "$SENTINEL" ]; then
   IS_STALE=$(grep -c '^stale$' "$SENTINEL" 2>/dev/null | head -1 || echo 0)
   if [ "${HAS_CODE:-0}" -gt 0 ] 2>/dev/null && [ "${HAS_DOC:-0}" -gt 0 ] 2>/dev/null && [ "${IS_STALE:-0}" -eq 0 ] 2>/dev/null; then
     rm -f "$BLOCK_COUNTER" 2>/dev/null
+    log_hook_event "jmunch-session-gate" "decision" "allow" "reason=indexes_ready" 2>/dev/null
     exit 0
   fi
 fi
 
-# Extract tool name from the already-read input
-TOOL=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_name',''))" 2>/dev/null)
+# Extract tool name using jq (fail-open)
+if command -v jq &>/dev/null; then
+  TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
+else
+  TOOL=""
+fi
 
-# Always allow: jCodeMunch/jDocMunch tools (needed to CREATE the sentinel)
+# Always allow: MCP tools (don't need indexes, and Claude Code can't block MCP calls)
+# Always allow: Agent (agent-gate-strict handles its own enforcement)
+# Always allow: ToolSearch (needed to fetch deferred tool schemas)
+# Always allow: Task* (task management doesn't need indexes)
 case "$TOOL" in
-  mcp__jcodemunch__*|mcp__jdocmunch__*) exit 0 ;;
-esac
-
-# Always allow: ToolSearch (needed to fetch deferred tool schemas for jmunch)
-case "$TOOL" in
-  ToolSearch) exit 0 ;;
+  mcp__*|Agent|ToolSearch|Task*) log_hook_event "jmunch-session-gate" "decision" "allow" "reason=mcp_passthrough" "tool=$TOOL" 2>/dev/null; exit 0 ;;
 esac
 
 # Increment block counter (off-by-one race across parallel sessions is acceptable)
@@ -72,26 +86,14 @@ Consider running them when convenient:
   exit 0
 fi
 
-# At RETRY_AT, re-emit the full indexing instructions (second chance trigger)
-if [ "$BLOCKS" -eq "$RETRY_AT" ]; then
-  echo "BLOCKED ($BLOCKS/$MAX_BLOCKS): Indexes still missing — retrying index trigger.
+# JSON deny — blocks tool call, model sees the reason and can act on it
+# (exit 2 causes "hook error" for some tool types; JSON deny + exit 0 always works)
+log_hook_event "jmunch-session-gate" "decision" "block" "tool=$TOOL" "blocks=$BLOCKS" 2>/dev/null
+REASON="BLOCKED ($BLOCKS/$MAX_BLOCKS): jCodeMunch/jDocMunch indexes not refreshed. Run both: mcp__jcodemunch__index_folder(path='.', incremental=true, use_ai_summaries=false) and mcp__jdocmunch__index_local(path='.', use_ai_summaries=false)"
+CONTEXT="Auto-bypass in $((MAX_BLOCKS - BLOCKS)) more blocked calls."
 
-**MANDATORY — run BOTH of these NOW before any other tool call:**
-1. Fetch schemas: ToolSearch(\"select:mcp__jcodemunch__index_folder,mcp__jdocmunch__index_local\")
-2. Run BOTH in parallel:
-   - mcp__jcodemunch__index_folder(path=\".\", incremental=true, use_ai_summaries=false)
-   - mcp__jdocmunch__index_local(path=\".\", use_ai_summaries=false)
-
-Tell the user: \"Index refresh was missed at session start — running it now.\"
-Auto-bypass in $((MAX_BLOCKS - BLOCKS)) more blocked calls."
-  exit 2
-fi
-
-# Standard block message
-echo "BLOCKED ($BLOCKS/$MAX_BLOCKS): jCodeMunch/jDocMunch indexes not yet refreshed this session.
-Run BOTH of these IMMEDIATELY before doing any other work:
-  1. mcp__jcodemunch__index_folder(path='.', incremental=true, use_ai_summaries=false)
-  2. mcp__jdocmunch__index_local(path='.', use_ai_summaries=false)
-Do NOT respond to the user first. Run the indexes NOW.
-Auto-bypass in $((MAX_BLOCKS - BLOCKS)) more blocked calls."
-exit 2
+jq -n \
+  --arg reason "$REASON" \
+  --arg context "$CONTEXT" \
+  '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$reason,"additionalContext":$context}}'
+exit 0

@@ -12,6 +12,13 @@
 # Register: PostToolUse matchers "mcp__jcodemunch__*" and "mcp__jdocmunch__*"
 #           in project .claude/settings.json
 
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$HOOK_DIR/lib/log.sh" 2>/dev/null
+hook_guard "track-genuine-savings"
+
+# python3 required for this hook's complex savings logic
+command -v python3 &>/dev/null || exit 0
+
 INPUT=$(cat)
 
 python3 -c "
