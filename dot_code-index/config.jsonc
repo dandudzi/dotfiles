@@ -1,0 +1,124 @@
+// jcodemunch-mcp configuration
+// Global: ~/.code-index/config.jsonc
+// Project: {project_root}/.jcodemunch.jsonc (optional, overrides global)
+//
+// All values below show defaults. Uncomment to override.
+// Env vars still work as fallback but are deprecated.
+{
+  // === Indexing ===
+  // "use_ai_summaries": true,
+  // "max_folder_files": 2000,
+  // "max_index_files": 10000,
+  // "staleness_days": 7,
+  // "max_results": 500,
+  // "extra_ignore_patterns": [],
+  // "extra_extensions": {},
+  // "context_providers": true,
+
+  // === Meta Response Control ===
+  // Allowlist of _meta fields to include in responses.
+  // Empty list = no _meta at all (maximum token savings).
+  // Absent/null = all fields included (backward compatible default).
+  // Uncomment and set to a list of field names to include only those fields.
+  // Available fields:"timing_ms",
+  //   "powered_by",
+  //   "index_stale",
+  //   "reindex_in_progress",
+  //   "stale_since_ms",
+  //   "reindex_error",
+  //   "reindex_failures",
+  //   "candidates_scored",
+  //   "token_budget",
+  //   "tokens_used",
+  //   "tokens_remaining",
+  // "meta_fields": [
+  //   "timing_ms",
+  //   "powered_by"
+  // ],
+  "meta_fields": null,
+
+  // === Languages ===
+  // All supported languages. Comment out to disable a language
+  // and its dependent features (e.g. "sql" disables dbt parsing
+  // and search_columns tool).
+  "languages": ["python", "javascript", "typescript", "tsx", "go", "rust", "java", "php", "dart", "csharp", "razor", "c", "swift", "cpp", "elixir", "ruby", "perl", "gdscript", "blade", "al", "kotlin", "gleam", "bash", "nix", "vue", "ejs", "verse", "lua", "luau", "erlang", "fortran", "sql", "scala", "haskell", "julia", "r", "css", "toml", "groovy", "objc", "proto", "hcl", "graphql", "autohotkey", "asm", "xml", "openapi"],
+
+  // === Disabled Tools ===
+  // Global: tools listed here are removed from the schema entirely.
+  // Project: tools listed here are rejected at call_tool() with an
+  //   explanatory error (schema is global, can't be changed per-project).
+  // Default: empty (all tools enabled). Uncomment to disable specific tools.
+  "disabled_tools": [
+  // "check_references",
+  // "find_importers",
+  // "find_references",
+  // "get_blast_radius",
+  // "get_class_hierarchy",
+  // "get_context_bundle",
+  // "get_dependency_graph",
+  // "get_file_content",
+  // "get_file_outline",
+  // "get_file_tree",
+  // "get_related_symbols",
+  // "get_repo_outline",
+  // "get_session_stats",
+  // "get_symbol_diff",
+  // "get_symbol_source",
+  // "index_file",
+  // "index_folder",
+  // "index_repo",
+  // "invalidate_cache",
+  // "list_repos",
+  // "resolve_repo",
+  // "search_columns",
+  // "search_symbols",
+  // "search_text",
+  // "suggest_queries",
+  // "wait_for_fresh",
+  ],
+
+  // === Descriptions ===
+  // Append text to shortened tool/param descriptions.
+  // Empty string = use hardcoded minimal base only.
+  // _tool = tool-level description, other keys = param names.
+  // _shared applies across all tools (tool-specific overrides _shared).
+  // Tools not listed here keep their full current descriptions unchanged.
+  "descriptions": {
+    // === Example: Uncomment to enable ===
+    // "search_symbols": {
+    //   "_tool": "",
+    //   "debug": "",
+    //   "detail_level": "",
+    //   "language": ""
+    // },
+    // "find_importers": { "_tool": "" },
+    // "find_references": { "_tool": "" },
+    // "get_blast_radius": { "_tool": "" },
+    // "get_context_bundle": { "_tool": "" },
+    // "suggest_queries": { "_tool": "" },
+    // "_shared": { "repo": "" }
+  },
+
+  // === Transport ===
+  // "transport": "stdio",
+  // "host": "127.0.0.1",
+  // "port": 8901,
+  // "rate_limit": 0,
+
+  // === Watcher ===
+  // "watch": false,
+  // "watch_debounce_ms": 2000,
+  // "freshness_mode": "relaxed",
+  // "claude_poll_interval": 5.0,
+
+  // === Logging ===
+  // "log_level": "WARNING",
+  // "log_file": null,
+
+  // === Privacy & Telemetry ===
+  // "redact_source_root": false,
+  // "stats_file_interval": 3,
+  // "share_savings": true,
+  // "summarizer_concurrency": 4,
+  // "allow_remote_summarizer": false
+}
