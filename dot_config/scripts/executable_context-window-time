@@ -1,2 +1,2 @@
 #!/bin/sh
-npx -y ccusage@latest blocks --active --json 2>/dev/null | node /Users/daniel/Repos/usage-script/usage-time.js
+node /Users/daniel/Repos/usage-script/usage-time.js
