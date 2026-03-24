@@ -18,20 +18,8 @@
         "type": "separator"
       },
       {
-        "id": "1dbe7b57-7831-44af-a042-79ff88313680",
-        "type": "context-percentage-usable",
-        "color": "brightRed",
-        "rawValue": true
-      },
-      {
-        "id": "3e70a2c0-e205-4c7e-a89f-1bc4e68d88a4",
-        "type": "separator"
-      },
-      {
-        "id": "4cdcdac6-ec0b-486d-9186-b6fde02e173d",
-        "type": "tokens-total",
-        "color": "brightGreen",
-        "rawValue": true
+        "id": "19dfbb34-8355-49f0-91c5-7d6a619bb86b",
+        "type": "context-percentage"
       },
       {
         "id": "fd38b1b3-4b5d-4faa-9396-43aa0660ba00",
