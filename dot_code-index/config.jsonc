@@ -19,23 +19,13 @@
   // Allowlist of _meta fields to include in responses.
   // Empty list = no _meta at all (maximum token savings).
   // Absent/null = all fields included (backward compatible default).
-  // Uncomment and set to a list of field names to include only those fields.
-  // Available fields:"timing_ms",
-  //   "powered_by",
-  //   "index_stale",
-  //   "reindex_in_progress",
-  //   "stale_since_ms",
-  //   "reindex_error",
-  //   "reindex_failures",
-  //   "candidates_scored",
-  //   "token_budget",
-  //   "tokens_used",
-  //   "tokens_remaining",
-  // "meta_fields": [
-  //   "timing_ms",
-  //   "powered_by"
-  // ],
-  "meta_fields": null,
+  // Available fields:
+  //   "timing_ms", "tokens_saved", "total_tokens_saved",
+  //   "powered_by", "index_stale", "reindex_in_progress",
+  //   "stale_since_ms", "files_searched", "truncated",
+  //   "candidates_scored", "token_budget", "tokens_used",
+  //   "tokens_remaining", "reindex_error", "reindex_failures"
+  "meta_fields": ["timing_ms", "tokens_saved"],
 
   // === Languages ===
   // All supported languages. Comment out to disable a language
