@@ -1,6 +1,8 @@
 {
   "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_SPAWN_BACKEND": "tmux",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
@@ -8,7 +10,7 @@
     "DISABLE_TELEMETRY": "1",
     "DISABLE_ERROR_REPORTING": "1",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
-    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+    "DISABLE_COST_WARNINGS": "1"
   },
   "permissions": {
     "allow": [
@@ -336,7 +338,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'DATA=$(cat); printf \"%s\" \"$DATA\" | python3 -c \"import sys,json; d=json.load(sys.stdin); r=d.get(\\\"rate_limits\\\",{}).get(\\\"five_hour\\\",{}).get(\\\"resets_at\\\"); r and open(\\\"/tmp/claude-resets-at\\\",\\\"w\\\").write(str(r))\" 2>/dev/null; L=$(printf \"%s\" \"$DATA\" | npx -y ccstatusline@latest 2>/dev/null); J=$(bash ~/.claude/hooks/jcodemunch-statusline.sh); S=$(printf \"%s\" \"$DATA\" | bash \"$HOME/.claude/statusline-standalone.sh\"); [ -n \"$J\" ] && printf \"%s\\n%s\\n%s\\n\" \"$L\" \"$J\" \"$S\" || printf \"%s\\n%s\\n\" \"$L\" \"$S\"'",
+    "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
   "enabledPlugins": {
@@ -366,12 +368,13 @@
   "sandbox": {
     "enabled": false
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "voiceEnabled": false,
   "autoMemoryEnabled": false,
   "autoCompact": {
     "customInstructions": "Preserve all file paths, function names, error messages, debugging steps, and architectural decisions."
   },
+  "teammateMode": "tmux",
   "gattributiong": {
     "commit": "",
     "pr": ""
