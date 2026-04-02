@@ -40,7 +40,7 @@ For simple, single-domain tasks, route directly to the specialist — skip the o
 
 ## Subagent Limit
 
-Spawn at most **5 subagents per session**. Use them for:
+Spawn at most **3 subagents** at the same time. Use them for:
 - Parallel independent queries (research, code analysis)
 - Complex tasks exceeding context (delegating to specialized agent types)
 - Work that doesn't duplicate your own efforts
