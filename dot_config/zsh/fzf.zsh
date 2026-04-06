@@ -20,7 +20,7 @@ export FZF_DEFAULT_OPTS=" --ansi \
 	--color=border:#363a4f,label:#cad3f5"
 
 # make sure that fzf-preview for completion uses less
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [ -d ${(Q)realpath} ]; then eza -1 --all --color=always --icons ${(Q)realpath}; else bat -n --color=always ${(Q)realpath} 2>/dev/null || less ${(Q)realpath}; fi'
 # brew installing lesspipe in strange place so this is why it is here
 # ** in case version will change
 export LESSOPEN="|${HOMEBREW_PREFIX:-/opt/homebrew}/Cellar/lesspipe/**/bin/lesspipe.sh %s"
