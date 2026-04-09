@@ -125,5 +125,10 @@ alias claude-mem="bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/s
 alias uClaude="brew upgrade claude-code@latest claude"
 alias aClaude="rtk discover --all && npx ccusage session --compact"
 function cc() {
-  CLAUDE_CODE_TASK_LIST_ID="$1" claude --enable-auto-mode --model opusplan "${@:2}"
+  CLAUDE_CODE_TASK_LIST_ID="$1" claude --model opusplan "${@:2}"
 }
+alias gNewWhoWrote="git shortlog -sn --no-merges"
+alias gNewWhoWroteLast6Months="git shortlog -sn --no-merges --since=\"6 months ago\""
+alias gNewWhereBugsCluster="git log -i -E --grep=\"fix|bug|broken\" --name-only --format='' | sort | uniq -c | sort -nr | head -20"
+alias gNewIsProjectDying="git log --format='%ad' --date=format:'%Y-%m' | sort | uniq -c"
+alias gNewFirefightingDetect="git log --oneline --since=\"1 year ago\" | grep -iE 'revert|hotfix|emergency|rollback'"
