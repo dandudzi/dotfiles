@@ -4,6 +4,7 @@
     "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
     "CLAUDE_CODE_SPAWN_BACKEND": "tmux",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1",
     "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
     "ENABLE_TOOL_SEARCH": "auto:5",
@@ -71,8 +72,6 @@
       "Bash(git branch *)"
     ],
     "deny": [
-      "Bash(rtk init*)",
-      "Bash(rtk proxy*)",
       "WebFetch(domain:example.com)",
       "Bash(*bitwarden*)",
       "Bash(bw:*)",
@@ -122,8 +121,7 @@
       "Read(~/.pypirc)",
       "Read(~/.gem/credentials)",
       "Read(~/Library/Keychains/**)"
-    ],
-    "defaultMode": "default"
+    ]
   },
   "hooks": {
     "SessionStart": [
@@ -351,7 +349,8 @@
     "claude-mermaid@claude-mermaid": false,
     "skill-creator@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "context-mode@context-mode": true
+    "context-mode@context-mode": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "context-mode": {
@@ -367,6 +366,12 @@
         "repo": "thedotmack/claude-mem"
       },
       "autoUpdate": true
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
     }
   },
   "sandbox": {
@@ -375,6 +380,8 @@
   "effortLevel": "medium",
   "voiceEnabled": false,
   "autoMemoryEnabled": false,
+  "skipAutoPermissionPrompt": true,
+  "useAutoModeDuringPlan": false,
   "autoCompact": {
     "customInstructions": "Preserve all file paths, function names, error messages, debugging steps, and architectural decisions."
   },
