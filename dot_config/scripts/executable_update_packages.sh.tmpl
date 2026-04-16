@@ -29,12 +29,8 @@ if [ ! -f "$UPDATE_FILE" ] || [ "$(date +%s)" -gt "$(( $(cat "$UPDATE_FILE") + 8
   run_step "Upgrading Homebrew packages" brew upgrade || failed=1
   run_step "Cleaning up Homebrew" brew cleanup || failed=1
   run_step "Updating Mise... 🐁" mise upgrade || failed=1
-
-  {{ if not .work -}}
   run_step "Updating homebrew bundle file" brew bundle dump --file="$BREWFILE_PATH" --force || failed=1
   run_step "Adding Brewfile to chezmoi" chezmoi add "$BREWFILE_PATH" || failed=1
-  {{ end }}
-
   run_step " Updating tpm plugins" "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all || failed=1
 
   if [ "$failed" -eq 0 ]; then
