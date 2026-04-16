@@ -1,0 +1,23 @@
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+[projects."/Users/daniel/Repos/dd-cc-setup"]
+trust_level = "trusted"
+
+[projects."/Users/daniel/Repos/conclude-benchmark-for-ai"]
+trust_level = "trusted"
+
+[projects."/Users/daniel/Repos"]
+trust_level = "trusted"
+
+[projects."/Users/daniel/Repos/rulesync"]
+trust_level = "trusted"
+
+[projects."/Users/daniel/Documents/Praca I dokumenty/assigmnets"]
+trust_level = "trusted"
+
+[projects."/Users/daniel/.config"]
+trust_level = "trusted"
+
+[tui]
+status_line = ["model-with-reasoning", "context-remaining", "current-dir", "five-hour-limit"]
+theme = "catppuccin-macchiato"
