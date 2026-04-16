@@ -156,6 +156,11 @@ source $CONFIG_HOME/zsh/alias.zsh
 source $CONFIG_HOME/zsh/themes/catppuccin_macchiato-zsh-syntax-highlighting.zsh
 export EZA_COLORS="catppuccin"
 
+# make bitwarden ssh agent available before auto-update hooks run
+if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
+    export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+fi
+
 #🍻 Source brew auto update script
 source $CONFIG_HOME/scripts/update_packages.sh
 
@@ -172,10 +177,6 @@ zstyle ':completion:*' special-dirs false
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 # ripgrep config 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
-# make bitwarden ssh agent
-if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
-    export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
-fi
 #📢 zsh autosuggestions
 source "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # make sure that spaceship prompt is refreshed
@@ -204,4 +205,3 @@ zle -N zle-keymap-select
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-

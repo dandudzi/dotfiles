@@ -1,32 +1,45 @@
-#!/bin/bash
-#🍻 Update brew once per day
+#!/bin/sh
+
 UPDATE_FILE="$HOME/.last_update"
-# Run only if last update was over 24 hours ago
-if [ ! -f "$UPDATE_FILE" ] || [ $(date +%s) -gt $(($(cat "$UPDATE_FILE") + 86400)) ]; then
-  echo "Updating oh-my-zsh"
-  $ZSH/tools/upgrade.sh
-  echo "Updating chezmoi dependencies"
-  chezmoi update
+BREWFILE_PATH="$HOME/.config/brewfile/Brewfile"
 
-  echo "Updating oh my zsh"
-  omz update
+run_step() {
+  label="$1"
+  shift
 
-  echo "Updating Homebrew... 🍺"
-  brew update
-  brew upgrade
-  brew cleanup
-  
-  echo "Updating Mise... 🐁"
-  mise upgrade
+  echo "$label"
+  if ! "$@"; then
+    echo "Failed: $label" >&2
+    return 1
+  fi
+}
+
+# Run only if the last update was over 24 hours ago.
+if [ ! -f "$UPDATE_FILE" ] || [ "$(date +%s)" -gt "$(( $(cat "$UPDATE_FILE") + 86400 ))" ]; then
+  failed=0
+
+  run_step "Updating Oh My Zsh" "$ZSH/tools/upgrade.sh" || failed=1
+
+  if ! run_step "Updating chezmoi dependencies" chezmoi update; then
+    echo "chezmoi uses git@github.com:dandudzi/dotfiles.git, so this step needs valid GitHub SSH access." >&2
+    failed=1
+  fi
+
+  run_step "Updating Homebrew... 🍺" brew update || failed=1
+  run_step "Upgrading Homebrew packages" brew upgrade || failed=1
+  run_step "Cleaning up Homebrew" brew cleanup || failed=1
+  run_step "Updating Mise... 🐁" mise upgrade || failed=1
 
   {{ if not .work -}}
-  echo "Updating homebrew bundle file"
-  brew bundle dump --file="~/.config/brewfile/Brewfile" --force
-  dota ~/.config/brewfile/Brewfile
+  run_step "Updating homebrew bundle file" brew bundle dump --file="$BREWFILE_PATH" --force || failed=1
+  run_step "Adding Brewfile to chezmoi" chezmoi add "$BREWFILE_PATH" || failed=1
   {{ end }}
 
-  echo " Updating tpm plugins"
-  ~/.config/tmux/plugins/tpm/bin/update_plugins all
+  run_step " Updating tpm plugins" "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all || failed=1
 
-  date +%s >"$UPDATE_FILE" # Save current timestamp
+  if [ "$failed" -eq 0 ]; then
+    date +%s >"$UPDATE_FILE"
+  else
+    echo "One or more update steps failed; leaving $UPDATE_FILE unchanged so the update is retried next time." >&2
+  fi
 fi
