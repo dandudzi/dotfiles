@@ -2,6 +2,7 @@
 
 UPDATE_FILE="$HOME/.last_update"
 BREWFILE_PATH="$HOME/.config/brewfile/Brewfile"
+TMUX_CATPPUCCIN_PLUGIN_PATH="$HOME/.config/tmux/plugins/tmux"
 
 run_step() {
   label="$1"
@@ -12,6 +13,19 @@ run_step() {
     echo "Failed: $label" >&2
     return 1
   fi
+}
+
+cleanup_tmux_plugin_tags() {
+  plugin_path="$1"
+  shift
+
+  [ -d "$plugin_path/.git" ] || return 0
+
+  for tag_name in "$@"; do
+    if git -C "$plugin_path" rev-parse -q --verify "refs/tags/$tag_name" >/dev/null 2>&1; then
+      git -C "$plugin_path" tag -d "$tag_name" >/dev/null 2>&1 || return 1
+    fi
+  done
 }
 
 # Run only if the last update was over 24 hours ago.
@@ -31,6 +45,7 @@ if [ ! -f "$UPDATE_FILE" ] || [ "$(date +%s)" -gt "$(( $(cat "$UPDATE_FILE") + 8
   run_step "Updating Mise... 🐁" mise upgrade || failed=1
   run_step "Updating homebrew bundle file" brew bundle dump --file="$BREWFILE_PATH" --force || failed=1
   run_step "Adding Brewfile to chezmoi" chezmoi add "$BREWFILE_PATH" || failed=1
+  run_step "Cleaning mutable catppuccin/tmux tags" cleanup_tmux_plugin_tags "$TMUX_CATPPUCCIN_PLUGIN_PATH" latest v2 || failed=1
   run_step " Updating tpm plugins" "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all || failed=1
 
   if [ "$failed" -eq 0 ]; then
