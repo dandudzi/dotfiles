@@ -28,6 +28,21 @@ do_log() {
   do_refresh
 }
 
+do_log_pullups() {
+  local kind="$1"
+  local reps="$2"
+  if [[ ! "$reps" =~ ^[0-9]+$ ]] || (( reps <= 0 )); then
+    echo "Error: reps must be a positive integer" >&2
+    exit 1
+  fi
+  local response
+  response=$(curl -sf -X POST "$API_URL/log/$kind/$reps" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json")
+  echo "$response"
+  do_refresh
+}
+
 do_summary() {
   curl -sf -X GET "$API_URL/summary" \
     -H "Authorization: Bearer $TOKEN"
@@ -86,7 +101,9 @@ sq = ex.get('squats', 0) / goal * 100 if goal else 0
 si = ex.get('situps', 0) / goal * 100 if goal else 0
 lr = ex.get('leg_rises', 0) / goal * 100 if goal else 0
 sm = ex.get('superman', 0) / goal * 100 if goal else 0
-avg = (p + sq + si + lr + sm) / 5
+pullup_goal = 1000
+pu = (ex.get('pullups', 0) + ex.get('partial_pullups', 0)) / pullup_goal * 100
+avg = (p + sq + si + lr + sm + pu) / 6
 c = f'\033[38;5;{color}m'
 r = '\033[0m'
 print(f'{c}󰥬 {avg:.1f}%{r}')
@@ -160,6 +177,8 @@ Usage:
   fitness-track -r | refresh       Fetch & cache current state from API
   fitness-track -s | summary       Show plain-text progress summary
   fitness-track -l | log <N>       Log N sets (POST to API + refresh)
+  fitness-track -u | pullups <N>         Log N pull-up reps
+  fitness-track -U | partial-pullups <N> Log N partial pull-up reps
   fitness-track -p | prompt        Increment local prompt counter
   fitness-track -e | edit          Edit state in $EDITOR and push to API
   fitness-track -t | track         Check if it's time to work out
@@ -178,6 +197,20 @@ case "${1:-}" in
       exit 1
     fi
     do_log "$2"
+    ;;
+  -u|pullups)
+    if [[ -z "${2:-}" ]]; then
+      echo "Error: missing reps number. Usage: fitness-track -u <N>" >&2
+      exit 1
+    fi
+    do_log_pullups "pullups" "$2"
+    ;;
+  -U|partial-pullups)
+    if [[ -z "${2:-}" ]]; then
+      echo "Error: missing reps number. Usage: fitness-track -U <N>" >&2
+      exit 1
+    fi
+    do_log_pullups "partial-pullups" "$2"
     ;;
   -s|summary)
     do_summary
