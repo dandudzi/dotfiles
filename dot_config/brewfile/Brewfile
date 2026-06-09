@@ -1,86 +1,159 @@
 tap "anomalyco/tap"
 tap "felixkratz/formulae"
 tap "joshmedeski/sesh"
+# Code searching, linting, rewriting
 brew "ast-grep"
+# Official Amazon AWS command-line interface
 brew "awscli"
+# Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
+# Secure and free password manager for all of your devices
 brew "bitwarden-cli"
+# Resource monitor. C++ version and continuation of bashtop and bpytop
 brew "btop"
+# Versatile and fast Unicode/ASCII/ANSI graphics renderer
 brew "chafa"
+# Manage your dotfiles across multiple diverse machines, securely
 brew "chezmoi"
+# Tool for emulating mouse and keyboard events
 brew "cliclick"
+# GNU File, Shell, and Text utilities
 brew "coreutils"
+# Load/unload environment variables based on $PWD
 brew "direnv"
+# Tool for managing dock items
 brew "dockutil"
+# Select default apps for documents and URL schemes on macOS
 brew "duti"
+# Run arbitrary commands when files change
 brew "entr"
+# Modern, maintained replacement for ls
 brew "eza"
-brew "fastfetch"
-brew "fd"
-brew "ffmpeg"
-brew "fzf"
-brew "gh"
-brew "git-delta"
-brew "git-open"
-brew "gnupg"
-brew "grc"
-brew "gum"
-brew "httpie"
-brew "imagemagick"
-brew "jdtls"
-brew "jq"
-brew "lazygit"
-brew "lesspipe"
-brew "lnav"
+# Powerful, lightweight programming language
 brew "lua"
+# Like neofetch, but much faster because written mostly in C
+brew "fastfetch"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# GitHub command-line tool
+brew "gh"
+# Syntax-highlighting pager for git and diff output
+brew "git-delta"
+# Open GitHub webpages from a terminal
+brew "git-open"
+# GNU Privacy Guard (OpenPGP)
+brew "gnupg"
+# Colorize logfiles and command output
+brew "grc"
+# Tool for glamorous shell scripts
+brew "gum"
+# User-friendly cURL replacement (command-line HTTP client)
+brew "httpie"
+# Tools and libraries to manipulate images in select formats
+brew "imagemagick"
+# Java language specific implementation of the Language Server Protocol
+brew "jdtls"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# Simple terminal UI for git commands
+brew "lazygit"
+# Input filter for the pager less
+brew "lesspipe"
+# Curses-based tool for viewing and analyzing log files
+brew "lnav"
+# Package manager for the Lua programming language
 brew "luarocks"
+# Mac App Store command-line interface
 brew "mas"
+# CLI for Mermaid library
 brew "mermaid-cli"
+# Polyglot runtime manager (asdf rust clone)
 brew "mise"
+# Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Port scanning utility for large networks
 brew "nmap"
+# Retrieves currently playing media, and simulates media actions
 brew "nowplaying-cli"
+# Command-line Git information tool
 brew "onefetch"
+# Swiss-army knife of markup format conversion
 brew "pandoc"
+# Pinentry for GPG on Mac
 brew "pinentry-mac"
+# PDF rendering library (based on the xpdf-3.0 code base)
 brew "poppler"
+# Cross-platform library for audio I/O
 brew "portaudio"
+# Show ps output as a tree
 brew "pstree"
+# SVG rendering tool and library
 brew "resvg"
+# Search tool like grep and The Silver Searcher
 brew "ripgrep"
+# CLI proxy to minimize LLM token consumption
 brew "rtk"
+# 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
+# Change macOS audio source from the command-line
 brew "switchaudio-osx"
+# Simplified and community-driven man pages
 brew "tldr"
+# Terminal multiplexer
 brew "tmux"
+# Parser generator tool
 brew "tree-sitter-cli"
+# Command-line unarchiving tools supporting multiple formats
 brew "unar"
+# Internet file retriever
 brew "wget"
+# Why is this running?
 brew "witr"
+# Blazing fast terminal file manager written in Rust, based on async I/O
 brew "yazi"
+# Shell extension to navigate your filesystem faster
 brew "zoxide"
+# Fish-like fast/unobtrusive autosuggestions for zsh
 brew "zsh-autosuggestions"
+# Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
-brew "anomalyco/tap/opencode"
-brew "felixkratz/formulae/sketchybar"
-brew "joshmedeski/sesh/sesh"
+# Desktop password and login vault
 cask "bitwarden"
+# Anthropic's official Claude AI desktop app
 cask "claude"
+# OpenAI's coding agent that runs in your terminal
 cask "codex"
+# Voice and text chat software
 cask "discord"
+# App to build and share containerised applications and microservices
 cask "docker-desktop"
+# Screenshot software with built-in annotation tools
 cask "flameshot"
 cask "font-jetbrains-mono"
 cask "font-symbols-only-nerd-font"
+# Web browser
 cask "google-chrome"
+# Keyboard shortcuts for every button on your screen
 cask "homerow"
+# JetBrains tools manager
 cask "jetbrains-toolbox"
+# GPU-based terminal emulator
 cask "kitty"
+# Collaboration platform for API development
 cask "postman"
+# Control your tools with a few keystrokes
 cask "raycast"
+# Music streaming service
 cask "spotify"
+# Video game digital distribution service
 cask "steam"
+# Open-source code editor
 cask "visual-studio-code"
+# Web browser with built-in email client focusing on customization and control
 cask "vivaldi"
 mas "ATEN KVM Utility", id: 6450888492
 mas "GarageBand", id: 682658836
