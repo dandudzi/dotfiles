@@ -179,6 +179,8 @@ esac
 # pnpm end
 
 pnpm config set --global --json minimumReleaseAge 10080
+pnpm config set --global --json blockExoticSubdeps true
+pnpm config set --global trustPolicy no-downgrade
 
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
