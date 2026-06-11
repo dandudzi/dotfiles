@@ -7,12 +7,6 @@ maven = "latest"
 gradle = "latest"
 kotlin = "latest"
 rust = "latest"
-"npm:wrangler" = "latest"
-"npm:typescript-language-server" = "latest"
-"npm:typescript" = "latest"
-"npm:@vtsls/language-server" = "latest"
-"npm:pyright" = "latest"
-"npm:pm2" = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"
