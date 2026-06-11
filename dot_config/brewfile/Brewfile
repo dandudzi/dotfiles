@@ -143,6 +143,8 @@ cask "homerow"
 cask "jetbrains-toolbox"
 # GPU-based terminal emulator
 cask "kitty"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
 # Collaboration platform for API development
 cask "postman"
 # Control your tools with a few keystrokes
@@ -166,7 +168,6 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft Word", id: 462054704
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-mas "Structured", id: 1499198946
 mas "Xcode", id: 497799835
 vscode "dbaeumer.vscode-eslint"
 vscode "donjayamanne.githistory"
