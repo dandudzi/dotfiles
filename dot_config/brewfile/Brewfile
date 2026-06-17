@@ -135,8 +135,6 @@ cask "docker-desktop"
 cask "flameshot"
 cask "font-jetbrains-mono"
 cask "font-symbols-only-nerd-font"
-# Web browser
-cask "google-chrome"
 # Keyboard shortcuts for every button on your screen
 cask "homerow"
 # JetBrains tools manager
@@ -145,8 +143,6 @@ cask "jetbrains-toolbox"
 cask "kitty"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
-# Collaboration platform for API development
-cask "postman"
 # Control your tools with a few keystrokes
 cask "raycast"
 # Music streaming service
