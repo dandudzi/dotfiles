@@ -28,3 +28,5 @@ For MCP specifically, `mcp.md` is only the canonical shared intent file. Active 
 
 ## Chezmoi
 This directory lives under the rendered `~/.config` tree, so new files added here must also be captured in the upstream `chezmoi` source. Use `chezmoi add ~/.config/agents/<path>` after live edits, or edit the corresponding source path directly when the mapping is clear.
+
+Do not capture native installer output outside `/Users/daniel/.config` from this shared-agent workflow unless the user explicitly requests that exact path. Tool-owned files such as `~/.codex/RTK.md`, `~/.claude/RTK.md`, `~/.claude/settings.json`, and `~/Library/Application Support/rtk/filters.toml` can exist live for the tools without being managed from this directory.

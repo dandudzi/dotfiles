@@ -11,3 +11,7 @@ These instructions apply across Codex, Claude Code, and OpenCode when their glob
 ## Verification
 - Before changing durable config, check whether the target path is managed by chezmoi.
 - After creating or moving shared config, verify the symlink target and chezmoi source path.
+
+@/Users/daniel/.codex/RTK.md
+
+@RTK.md
