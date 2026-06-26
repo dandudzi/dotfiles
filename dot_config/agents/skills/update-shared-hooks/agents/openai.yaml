@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Shared Hooks"
+  short_description: "Share hook scripts with wrappers"
+  default_prompt: "Use $update-shared-hooks to add or change a shared hook script and wire it into Codex, Claude Code, and OpenCode safely."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Shared Agents"
+  short_description: "Change shared agent instructions safely"
+  default_prompt: "Use $update-shared-agents to update shared global instructions or agent prompts for Codex, Claude Code, and OpenCode."

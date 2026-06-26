@@ -1,0 +1,4 @@
+interface:
+  display_name: "Install Shared MCP"
+  short_description: "Install MCP across agent tools"
+  default_prompt: "Use $install-shared-mcp to add this MCP server for Codex, Claude Code, and OpenCode without losing existing config."
