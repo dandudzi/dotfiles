@@ -21,5 +21,10 @@ Docs checked on 2026-06-24 against official Codex, Claude Code, OpenCode, and Op
 
 Treat `global.md` and `SKILL.md` with `name` and `description` frontmatter as the most portable units across the three tools. Treat Claude/OpenCode Markdown agents as shareable when their frontmatter stays compatible. Treat MCP config, hook config, permissions, model choices, auth, caches, logs, histories, and runtime state as tool-specific unless explicitly designed as a safe wrapper around shared content.
 
+## Existing Config Handling
+Before moving or linking any live tool config, inspect the existing target path and preserve current entries. Do not overwrite current MCP servers, hooks, settings, skills, or agents just to make the layout look consistent. If a target already exists, merge deliberately or stop and ask for direction.
+
+For MCP specifically, `mcp.md` is only the canonical shared intent file. Active MCP servers must still be represented in each tool's native config format. Codex, Claude Code, and OpenCode do not share one MCP schema, so a complete MCP-sharing change means checking current tool configs, recording the non-secret shared intent here, and then updating each requested tool wrapper without copying tokens or OAuth state.
+
 ## Chezmoi
 This directory lives under the rendered `~/.config` tree, so new files added here must also be captured in the upstream `chezmoi` source. Use `chezmoi add ~/.config/agents/<path>` after live edits, or edit the corresponding source path directly when the mapping is clear.
