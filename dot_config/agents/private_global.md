@@ -1,17 +1,9 @@
-# Global Agent Instructions
-
-These instructions apply across Codex, Claude Code, and OpenCode when their global instruction paths are symlinked to this file.
-
-## Shared Working Rules
-- Treat this machine's `~/.config` tree as chezmoi-managed. When adding or moving config files, capture changes in chezmoi instead of leaving machine-only files behind.
-- Prefer portable `SKILL.md` skills for reusable workflows that apply across multiple tools.
-- Keep secrets, tokens, OAuth state, histories, logs, caches, sessions, and generated runtime state out of shared agent configuration.
-- When tool behavior differs, keep the shared intent here and use the smallest tool-specific wrapper required by that tool.
-
-## Verification
-- Before changing durable config, check whether the target path is managed by chezmoi.
-- After creating or moving shared config, verify the symlink target and chezmoi source path.
-
 @/Users/daniel/.codex/RTK.md
 
 @RTK.md
+
+## Required Tool Usage
+
+- Always run shell commands through `rtk`, for example `rtk git status` or `rtk npm test`.
+- For library, framework, API, package, MCP, tool, or configuration questions, use Context7 and Exa together before answering or editing: Context7 for current official docs/API details, and Exa for current web/source verification or page fetching.
+- For web search, current facts, external docs, release notes, package behavior, or anything likely to change, use Exa search/fetch first. If Context7 or Exa is unavailable, say that explicitly and continue with the best available source.
