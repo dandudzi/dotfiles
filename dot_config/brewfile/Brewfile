@@ -11,6 +11,8 @@ brew "bat"
 brew "bitwarden-cli"
 # Resource monitor. C++ version and continuation of bashtop and bpytop
 brew "btop"
+# TIFF library and utilities
+brew "libtiff"
 # Versatile and fast Unicode/ASCII/ANSI graphics renderer
 brew "chafa"
 # Manage your dotfiles across multiple diverse machines, securely
@@ -165,16 +167,6 @@ mas "Microsoft Word", id: 462054704
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
 mas "Xcode", id: 497799835
-vscode "dbaeumer.vscode-eslint"
-vscode "donjayamanne.githistory"
-vscode "eamodio.gitlens"
-vscode "formulahendry.auto-close-tag"
-vscode "github.copilot-chat"
-vscode "github.vscode-github-actions"
-vscode "k--kato.intellij-idea-keybindings"
-vscode "mermaidchart.vscode-mermaid-chart"
-vscode "ms-azuretools.vscode-containers"
-vscode "roscop.activefileinstatusbar"
 cargo "recon"
 uv "claude-monitor"
 npm "corepack"
