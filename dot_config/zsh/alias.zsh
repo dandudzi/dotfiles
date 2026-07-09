@@ -92,7 +92,7 @@ alias ta="tmux attach -t"                       # Attach new tmux session to alr
 alias tkss="tmux kill-session -t"               # Terminate named running tmux session
 alias tksv="tmux kill-server"                   # Terminate all running tmux sessions
 alias tl="tmux list-sessions"                   # Displays a list of running tmux sessions
-alias tmuxconf="$EDITOR $ZSH_TMUX_CONFIG"       # Open .tmux.conf file with an editor
+alias tmuxconf='${EDITOR:-nvim} ~/.config/tmux/tmux.conf' # Open tmux config with an editor
 alias ts="tmux new-session -s"                  # Create a new named tmux session
 
 #🐍 make sure that we are using python3 instead of python2
