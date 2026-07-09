@@ -8,7 +8,7 @@ alias week='date +%V'
 alias rgi="rg --invert-match"           # invert search text in files
 alias rgf="rg --fixed-strings"          # search fixed string
 alias rfv="~/.config/scripts/rfv"       # fzf with rg fo searching files and its content 
-alias kb="cat ~/.config/key-bindings.md ~/.config/zsh/alias.zsh | fzf"
+alias kb="cat ~/.config/zsh/alias.zsh ~/.config/zsh/command.zsh | fzf"
 
 #🩳 aliases
 #🪛 tools aliases
@@ -16,7 +16,7 @@ alias fastfetch="clear && fastfetch"
 alias tree=pstree
 alias cat=bat
 alias lals="cat ~/.config/zsh/alias.zsh"
-alias lkey="cat ~/.config/key-bindings.md"
+alias lkey="cat ~/.config/zsh/alias.zsh ~/.config/zsh/command.zsh"
 alias vi="nvim"
 alias vim="nvim"
 alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 
