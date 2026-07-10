@@ -44,7 +44,7 @@ small, reversible step at a time and verified before moving to the next item.
    researched below are archived because they solve a migration that is no
    longer planned.
 
-6. **The remaining work is a six-topic improvement queue.** Each topic will be
+6. **The remaining work is a three-topic improvement queue.** Each topic will be
    investigated and interviewed one at a time before a small, reversible change
    is implemented and verified.
 
@@ -235,8 +235,23 @@ Sources: [init.zsh](../zsh/init.zsh), [fzf.zsh](../zsh/fzf.zsh),
 - The shell has direct fzf workflows for files, directories, Git, history, and
   sesh. Kitty `choose-files` overlaps some file/directory use cases, but should
   not automatically replace familiar shell workflows.
-- `KITTY_CONFIG_DIRECTORY` is assigned the path to `kitty.conf`, but Kitty
-  expects a directory. It is not exported and is currently mostly inert.
+- `KITTY_CONFIG_DIRECTORY` controls the directory in which Kitty searches for
+  `kitty.conf` and related configuration. The current assignment points to the
+  file `$CONFIG_HOME/kitty/kitty.conf`, not the directory
+  `$CONFIG_HOME/kitty`, and it is not exported.
+- The live macOS launch environment and live tmux server environment do not
+  contain `KITTY_CONFIG_DIRECTORY`, and no other local file consumes the zsh
+  parameter. Kitty therefore follows its normal lookup and already finds
+  `~/.config/kitty/kitty.conf` without it.
+- Chezmoi/Git history shows the line was introduced alone by commit `a81f480`
+  on 2025-10-26 at 18:00, 55 minutes before commit `3c62a4c` first added
+  `kitty/kitty.conf` and `macchiato.conf`. It has never been changed since.
+- **Inference:** it was intended to point Kitty at the newly created config but
+  was written with a file path and without `export`. Correcting and exporting it
+  would still be redundant while the config remains in Kitty's standard
+  directory; exporting the current file-valued form would make Kitty treat that
+  file path as a directory. Daniel confirmed there is no alternate-profile
+  workflow, so the stale assignment was removed on 2026-07-10.
 - zsh vi-mode and a custom `zle-keymap-select` function manage cursor shape.
   Any manual Kitty shell integration inside tmux should use `no-cursor` to avoid
   two cursor managers. After direct zsh launch, this still needs a conflict test.
@@ -462,7 +477,7 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
 1. **Completed:** replace the generated 3,000-line Kitty template with a small,
    annotated configuration while preserving every active directive.
 2. **Completed:** verify the command palette, URL hints, and visible-path hints.
-   The file-oriented sequences work but need simpler follow-up mappings.
+   The file-oriented sequences work and will be retained unchanged.
 3. **Skipped:** `kitten ssh` is low value because SSH sessions are rarely used.
 4. **Completed:** keep `background_opacity 0.9` with blur disabled.
 5. **Completed:** keep `text_composition_strategy 0.1 0`; the current rendering
@@ -474,23 +489,17 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
 The selection interview retained these topics for investigation and later
 one-by-one implementation decisions:
 
-1. Manually enable Kitty zsh shell integration inside tmux, then evaluate prompt
-   navigation and long-command notifications without disturbing zsh vi-mode.
-2. Replace cumbersome file/path hint sequences with easy single-chord bindings
-   for the actions that prove useful. Audit Kitty, tmux, zsh, and Neovim key
-   conflicts before selecting keys.
-3. Investigate and correct the current inert or incorrect
-   `KITTY_CONFIG_DIRECTORY` assignment.
-4. Decide whether Kitty or tmux should own scrollback, search, selection, and
+1. Decide whether Kitty or tmux should own scrollback, search, selection, and
    clipboard actions, prioritizing whichever is easiest to bind and use.
-5. Improve Kitty close safety while preserving tmux sessions and their running
+2. Improve Kitty close safety while preserving tmux sessions and their running
    processes.
-6. Investigate restoration of the tmux/sesh workspace set after a macOS reboot,
+3. Investigate restoration of the tmux/sesh workspace set after a macOS reboot,
    where the original processes cannot remain alive.
 
 Explicitly excluded: a separate direct-zsh quick-access terminal and all work
 whose only purpose was replacing tmux with Kitty sessions, layouts, or project
-namespaces.
+namespaces. Prompt navigation and long-command notifications were also rejected,
+so manual Kitty shell integration is no longer an active topic.
 
 ## Archived Kitty-native migration stages
 
@@ -662,9 +671,11 @@ longer protects those processes?
 | Date | Topic | Decision | Evidence/answer | Implementation status |
 | --- | --- | --- | --- | --- |
 | 2026-07-10 | Phase ordering | Finish the initial tmux-independent Kitty recommendations before later investigations | Daniel explicitly separated the initial cleanup/tests from deeper workflow work | Completed |
-| 2026-07-10 | Shell integration | Investigate manual Kitty shell integration inside tmux for prompt navigation and long-command notifications | Automatic integration does not initialize shells started through tmux; Daniel wants both features investigated | Selected follow-up |
+| 2026-07-10 | Prompt navigation | Do not enable or remap previous/next prompt navigation | Daniel does not need this functionality; the non-working defaults therefore require no fix | Closed |
+| 2026-07-10 | Long-command notifications | Do not add long-command notifications | Daniel does not need this functionality | Closed |
+| 2026-07-10 | Manual shell integration | Do not enable manual Kitty shell integration | Its two proposed uses, prompt navigation and long-command notifications, were both rejected | Closed |
 | 2026-07-10 | Direct-zsh quick access | Do not add a separate direct-zsh quick-access terminal | Daniel explicitly rejected this topic during the selection interview | Closed |
-| 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings within the tmux-first setup | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Selected follow-up |
+| 2026-07-10 | File workflow shortcuts | Keep Kitty's existing multi-key path/file hint shortcuts unchanged | Daniel confirmed that the current `Ctrl+Shift+P`, then `f` workflow should be retained | Closed; no config change |
 | 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
 | 2026-07-10 | tmux persistence | Retain tmux permanently as the workspace organization and live-process persistence layer | Daniel uses tmux both for workspace organization and shell-state survival after Kitty closes | Selected architecture |
 | 2026-07-10 | Project switching | Retain the existing sesh plus zoxide workflow rather than replacing it with Kitty sessions | The live selector combines persistent tmux sessions, configured startup workspaces, frecency-ranked directories, filesystem search, previews, source filters, last-session, and session deletion | Selected architecture |
@@ -673,7 +684,7 @@ longer protects those processes?
 | 2026-07-10 | Phase 1 | Close the initial Kitty review and begin the selected tmux-first follow-up investigations | Cleanup and feature tests completed; SSH skipped; appearance and security defaults intentionally retained | Completed |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Architecture | Keep tmux permanently and improve Kitty around it | Daniel confirmed that replacing tmux is no longer relevant; tmux remains necessary for workspace organization, sesh, and live shell persistence | Selected |
-| 2026-07-10 | Config environment | Investigate the current `KITTY_CONFIG_DIRECTORY` assignment | Daniel selected this topic during the follow-up interview | Selected follow-up |
+| 2026-07-10 | Config environment | Remove the stale `KITTY_CONFIG_DIRECTORY` assignment | Official docs require a directory; the value was a file path, unexported, absent from live launch environments, and unused; Git history tied it to initial Kitty setup; Daniel confirmed there is no alternate-profile workflow | Completed |
 | 2026-07-10 | Interaction ownership | Compare Kitty and tmux ownership of scrollback, search, selection, and clipboard; prefer the easier keybinding model | Daniel selected the topic and identified ease of binding as the decision criterion | Selected follow-up |
 | 2026-07-10 | Close safety | Improve Kitty close behavior without sacrificing tmux session/process persistence | Daniel selected this topic during the follow-up interview | Selected follow-up |
 | 2026-07-10 | Reboot restoration | Investigate restoring tmux/sesh workspaces after macOS reboot | Daniel selected restoration even though reboot necessarily restarts rather than preserves processes | Selected follow-up |
@@ -683,6 +694,8 @@ longer protects those processes?
 Primary/current sources used for this research:
 
 - [Kitty configuration](https://sw.kovidgoyal.net/kitty/conf/)
+- [Kitty command-line config lookup](https://sw.kovidgoyal.net/kitty/invocation/#cmdoption-kitty-config)
+- [Kitty environment-variable glossary](https://sw.kovidgoyal.net/kitty/glossary/#envvar-KITTY_CONFIG_DIRECTORY)
 - [Kitty shell integration](https://sw.kovidgoyal.net/kitty/shell-integration/)
 - [Kitty sessions](https://sw.kovidgoyal.net/kitty/sessions/)
 - [Kitty layouts](https://sw.kovidgoyal.net/kitty/layouts/)

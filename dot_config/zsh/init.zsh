@@ -71,9 +71,6 @@ setopt chaselinks
 #🖥️ zsh settings
 ZSH_THEME="spaceship"
 
-# change terminal config path
-KITTY_CONFIG_DIRECTORY="$CONFIG_HOME/kitty/kitty.conf"
-
 #⚠️jira plugins require setup https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/jira
 plugins=(
   direnv              # Directory-based environment variables
