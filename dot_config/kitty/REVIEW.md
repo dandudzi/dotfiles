@@ -427,8 +427,9 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
    annotated configuration while preserving every active directive.
 2. Learn the Kitty command palette and current hint shortcuts.
 3. **Skipped:** `kitten ssh` is low value because SSH sessions are rarely used.
-4. Consider native blur and review the unusually thin text composition setting.
-5. Keep `allow_remote_control no` throughout Phase 1.
+4. **Completed:** keep `background_opacity 0.9` with blur disabled.
+5. Review the unusually thin text composition setting separately.
+6. Keep `allow_remote_control no` throughout Phase 1.
 
 The following earlier findings are deliberately deferred until a Phase 2
 profile launches zsh directly instead of tmux:
@@ -607,6 +608,7 @@ longer protects those processes?
 | 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings during Phase 2 | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Planned for Phase 2 |
 | 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
 | 2026-07-10 | tmux persistence | Preserve live shell state after Kitty closes, or provide an explicit retained persistence layer | Daniel uses tmux both for workspace organization and shell-state survival | Hard Phase 2 requirement |
+| 2026-07-10 | Transparency and blur | Retain `background_opacity 0.9` and leave `background_blur` disabled | Daniel prefers the current appearance | Completed; no config change |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
