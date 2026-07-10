@@ -6,12 +6,17 @@ elif [[ -f /usr/local/bin/brew ]]; then
 fi
 
 # PATH additions
-export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
-export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
-export PATH="$PATH:$HOME/.config/scripts"
+typeset -U path PATH
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
+path=(
+    "$HOME/.local/bin"
+    "$BUN_INSTALL/bin"
+    $path
+    "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
+    "/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
+    "$HOME/.config/scripts"
+)
+export PATH
 
 # Fitness tracker LaunchAgents (once per login, not every shell)
 CONFIG_HOME="$HOME/.config"
