@@ -28,7 +28,18 @@ echo "🚀 Starting setting up..."
 
 if ! check_brew; then
   echo "🍻 Installing Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  # Update the commit and checksum together after reviewing a newer installer.
+  HOMEBREW_INSTALL_COMMIT="feb6351d0d1a766a281d9691d4269cb026ff8f70"
+  HOMEBREW_INSTALL_SHA256="99287f194a8b3c9e6b0203a11a5fa54518be57209343e6bb954dec4635796d9d"
+  HOMEBREW_INSTALL_URL="https://raw.githubusercontent.com/Homebrew/install/${HOMEBREW_INSTALL_COMMIT}/install.sh"
+  HOMEBREW_INSTALL_SCRIPT="$(mktemp)"
+
+  trap 'rm -f "$HOMEBREW_INSTALL_SCRIPT"' EXIT
+  curl -fsSL "$HOMEBREW_INSTALL_URL" -o "$HOMEBREW_INSTALL_SCRIPT"
+  printf '%s  %s\n' "$HOMEBREW_INSTALL_SHA256" "$HOMEBREW_INSTALL_SCRIPT" | shasum -a 256 -c -
+  /bin/bash "$HOMEBREW_INSTALL_SCRIPT"
+  rm -f "$HOMEBREW_INSTALL_SCRIPT"
+  trap - EXIT
 
   echo "Applying Homebrew environment settings..."
   eval "$(/opt/homebrew/bin/brew shellenv)"
