@@ -175,4 +175,3 @@ unless ENV["HOMEBREW_DOTFILES_SKIP_MAS"] == "1"
 end
 cargo "recon"
 uv "claude-monitor"
-npm "corepack"
