@@ -2,7 +2,6 @@ tap "anomalyco/tap"
 tap "felixkratz/formulae", trusted: {
   formula: "sketchybar"
 }
-tap "joshmedeski/sesh"
 # Code searching, linting, rewriting
 brew "ast-grep"
 # Official Amazon AWS command-line interface
@@ -103,6 +102,8 @@ brew "ripgrep"
 brew "rtk"
 # 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
+# Smart tmux session manager
+brew "sesh"
 # Highly customizable macOS status bar
 brew "sketchybar"
 # Change macOS audio source from the command-line
