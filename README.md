@@ -5,7 +5,6 @@
    1. `touch id_ed25519.pub`
    1. `chmod 600 id_ed25519.pub`
    1. `pbpaste > id_ed25519.pub`
-1. If work laptop run `mv .zshrc .zshrc_work`
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --force dandudzi --ssh`
    1. During the installation pick if this is work laptop or not `y/n`
 1. Open Kitty to start an interactive Zsh shell and finish the first-shell setup
