@@ -101,9 +101,6 @@ trap 'echo "An error occurred, while installing brew dependencies";' ERR
 brew bundle --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
 trap - ERR
 
-echo "✅ Setup autocompletion for mise"
-mise completion zsh
-
 echo "▦ setting up ssh to include my config"
 if ! grep -qF "Include ~/.config/ssh/ssh_config" ~/.ssh/config 2>/dev/null; then
   echo "Include ~/.config/ssh/ssh_config" >> ~/.ssh/config
