@@ -1,1 +1,1 @@
-/Users/daniel/.config/agents/global.md
+../.config/agents/global.md
