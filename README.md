@@ -7,9 +7,9 @@
    1. `pbpaste > id_ed25519.pub`
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --force dandudzi --ssh`
    1. During the installation pick if this is work laptop or not `y/n`
+1. Enable in Bitwarden ssh agent
 1. Open Kitty to start an interactive Zsh shell and finish the first-shell setup
 1. Sometimes `tmux` has an issue with installing dependencies then enter it and refresh `<c-b> -> <⇧+i>`
-1. Enable in Bitwarden ssh agent
 1. Apply `Vivaldi` theme from path `~/.config/vivaldi/`
 1. Add wallpapers from path `~/.config/images/wallpapers`
 1. `<⇧-⌘-.>` to show hidden files in files/finder
