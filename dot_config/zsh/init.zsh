@@ -167,17 +167,12 @@ source $CONFIG_HOME/zsh/command.zsh
 #🍻 Source script that runs only once to setUp CI tools
 source $CONFIG_HOME/scripts/setUpCITools.sh
 
-# pnpm
+# Keep pnpm-installed global commands available without shadowing mise's pnpm.
 export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+  *) export PATH="$PATH:$PNPM_HOME/bin" ;;
 esac
-# pnpm end
-
-pnpm config set --global --json minimumReleaseAge 10080
-pnpm config set --global --json blockExoticSubdeps true
-pnpm config set --global trustPolicy no-downgrade
 
 # make sure that special-dirs like './' or '../' are not listed in completion
 zstyle ':completion:*' special-dirs false
