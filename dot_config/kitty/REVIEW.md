@@ -584,7 +584,7 @@ longer protects those processes?
 | --- | --- | --- | --- | --- |
 | 2026-07-10 | Phase ordering | Finish tmux-independent Kitty recommendations before starting the tmux replacement experiment | Daniel explicitly separated the work into Phase 1 and Phase 2 | Recorded |
 | 2026-07-10 | Direct-zsh features | Defer shell integration, notifications, quick access, and command-aware close behavior until Phase 2 | These features should be evaluated after switching the experimental profile away from tmux | Deferred to Phase 2 |
-| 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines before and after; normalized effective directives match | Completed |
+| 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
 ## Sources
