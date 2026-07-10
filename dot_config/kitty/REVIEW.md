@@ -426,7 +426,7 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
 1. **Completed:** replace the generated 3,000-line Kitty template with a small,
    annotated configuration while preserving every active directive.
 2. Learn the Kitty command palette and current hint shortcuts.
-3. Try `kitten ssh`, keeping transfer confirmation and clipboard-read prompts.
+3. **Skipped:** `kitten ssh` is low value because SSH sessions are rarely used.
 4. Consider native blur and review the unusually thin text composition setting.
 5. Keep `allow_remote_control no` throughout Phase 1.
 
@@ -457,7 +457,8 @@ These stages are a research sequence, not authorization to implement them.
 
 - Compact and annotate `kitty.conf` without changing effective behavior.
 - Learn command palette/hints.
-- Review `kitten ssh` and tmux-independent visual settings one at a time.
+- Skip `kitten ssh` unless remote usage increases; review tmux-independent
+  visual settings one at a time.
 - Keep tmux startup and remote-control policy unchanged.
 
 ### Stage 2: one experimental Kitty-native project
@@ -482,6 +483,9 @@ These stages are a research sequence, not authorization to implement them.
 ### Stage 4: persistence boundary
 
 - Classify processes into disposable, restartable, and must-remain-live.
+- Treat preservation of live shell state after Kitty closes as a current hard
+  requirement. Kitty session files can recreate programs and layouts, but do
+  not reattach the original live processes.
 - Move disposable/restartable work to Kitty-native windows.
 - Keep tmux only for must-remain-live or remote work if any exists.
 
@@ -527,10 +531,17 @@ last few weeks?
 Why this is first: it determines whether fully removing tmux is realistic or a
 hybrid persistence boundary is required.
 
+Partial answer, 2026-07-10: yes. tmux is deliberately used to preserve live
+shell state while Kitty is closed. The exact commands and processes that must
+survive still need to be inventoried in Phase 2.
+
 ### 2. Project mental model
 
 What does one tmux session represent: a repository, a task, a client, a broad
 context, or something else? What do tmux windows and panes represent inside it?
+
+Partial answer, 2026-07-10: tmux is the current workspace organization layer.
+The exact meaning of its sessions, windows, and panes still needs follow-up.
 
 ### 3. Daily entry points
 
@@ -568,6 +579,9 @@ important, or is a Kitty overlay/full-window picker acceptable?
 Which hosts use SSH, whether remote tmux is required, whether sessions survive
 network drops, and whether using `kitten ssh` is acceptable.
 
+Answer, 2026-07-10: SSH sessions are rarely used, so `kitten ssh` is not a
+Phase 1 priority.
+
 ### 10. Project restoration
 
 Should switching to a project merely open the correct directory, restore the
@@ -591,6 +605,8 @@ longer protects those processes?
 | 2026-07-10 | Phase ordering | Finish tmux-independent Kitty recommendations before starting the tmux replacement experiment | Daniel explicitly separated the work into Phase 1 and Phase 2 | Recorded |
 | 2026-07-10 | Direct-zsh features | Defer shell integration, notifications, quick access, and command-aware close behavior until Phase 2 | These features should be evaluated after switching the experimental profile away from tmux | Deferred to Phase 2 |
 | 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings during Phase 2 | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Planned for Phase 2 |
+| 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
+| 2026-07-10 | tmux persistence | Preserve live shell state after Kitty closes, or provide an explicit retained persistence layer | Daniel uses tmux both for workspace organization and shell-state survival | Hard Phase 2 requirement |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
