@@ -19,7 +19,6 @@ alias lals="cat ~/.config/zsh/alias.zsh"
 alias lkey="cat ~/.config/zsh/alias.zsh ~/.config/zsh/command.zsh"
 alias vi="nvim"
 alias vim="nvim"
-alias testBrewInstall="./install-mysetup.sh --skipInitial --skipMac --skipAppStore" 
 
 #🛜 networking
 alias fig="find . -print | grep -iw"
