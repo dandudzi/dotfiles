@@ -22,7 +22,6 @@
    1. Flameshot
       - change `Capture Screen` shortcut to `⌘+⇧+x`
       - change `Main color`
-   1. Caffeine
    1. Homerow
       - shortcut for clicking `⌘+⇧+space`
       - `immediate click`
