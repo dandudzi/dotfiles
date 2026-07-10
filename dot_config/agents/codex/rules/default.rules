@@ -1,0 +1,1461 @@
+# Codex execution policy — review draft.
+#
+# This file is intentionally not installed in ~/.codex/rules yet.
+# Codex uses the strictest decision across all matching prefixes:
+# forbidden > prompt > allow.
+#
+# Native execpolicy rules match token prefixes, not arbitrary flags or
+# canonicalized paths. Commands that require path-aware or flag-order-aware
+# checks remain prompt/forbidden instead of receiving broad allow rules.
+#
+# DEFERRED FOLLOW-UP — full-command enforcement hook:
+# - unwrap RTK, env, command, xargs, shell, and similar execution wrappers;
+# - normalize absolute executables and canonicalize paths/symlinks;
+# - detect reordered or combined dangerous flags and destructive Git refspecs;
+# - inspect compound commands, redirections, and remote-code pipelines;
+# - protect credential paths, secret APIs, and bulk environment dumps; and
+# - distinguish exact diagnostic commands from nested agent execution.
+# Until that hook is implemented, these rules are a strong escalation policy,
+# not an unconditional security boundary for every possible command spelling.
+#
+# The duplicate `rtk` forms are required by the global AGENTS.md instruction
+# that all shell commands run through RTK.
+
+# Restrict basename fallback for unconditionally allowed executables. Without
+# these declarations, an arbitrary absolute executable such as /tmp/ls could
+# inherit the `ls` allow rule when host-executable resolution is enabled.
+host_executable(name = "rtk", paths = ["/opt/homebrew/bin/rtk"])
+host_executable(name = "ls", paths = ["/bin/ls"])
+host_executable(name = "pwd", paths = ["/bin/pwd"])
+host_executable(name = "id", paths = ["/usr/bin/id"])
+host_executable(name = "whoami", paths = ["/usr/bin/whoami"])
+host_executable(name = "uname", paths = ["/usr/bin/uname"])
+host_executable(name = "which", paths = ["/usr/bin/which"])
+host_executable(name = "true", paths = ["/usr/bin/true"])
+host_executable(name = "false", paths = ["/usr/bin/false"])
+host_executable(name = "basename", paths = ["/usr/bin/basename"])
+host_executable(name = "dirname", paths = ["/usr/bin/dirname"])
+host_executable(name = "codex", paths = ["/opt/homebrew/bin/codex"])
+
+# -----------------------------------------------------------------------------
+# ALLOW — narrow, read-only commands whose remaining arguments cannot perform
+# writes, network calls, child execution, or privilege changes.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = ["pwd"],
+    decision = "allow",
+    justification = "Print the current working directory.",
+    match = ["pwd", "pwd -L"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "pwd"],
+    decision = "allow",
+    justification = "Print the current working directory through RTK.",
+    match = ["rtk pwd", "rtk pwd -L"],
+)
+
+prefix_rule(
+    pattern = ["ls"],
+    decision = "allow",
+    justification = "List directory entries without modifying them.",
+    match = ["ls", "ls -la"],
+    not_match = ["lsof"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "ls"],
+    decision = "allow",
+    justification = "List directory entries through RTK without modifying them.",
+    match = ["rtk ls", "rtk ls -la"],
+    not_match = ["rtk lsof"],
+)
+
+prefix_rule(
+    pattern = [["id", "whoami", "uname", "which"]],
+    decision = "allow",
+    justification = "Inspect local identity, platform, or executable resolution.",
+    match = ["id", "whoami", "uname -a", "which git"],
+    not_match = ["who"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["id", "whoami", "uname", "which"]],
+    decision = "allow",
+    justification = "Inspect local identity, platform, or executable resolution through RTK.",
+    match = ["rtk id", "rtk whoami", "rtk uname -a", "rtk which git"],
+    not_match = ["rtk who"],
+)
+
+prefix_rule(
+    pattern = [["true", "false", "basename", "dirname"]],
+    decision = "allow",
+    justification = "Run an inert result command or perform lexical path formatting.",
+    match = ["true", "false", "basename path/file", "dirname path/file"],
+    not_match = ["date", "arch"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["true", "false", "basename", "dirname"]],
+    decision = "allow",
+    justification = "Run an inert result command or lexical path formatting through RTK.",
+    match = ["rtk true", "rtk false", "rtk basename path/file", "rtk dirname path/file"],
+    not_match = ["rtk date", "rtk arch"],
+)
+
+prefix_rule(
+    pattern = ["codex", ["--version", "-V", "--help", "-h"]],
+    decision = "allow",
+    justification = "Inspect the installed Codex CLI without starting an agent.",
+    match = ["codex --version", "codex --help"],
+    not_match = ["codex exec task", "codex resume"],
+)
+
+prefix_rule(
+    pattern = ["codex", "help"],
+    decision = "allow",
+    justification = "Inspect Codex CLI help without starting an agent.",
+    match = ["codex help", "codex help execpolicy"],
+    not_match = ["codex exec task"],
+)
+
+prefix_rule(
+    pattern = ["codex", "execpolicy", "check"],
+    decision = "allow",
+    justification = "Validate Codex execution-policy rules without starting an agent.",
+    match = ["codex execpolicy check --rules default.rules -- git status"],
+    not_match = ["codex exec task"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", ["--version", "-V", "--help", "-h"]],
+    decision = "allow",
+    justification = "Inspect the installed Codex CLI through RTK without starting an agent.",
+    match = ["rtk codex --version", "rtk codex --help"],
+    not_match = ["rtk codex exec task", "rtk codex resume"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", "help"],
+    decision = "allow",
+    justification = "Inspect Codex CLI help through RTK without starting an agent.",
+    match = ["rtk codex help", "rtk codex help execpolicy"],
+    not_match = ["rtk codex exec task"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", "execpolicy", "check"],
+    decision = "allow",
+    justification = "Validate Codex execution-policy rules through RTK without starting an agent.",
+    match = ["rtk codex execpolicy check --rules default.rules -- git status"],
+    not_match = ["rtk codex exec task"],
+)
+
+# -----------------------------------------------------------------------------
+# PROMPT — potentially modifying, networked, executable, sensitive, or external
+# operations. Approval should be granted for the exact invocation only.
+#
+# Ordinary workspace-scoped inspection, builds, and tests intentionally have no
+# blanket prompt rule. They remain governed by Codex's sandbox and only require
+# escalation when they need capabilities outside it. Broad allows are avoided
+# because tools such as find, sed, awk, rg, and build runners have executable or
+# mutating modes.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = [["mkdir", "touch", "cp", "mv", "ln", "rm", "rmdir", "truncate", "install", "chmod", "chown", "chgrp", "tee", "patch"]],
+    decision = "prompt",
+    justification = "Filesystem mutation requires approval for the exact paths.",
+    match = ["mkdir build", "cp source target", "rm file.txt", "chmod 600 file"],
+    not_match = ["pwd"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["mkdir", "touch", "cp", "mv", "ln", "rm", "rmdir", "truncate", "install", "chmod", "chown", "chgrp", "tee", "patch"]],
+    decision = "prompt",
+    justification = "Filesystem mutation through RTK requires approval for the exact paths.",
+    match = ["rtk mkdir build", "rtk cp source target", "rtk rm file.txt", "rtk chmod 600 file"],
+    not_match = ["rtk pwd"],
+)
+
+prefix_rule(
+    pattern = ["git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
+    decision = "prompt",
+    justification = "Git mutations, network operations, configurable helpers, and content inspection require approval.",
+    match = ["git status", "git add file", "git commit -m change", "git push origin main", "git reset HEAD file", "git clean -n"],
+    not_match = ["git diff"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
+    decision = "prompt",
+    justification = "Git mutations, network operations, configurable helpers, and content inspection through RTK require approval.",
+    match = ["rtk git status", "rtk git add file", "rtk git commit -m change", "rtk git push origin main", "rtk git reset HEAD file", "rtk git clean -n"],
+    not_match = ["rtk git diff"],
+)
+
+prefix_rule(
+    pattern = [["bash", "sh", "zsh", "python", "python3", "node", "ruby", "perl", "osascript", "pwsh", "powershell", "tclsh", "lua", "php", "java", "jshell", "R", "Rscript", "deno", "swift"]],
+    decision = "prompt",
+    justification = "Shells and interpreters can execute arbitrary code.",
+    match = ["bash -c 'echo ok'", "python3 script.py", "node -e 'console.log(1)'", "deno run script.ts", "java Main"],
+    not_match = ["uname -a"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["bash", "sh", "zsh", "python", "python3", "node", "ruby", "perl", "osascript", "pwsh", "powershell", "tclsh", "lua", "php", "java", "jshell", "R", "Rscript", "deno", "swift"]],
+    decision = "prompt",
+    justification = "Shells and interpreters executed through RTK can run arbitrary code.",
+    match = ["rtk bash -c 'echo ok'", "rtk python3 script.py", "rtk node -e 'console.log(1)'", "rtk deno run script.ts", "rtk java Main"],
+    not_match = ["rtk uname -a"],
+)
+
+prefix_rule(
+    pattern = [["env", "command", "xargs", "parallel", "timeout", "nohup", "nice", "watch", "script", "expect"]],
+    decision = "prompt",
+    justification = "Execution wrappers can hide or transform a nested command and require exact approval.",
+    match = ["env command", "xargs rm", "parallel command", "timeout 10 command", "expect script.exp"],
+    not_match = ["pwd"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["env", "command", "xargs", "parallel", "timeout", "nohup", "nice", "watch", "script", "expect", "read"]],
+    decision = "prompt",
+    justification = "Execution wrappers and RTK content readers require exact approval.",
+    match = ["rtk env command", "rtk xargs rm", "rtk timeout 10 command", "rtk read README.md"],
+    not_match = ["rtk pwd"],
+)
+
+prefix_rule(
+    pattern = [["cmake", "ninja", "meson"]],
+    decision = "prompt",
+    justification = "Build-system frontends can execute project or third-party code.",
+    match = ["cmake --build build", "ninja test", "meson compile -C build"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["cmake", "ninja", "meson"]],
+    decision = "prompt",
+    justification = "Build-system frontends through RTK can execute project or third-party code.",
+    match = ["rtk cmake --build build", "rtk ninja test", "rtk meson compile -C build"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = [["printenv", "set", "export", "declare"]],
+    decision = "prompt",
+    justification = "Environment inspection can expose credentials; approve only narrowly scoped variable access.",
+    match = ["printenv PATH", "printenv", "set", "export -p", "declare -x"],
+    not_match = ["env NO_COLOR=1 command"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["printenv", "set", "export", "declare"]],
+    decision = "prompt",
+    justification = "Environment inspection through RTK can expose credentials; approve only narrowly scoped access.",
+    match = ["rtk printenv PATH", "rtk printenv", "rtk set", "rtk export -p", "rtk declare -x"],
+    not_match = ["rtk env NO_COLOR=1 command"],
+)
+
+
+prefix_rule(
+    pattern = [["curl", "wget", "ssh", "scp", "sftp", "rsync", "nc", "ncat", "socat", "gh", "glab"]],
+    decision = "prompt",
+    justification = "Network access, remote execution, and external state changes require approval.",
+    match = ["curl https://example.com", "ssh host", "gh pr create"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["curl", "wget", "ssh", "scp", "sftp", "rsync", "nc", "ncat", "socat", "gh", "glab"]],
+    decision = "prompt",
+    justification = "Network access, remote execution, and external state changes through RTK require approval.",
+    match = ["rtk curl https://example.com", "rtk ssh host", "rtk gh pr create"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = [["kill", "pkill", "killall", "systemctl", "service", "launchctl", "crontab", "at", "open", "xdg-open"]],
+    decision = "prompt",
+    justification = "Process, service, persistence, scheduling, and GUI changes require approval.",
+    match = ["kill 123", "systemctl restart app", "crontab -e", "open file.pdf"],
+    not_match = ["ps aux"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["kill", "pkill", "killall", "systemctl", "service", "launchctl", "crontab", "at", "open", "xdg-open"]],
+    decision = "prompt",
+    justification = "Process, service, persistence, scheduling, and GUI changes through RTK require approval.",
+    match = ["rtk kill 123", "rtk systemctl restart app", "rtk crontab -e", "rtk open file.pdf"],
+    not_match = ["rtk ps aux"],
+)
+
+prefix_rule(
+    pattern = [["docker", "podman", "colima", "limactl", "vagrant"]],
+    decision = "prompt",
+    justification = "Container and virtual-machine commands can execute code, mutate state, or access host resources.",
+    match = ["docker build .", "podman run image", "colima start"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["docker", "podman", "colima", "limactl", "vagrant"]],
+    decision = "prompt",
+    justification = "Container and virtual-machine commands through RTK can execute code, mutate state, or access host resources.",
+    match = ["rtk docker build .", "rtk podman run image", "rtk colima start"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu", "pulumi", "kubectl", "helm", "ansible", "ansible-playbook", "packer", "aws", "gcloud", "az", "psql", "mysql", "sqlite3", "redis-cli", "mongosh"]],
+    decision = "prompt",
+    justification = "Infrastructure, cloud, cluster, and database commands can affect external systems or sensitive data.",
+    match = ["terraform plan", "kubectl get pods", "aws sts get-caller-identity", "psql database"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu", "pulumi", "kubectl", "helm", "ansible", "ansible-playbook", "packer", "aws", "gcloud", "az", "psql", "mysql", "sqlite3", "redis-cli", "mongosh"]],
+    decision = "prompt",
+    justification = "Infrastructure, cloud, cluster, and database commands through RTK can affect external systems or sensitive data.",
+    match = ["rtk terraform plan", "rtk kubectl get pods", "rtk aws sts get-caller-identity", "rtk psql database"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = [["fdisk", "parted", "diskutil", "zpool", "zfs", "btrfs", "cryptsetup", "lvm", "lvs", "vgs", "pvs"]],
+    decision = "prompt",
+    justification = "Disk, pool, encryption, and volume tools include both diagnostics and destructive operations; approve exact diagnostic commands only.",
+    match = ["diskutil list", "zpool status", "zfs list", "cryptsetup status volume", "lvs"],
+    not_match = ["du -sh ."],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["fdisk", "parted", "diskutil", "zpool", "zfs", "btrfs", "cryptsetup", "lvm", "lvs", "vgs", "pvs"]],
+    decision = "prompt",
+    justification = "Disk, pool, encryption, and volume tools through RTK require exact approval for diagnostic use.",
+    match = ["rtk diskutil list", "rtk zpool status", "rtk zfs list", "rtk cryptsetup status volume", "rtk lvs"],
+    not_match = ["rtk du -sh ."],
+)
+
+# -----------------------------------------------------------------------------
+# FORBIDDEN — agents must not execute these. A human may run them manually.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = [["sudo", "su", "doas", "pkexec", "visudo"]],
+    decision = "forbidden",
+    justification = "Privilege escalation is blocked; perform the operation manually with a reviewed command.",
+    match = ["sudo rm file", "su root", "doas command", "visudo"],
+    not_match = ["whoami"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["sudo", "su", "doas", "pkexec", "visudo"]],
+    decision = "forbidden",
+    justification = "Privilege escalation through RTK is blocked; perform the operation manually with a reviewed command.",
+    match = ["rtk sudo rm file", "rtk su root", "rtk doas command", "rtk visudo"],
+    not_match = ["rtk whoami"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr", "-Rf", "-fR"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -rf path", "rm -fr path", "rm -Rf path", "rm -fR path"],
+    not_match = ["rm file.txt", "rm -r directory"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "rm", ["-rf", "-fr", "-Rf", "-fR"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rtk rm -rf path", "rtk rm -fr path", "rtk rm -Rf path", "rtk rm -fR path"],
+    not_match = ["rtk rm file.txt", "rtk rm -r directory"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-r", "-R", "--recursive"], ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -r -f path", "rm -R --force path", "rm --recursive --force path"],
+    not_match = ["rm -r directory", "rm --force file.txt"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "rm", ["-r", "-R", "--recursive"], ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rtk rm -r -f path", "rtk rm -R --force path", "rtk rm --recursive --force path"],
+    not_match = ["rtk rm -r directory", "rtk rm --force file.txt"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -f -r path", "rm --force -R path", "rm --force --recursive path"],
+    not_match = ["rm --force file.txt", "rm --recursive directory"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rtk rm -f -r path", "rtk rm --force -R path", "rtk rm --force --recursive path"],
+    not_match = ["rtk rm --force file.txt", "rtk rm --recursive directory"],
+)
+
+prefix_rule(
+    pattern = ["chmod", ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "World-writable permissions are blocked; choose the minimum required permission bits.",
+    match = ["chmod 777 file", "chmod 0777 file", "chmod a+rwx file"],
+    not_match = ["chmod 600 file", "chmod 755 script"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "chmod", ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "World-writable permissions through RTK are blocked; choose the minimum required permission bits.",
+    match = ["rtk chmod 777 file", "rtk chmod 0777 file", "rtk chmod a+rwx file"],
+    not_match = ["rtk chmod 600 file", "rtk chmod 755 script"],
+)
+
+prefix_rule(
+    pattern = ["chmod", ["-R", "--recursive"], ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "Recursive world-writable permissions are blocked; choose scoped paths and minimum permission bits.",
+    match = ["chmod -R 777 directory", "chmod --recursive 0777 directory"],
+    not_match = ["chmod -R 755 directory"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "chmod", ["-R", "--recursive"], ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "Recursive world-writable permissions through RTK are blocked; choose scoped paths and minimum permission bits.",
+    match = ["rtk chmod -R 777 directory", "rtk chmod --recursive 0777 directory"],
+    not_match = ["rtk chmod -R 755 directory"],
+)
+
+prefix_rule(
+    pattern = [["dd", "mkfs", "mkfs.ext2", "mkfs.ext3", "mkfs.ext4", "mkfs.xfs", "mkfs.btrfs", "wipefs", "blkdiscard", "sfdisk", "sgdisk", "newfs", "newfs_apfs", "newfs_hfs", "newfs_msdos", "newfs_exfat", "newfs_udf", "mdadm", "lvremove", "vgremove", "pvremove"]],
+    decision = "forbidden",
+    justification = "Raw disk, filesystem creation, block discard, RAID, and volume removal are blocked for agents.",
+    match = ["dd if=input of=output", "mkfs.ext4 /dev/disk", "blkdiscard /dev/disk", "newfs_apfs /dev/disk", "lvremove volume"],
+    not_match = ["diskutil list", "zpool status", "du -sh ."],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["dd", "mkfs", "mkfs.ext2", "mkfs.ext3", "mkfs.ext4", "mkfs.xfs", "mkfs.btrfs", "wipefs", "blkdiscard", "sfdisk", "sgdisk", "newfs", "newfs_apfs", "newfs_hfs", "newfs_msdos", "newfs_exfat", "newfs_udf", "mdadm", "lvremove", "vgremove", "pvremove"]],
+    decision = "forbidden",
+    justification = "Raw disk, filesystem creation, block discard, RAID, and volume removal through RTK are blocked.",
+    match = ["rtk dd if=input of=output", "rtk mkfs.ext4 /dev/disk", "rtk blkdiscard /dev/disk", "rtk newfs_apfs /dev/disk", "rtk lvremove volume"],
+    not_match = ["rtk diskutil list", "rtk zpool status", "rtk du -sh ."],
+)
+
+prefix_rule(
+    pattern = ["diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "secureErase", "deleteVolume"]],
+    decision = "forbidden",
+    justification = "Destructive diskutil operations are blocked; use list or info diagnostics only.",
+    match = ["diskutil eraseDisk APFS name disk0", "diskutil eraseVolume APFS disk1s1", "diskutil partitionDisk disk0 GPT APFS name 0b"],
+    not_match = ["diskutil list", "diskutil info disk0"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "secureErase", "deleteVolume"]],
+    decision = "forbidden",
+    justification = "Destructive diskutil operations through RTK are blocked; use diagnostics only.",
+    match = ["rtk diskutil eraseDisk APFS name disk0", "rtk diskutil eraseVolume APFS disk1s1"],
+    not_match = ["rtk diskutil list", "rtk diskutil info disk0"],
+)
+
+prefix_rule(
+    pattern = ["diskutil", "apfs", ["deleteVolume", "deleteContainer", "eraseVolume", "resizeContainer"]],
+    decision = "forbidden",
+    justification = "Destructive APFS container and volume operations are blocked for agents.",
+    match = ["diskutil apfs deleteVolume disk1s1", "diskutil apfs deleteContainer disk1"],
+    not_match = ["diskutil apfs list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "diskutil", "apfs", ["deleteVolume", "deleteContainer", "eraseVolume", "resizeContainer"]],
+    decision = "forbidden",
+    justification = "Destructive APFS operations through RTK are blocked for agents.",
+    match = ["rtk diskutil apfs deleteVolume disk1s1", "rtk diskutil apfs deleteContainer disk1"],
+    not_match = ["rtk diskutil apfs list"],
+)
+
+prefix_rule(
+    pattern = [["zpool", "zfs"], ["destroy", "remove"]],
+    decision = "forbidden",
+    justification = "Pool and dataset destruction or removal is blocked; use status/list diagnostics only.",
+    match = ["zpool destroy pool", "zpool remove pool device", "zfs destroy pool/dataset"],
+    not_match = ["zpool status", "zfs list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["zpool", "zfs"], ["destroy", "remove"]],
+    decision = "forbidden",
+    justification = "Pool and dataset destruction or removal through RTK is blocked.",
+    match = ["rtk zpool destroy pool", "rtk zfs destroy pool/dataset"],
+    not_match = ["rtk zpool status", "rtk zfs list"],
+)
+
+prefix_rule(
+    pattern = ["zfs", "rollback"],
+    decision = "forbidden",
+    justification = "Dataset rollback can discard changes and is blocked for agents.",
+    match = ["zfs rollback pool/dataset@snapshot"],
+    not_match = ["zfs list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "zfs", "rollback"],
+    decision = "forbidden",
+    justification = "Dataset rollback through RTK can discard changes and is blocked.",
+    match = ["rtk zfs rollback pool/dataset@snapshot"],
+    not_match = ["rtk zfs list"],
+)
+
+prefix_rule(
+    pattern = ["cryptsetup", ["luksFormat", "erase", "luksErase", "reencrypt"]],
+    decision = "forbidden",
+    justification = "Destructive encryption-container operations are blocked; use status diagnostics only.",
+    match = ["cryptsetup luksFormat /dev/disk", "cryptsetup erase /dev/disk"],
+    not_match = ["cryptsetup status volume"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "cryptsetup", ["luksFormat", "erase", "luksErase", "reencrypt"]],
+    decision = "forbidden",
+    justification = "Destructive encryption-container operations through RTK are blocked.",
+    match = ["rtk cryptsetup luksFormat /dev/disk", "rtk cryptsetup erase /dev/disk"],
+    not_match = ["rtk cryptsetup status volume"],
+)
+
+prefix_rule(
+    pattern = ["parted", ["mklabel", "mkpart", "rm", "resizepart"]],
+    decision = "forbidden",
+    justification = "Partition-table mutation is blocked; use print diagnostics only.",
+    match = ["parted mklabel gpt", "parted rm 1"],
+    not_match = ["parted print"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "parted", ["mklabel", "mkpart", "rm", "resizepart"]],
+    decision = "forbidden",
+    justification = "Partition-table mutation through RTK is blocked.",
+    match = ["rtk parted mklabel gpt", "rtk parted rm 1"],
+    not_match = ["rtk parted print"],
+)
+
+prefix_rule(
+    pattern = ["btrfs", "subvolume", "delete"],
+    decision = "forbidden",
+    justification = "Btrfs subvolume deletion is blocked for agents.",
+    match = ["btrfs subvolume delete path"],
+    not_match = ["btrfs subvolume list path"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "btrfs", "subvolume", "delete"],
+    decision = "forbidden",
+    justification = "Btrfs subvolume deletion through RTK is blocked for agents.",
+    match = ["rtk btrfs subvolume delete path"],
+    not_match = ["rtk btrfs subvolume list path"],
+)
+
+prefix_rule(
+    pattern = ["git", ["prune", "filter-branch", "filter-repo"]],
+    decision = "forbidden",
+    justification = "Irreversible Git pruning and history rewriting are blocked; use non-destructive inspection or a reviewed manual workflow.",
+    match = ["git prune", "git filter-branch -- --all", "git filter-repo --force"],
+    not_match = ["git clean -n", "git reset HEAD file", "git gc"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", ["prune", "filter-branch", "filter-repo"]],
+    decision = "forbidden",
+    justification = "Irreversible Git pruning and history rewriting through RTK are blocked.",
+    match = ["rtk git prune", "rtk git filter-branch -- --all", "rtk git filter-repo --force"],
+    not_match = ["rtk git clean -n", "rtk git reset HEAD file", "rtk git gc"],
+)
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Hard reset discards working-tree and index changes; use a scoped restore or perform it manually.",
+    match = ["git reset --hard", "git reset --hard HEAD~1"],
+    not_match = ["git reset HEAD file", "git reset --soft HEAD~1"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Hard reset through RTK discards working-tree and index changes and is blocked.",
+    match = ["rtk git reset --hard", "rtk git reset --hard HEAD~1"],
+    not_match = ["rtk git reset HEAD file", "rtk git reset --soft HEAD~1"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", ["-f", "--force", "-fd", "-df", "-fdx", "-fxd", "-dfx", "-xdf", "-xfd", "-dxf", "-fX", "-fdX"]],
+    decision = "forbidden",
+    justification = "Forced Git clean permanently deletes untracked files; use dry-run or interactive mode.",
+    match = ["git clean -f", "git clean -fdx", "git clean --force"],
+    not_match = ["git clean -n", "git clean -i"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "clean", ["-f", "--force", "-fd", "-df", "-fdx", "-fxd", "-dfx", "-xdf", "-xfd", "-dxf", "-fX", "-fdX"]],
+    decision = "forbidden",
+    justification = "Forced Git clean through RTK permanently deletes untracked files and is blocked.",
+    match = ["rtk git clean -f", "rtk git clean -fdx", "rtk git clean --force"],
+    not_match = ["rtk git clean -n", "rtk git clean -i"],
+)
+
+prefix_rule(
+    pattern = ["git", "gc", "--prune=now"],
+    decision = "forbidden",
+    justification = "Immediate Git object pruning can remove recovery data; use normal maintenance or run it manually.",
+    match = ["git gc --prune=now"],
+    not_match = ["git gc", "git gc --auto"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "gc", "--prune=now"],
+    decision = "forbidden",
+    justification = "Immediate Git object pruning through RTK can remove recovery data and is blocked.",
+    match = ["rtk git gc --prune=now"],
+    not_match = ["rtk git gc", "rtk git gc --auto"],
+)
+
+prefix_rule(
+    pattern = ["git", "stash", ["clear", "drop"]],
+    decision = "forbidden",
+    justification = "Deleting stashes removes recovery state and is blocked for agents.",
+    match = ["git stash clear", "git stash drop stash@{0}"],
+    not_match = ["git stash list", "git stash push"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "stash", ["clear", "drop"]],
+    decision = "forbidden",
+    justification = "Deleting stashes through RTK removes recovery state and is blocked.",
+    match = ["rtk git stash clear", "rtk git stash drop stash@{0}"],
+    not_match = ["rtk git stash list", "rtk git stash push"],
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-D"],
+    decision = "forbidden",
+    justification = "Forced branch deletion is blocked; use a reviewed normal deletion or perform it manually.",
+    match = ["git branch -D feature"],
+    not_match = ["git branch -d feature", "git branch --list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "branch", "-D"],
+    decision = "forbidden",
+    justification = "Forced branch deletion through RTK is blocked.",
+    match = ["rtk git branch -D feature"],
+    not_match = ["rtk git branch -d feature", "rtk git branch --list"],
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "-d"],
+    decision = "forbidden",
+    justification = "Tag deletion is blocked for agents; perform it manually after review.",
+    match = ["git tag -d release"],
+    not_match = ["git tag --list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "tag", "-d"],
+    decision = "forbidden",
+    justification = "Tag deletion through RTK is blocked for agents.",
+    match = ["rtk git tag -d release"],
+    not_match = ["rtk git tag --list"],
+)
+
+prefix_rule(
+    pattern = ["git", "update-ref", "-d"],
+    decision = "forbidden",
+    justification = "Direct reference deletion is blocked for agents.",
+    match = ["git update-ref -d refs/heads/feature"],
+    not_match = ["git update-ref refs/heads/feature commit"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "update-ref", "-d"],
+    decision = "forbidden",
+    justification = "Direct reference deletion through RTK is blocked for agents.",
+    match = ["rtk git update-ref -d refs/heads/feature"],
+    not_match = ["rtk git update-ref refs/heads/feature commit"],
+)
+
+prefix_rule(
+    pattern = ["git", "commit", ["--no-verify", "--no-gpg-sign"]],
+    decision = "forbidden",
+    justification = "Bypassing commit hooks or signature policy is blocked; use a normal reviewed commit.",
+    match = ["git commit --no-verify -m change", "git commit --no-gpg-sign -m change"],
+    not_match = ["git commit -m change"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "commit", ["--no-verify", "--no-gpg-sign"]],
+    decision = "forbidden",
+    justification = "Bypassing commit hooks or signature policy through RTK is blocked; use a normal reviewed commit.",
+    match = ["rtk git commit --no-verify -m change", "rtk git commit --no-gpg-sign -m change"],
+    not_match = ["rtk git commit -m change"],
+)
+
+prefix_rule(
+    pattern = ["git", "reflog", ["drop", "expire", "delete"]],
+    decision = "forbidden",
+    justification = "Deleting recovery history is blocked for agents.",
+    match = ["git reflog drop --all", "git reflog expire --expire=all --all", "git reflog delete HEAD@{1}"],
+    not_match = ["git reflog show"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", "reflog", ["drop", "expire", "delete"]],
+    decision = "forbidden",
+    justification = "Deleting recovery history through RTK is blocked for agents.",
+    match = ["rtk git reflog drop --all", "rtk git reflog expire --expire=all --all", "rtk git reflog delete HEAD@{1}"],
+    not_match = ["rtk git reflog show"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror", "--delete", "--prune"]],
+    decision = "forbidden",
+    justification = "Direct forced, mirrored, or deleting pushes are blocked; use a normal reviewed push or perform it manually.",
+    match = ["git push --force origin main", "git push --force-with-lease origin main", "git push --force-if-includes origin main", "git push --mirror", "git push --delete origin branch", "git push --prune origin"],
+    not_match = ["git push origin main"],
+)
+
+# Codex prefix rules cannot match a dangerous flag in every possible argument
+# position. Reordered push flags still match the general `git push` prompt rule.
+# A full-command hook is required if those forms must be unconditionally denied.
+
+prefix_rule(
+    pattern = ["rtk", "git", "push", ["--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror", "--delete", "--prune"]],
+    decision = "forbidden",
+    justification = "Direct forced, mirrored, or deleting pushes through RTK are blocked; use a normal reviewed push or perform it manually.",
+    match = ["rtk git push --force origin main", "rtk git push --force-with-lease origin main", "rtk git push --force-if-includes origin main", "rtk git push --mirror", "rtk git push --delete origin branch", "rtk git push --prune origin"],
+    not_match = ["rtk git push origin main"],
+)
+
+prefix_rule(
+    pattern = [["bw", "bitwarden", "pass", "op", "vault", "security"]],
+    decision = "forbidden",
+    justification = "Direct credential-store and keychain access is blocked for agents; inject only scoped credentials through the environment.",
+    match = ["bw get item example", "bitwarden get item example", "pass show service", "op read item", "vault kv get secret", "security find-generic-password -w"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["bw", "bitwarden", "pass", "op", "vault", "security"]],
+    decision = "forbidden",
+    justification = "Direct credential-store and keychain access through RTK is blocked for agents.",
+    match = ["rtk bw get item example", "rtk bitwarden get item example", "rtk pass show service", "rtk op read item", "rtk vault kv get secret", "rtk security find-generic-password -w"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = ["git", ["credential", "credential-store", "credential-cache"]],
+    decision = "forbidden",
+    justification = "Direct Git credential-helper access is blocked; provide only a scoped credential through an approved mechanism.",
+    match = ["git credential fill", "git credential-store get", "git credential-cache get"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "git", ["credential", "credential-store", "credential-cache"]],
+    decision = "forbidden",
+    justification = "Direct Git credential-helper access through RTK is blocked.",
+    match = ["rtk git credential fill", "rtk git credential-store get", "rtk git credential-cache get"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = [["git-credential-osxkeychain", "git-credential-manager", "git-credential-manager-core", "git-credential-store", "git-credential-cache", "docker-credential-osxkeychain", "docker-credential-desktop", "docker-credential-pass", "docker-credential-secretservice", "docker-credential-wincred"]],
+    decision = "forbidden",
+    justification = "Direct credential-helper execution is blocked for agents.",
+    match = ["git-credential-osxkeychain get", "git-credential-manager get", "docker-credential-osxkeychain get"],
+    not_match = ["git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["git-credential-osxkeychain", "git-credential-manager", "git-credential-manager-core", "git-credential-store", "git-credential-cache", "docker-credential-osxkeychain", "docker-credential-desktop", "docker-credential-pass", "docker-credential-secretservice", "docker-credential-wincred"]],
+    decision = "forbidden",
+    justification = "Direct credential-helper execution through RTK is blocked for agents.",
+    match = ["rtk git-credential-osxkeychain get", "rtk git-credential-manager get", "rtk docker-credential-osxkeychain get"],
+    not_match = ["rtk git status"],
+)
+
+prefix_rule(
+    pattern = ["gh", "auth", "token"],
+    decision = "forbidden",
+    justification = "Printing a GitHub authentication token is blocked; use authenticated commands without exposing the token.",
+    match = ["gh auth token"],
+    not_match = ["gh auth status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "gh", "auth", "token"],
+    decision = "forbidden",
+    justification = "Printing a GitHub authentication token through RTK is blocked.",
+    match = ["rtk gh auth token"],
+    not_match = ["rtk gh auth status"],
+)
+
+prefix_rule(
+    pattern = ["aws", "configure", "export-credentials"],
+    decision = "forbidden",
+    justification = "Exporting cloud credentials is blocked; use scoped authenticated commands without printing credentials.",
+    match = ["aws configure export-credentials"],
+    not_match = ["aws sts get-caller-identity"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "aws", "configure", "export-credentials"],
+    decision = "forbidden",
+    justification = "Exporting cloud credentials through RTK is blocked.",
+    match = ["rtk aws configure export-credentials"],
+    not_match = ["rtk aws sts get-caller-identity"],
+)
+
+prefix_rule(
+    pattern = ["gcloud", "auth", ["print-access-token", "print-identity-token"]],
+    decision = "forbidden",
+    justification = "Printing Google Cloud authentication tokens is blocked.",
+    match = ["gcloud auth print-access-token", "gcloud auth print-identity-token"],
+    not_match = ["gcloud auth list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "gcloud", "auth", ["print-access-token", "print-identity-token"]],
+    decision = "forbidden",
+    justification = "Printing Google Cloud authentication tokens through RTK is blocked.",
+    match = ["rtk gcloud auth print-access-token", "rtk gcloud auth print-identity-token"],
+    not_match = ["rtk gcloud auth list"],
+)
+
+prefix_rule(
+    pattern = ["az", "account", "get-access-token"],
+    decision = "forbidden",
+    justification = "Printing an Azure access token is blocked.",
+    match = ["az account get-access-token"],
+    not_match = ["az account show"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "az", "account", "get-access-token"],
+    decision = "forbidden",
+    justification = "Printing an Azure access token through RTK is blocked.",
+    match = ["rtk az account get-access-token"],
+    not_match = ["rtk az account show"],
+)
+
+prefix_rule(
+    pattern = ["kubectl", "config", "view", "--raw"],
+    decision = "forbidden",
+    justification = "Raw kubeconfig output can expose client credentials and is blocked.",
+    match = ["kubectl config view --raw"],
+    not_match = ["kubectl config current-context"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "kubectl", "config", "view", "--raw"],
+    decision = "forbidden",
+    justification = "Raw kubeconfig output through RTK can expose credentials and is blocked.",
+    match = ["rtk kubectl config view --raw"],
+    not_match = ["rtk kubectl config current-context"],
+)
+
+prefix_rule(
+    pattern = ["aws", "secretsmanager", ["get-secret-value", "batch-get-secret-value"]],
+    decision = "forbidden",
+    justification = "Direct cloud secret retrieval is blocked for agents.",
+    match = ["aws secretsmanager get-secret-value --secret-id example"],
+    not_match = ["aws secretsmanager list-secrets"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "aws", "secretsmanager", ["get-secret-value", "batch-get-secret-value"]],
+    decision = "forbidden",
+    justification = "Direct cloud secret retrieval through RTK is blocked.",
+    match = ["rtk aws secretsmanager get-secret-value --secret-id example"],
+    not_match = ["rtk aws secretsmanager list-secrets"],
+)
+
+prefix_rule(
+    pattern = ["gcloud", "secrets", "versions", "access"],
+    decision = "forbidden",
+    justification = "Direct Google Cloud secret retrieval is blocked for agents.",
+    match = ["gcloud secrets versions access latest --secret example"],
+    not_match = ["gcloud secrets list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "gcloud", "secrets", "versions", "access"],
+    decision = "forbidden",
+    justification = "Direct Google Cloud secret retrieval through RTK is blocked.",
+    match = ["rtk gcloud secrets versions access latest --secret example"],
+    not_match = ["rtk gcloud secrets list"],
+)
+
+prefix_rule(
+    pattern = ["az", "keyvault", "secret", ["show", "download"]],
+    decision = "forbidden",
+    justification = "Direct Azure Key Vault secret retrieval is blocked for agents.",
+    match = ["az keyvault secret show --vault-name vault --name secret"],
+    not_match = ["az keyvault secret list --vault-name vault"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "az", "keyvault", "secret", ["show", "download"]],
+    decision = "forbidden",
+    justification = "Direct Azure Key Vault secret retrieval through RTK is blocked.",
+    match = ["rtk az keyvault secret show --vault-name vault --name secret"],
+    not_match = ["rtk az keyvault secret list --vault-name vault"],
+)
+
+prefix_rule(
+    pattern = ["kubectl", "get", ["secret", "secrets"]],
+    decision = "forbidden",
+    justification = "Direct Kubernetes Secret retrieval is blocked; inspect non-secret metadata instead.",
+    match = ["kubectl get secret app", "kubectl get secrets"],
+    not_match = ["kubectl get pods"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "kubectl", "get", ["secret", "secrets"]],
+    decision = "forbidden",
+    justification = "Direct Kubernetes Secret retrieval through RTK is blocked.",
+    match = ["rtk kubectl get secret app", "rtk kubectl get secrets"],
+    not_match = ["rtk kubectl get pods"],
+)
+
+prefix_rule(
+    pattern = ["npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Publishing or unpublishing packages is blocked for agents; prepare and inspect locally, then perform registry changes manually.",
+    match = ["npm publish", "npm publish --access public", "npm unpublish package@version"],
+    not_match = ["npm pack", "npm test"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Publishing or unpublishing packages through RTK is blocked; perform registry changes manually.",
+    match = ["rtk npm publish", "rtk npm publish --access public", "rtk npm unpublish package@version"],
+    not_match = ["rtk npm pack", "rtk npm test"],
+)
+
+prefix_rule(
+    pattern = [["pnpm", "bun"], ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Package registry publishing and removal are blocked for agents.",
+    match = ["pnpm publish", "pnpm unpublish package", "bun publish"],
+    not_match = ["pnpm pack", "bun test"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["pnpm", "bun"], ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Package registry publishing and removal through RTK are blocked.",
+    match = ["rtk pnpm publish", "rtk pnpm unpublish package", "rtk bun publish"],
+    not_match = ["rtk pnpm pack", "rtk bun test"],
+)
+
+prefix_rule(
+    pattern = ["yarn", "npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Yarn registry publishing and removal are blocked for agents.",
+    match = ["yarn npm publish", "yarn npm unpublish package"],
+    not_match = ["yarn npm info package"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "yarn", "npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Yarn registry publishing and removal through RTK are blocked.",
+    match = ["rtk yarn npm publish", "rtk yarn npm unpublish package"],
+    not_match = ["rtk yarn npm info package"],
+)
+
+prefix_rule(
+    pattern = ["cargo", ["publish", "yank"]],
+    decision = "forbidden",
+    justification = "Publishing or yanking Rust crates is blocked for agents.",
+    match = ["cargo publish", "cargo yank crate@1.0.0"],
+    not_match = ["cargo package", "cargo test"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "cargo", ["publish", "yank"]],
+    decision = "forbidden",
+    justification = "Publishing or yanking Rust crates through RTK is blocked.",
+    match = ["rtk cargo publish", "rtk cargo yank crate@1.0.0"],
+    not_match = ["rtk cargo package", "rtk cargo test"],
+)
+
+prefix_rule(
+    pattern = [["poetry", "uv"], "publish"],
+    decision = "forbidden",
+    justification = "Publishing Python packages is blocked for agents.",
+    match = ["poetry publish", "uv publish"],
+    not_match = ["poetry build", "uv build"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["poetry", "uv"], "publish"],
+    decision = "forbidden",
+    justification = "Publishing Python packages through RTK is blocked.",
+    match = ["rtk poetry publish", "rtk uv publish"],
+    not_match = ["rtk poetry build", "rtk uv build"],
+)
+
+prefix_rule(
+    pattern = ["twine", "upload"],
+    decision = "forbidden",
+    justification = "Uploading Python distributions is blocked for agents.",
+    match = ["twine upload dist/*"],
+    not_match = ["twine check dist/*"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "twine", "upload"],
+    decision = "forbidden",
+    justification = "Uploading Python distributions through RTK is blocked.",
+    match = ["rtk twine upload dist/*"],
+    not_match = ["rtk twine check dist/*"],
+)
+
+prefix_rule(
+    pattern = ["gem", "push"],
+    decision = "forbidden",
+    justification = "Publishing Ruby gems is blocked for agents.",
+    match = ["gem push package.gem"],
+    not_match = ["gem build package.gemspec"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "gem", "push"],
+    decision = "forbidden",
+    justification = "Publishing Ruby gems through RTK is blocked.",
+    match = ["rtk gem push package.gem"],
+    not_match = ["rtk gem build package.gemspec"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "nuget", ["push", "delete"]],
+    decision = "forbidden",
+    justification = "Publishing or deleting NuGet packages is blocked for agents.",
+    match = ["dotnet nuget push package.nupkg", "dotnet nuget delete package 1.0.0"],
+    not_match = ["dotnet test"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "dotnet", "nuget", ["push", "delete"]],
+    decision = "forbidden",
+    justification = "Publishing or deleting NuGet packages through RTK is blocked.",
+    match = ["rtk dotnet nuget push package.nupkg", "rtk dotnet nuget delete package 1.0.0"],
+    not_match = ["rtk dotnet test"],
+)
+
+prefix_rule(
+    pattern = [["mvn", "gradle"], ["deploy", "publish", "publishPlugins"]],
+    decision = "forbidden",
+    justification = "Deploying or publishing build artifacts is blocked for agents.",
+    match = ["mvn deploy", "gradle publish", "gradle publishPlugins"],
+    not_match = ["mvn test", "gradle test"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["mvn", "gradle"], ["deploy", "publish", "publishPlugins"]],
+    decision = "forbidden",
+    justification = "Deploying or publishing build artifacts through RTK is blocked.",
+    match = ["rtk mvn deploy", "rtk gradle publish", "rtk gradle publishPlugins"],
+    not_match = ["rtk mvn test", "rtk gradle test"],
+)
+
+prefix_rule(
+    pattern = ["docker", "push"],
+    decision = "forbidden",
+    justification = "Publishing container images is blocked for agents; inspect the image and push it manually.",
+    match = ["docker push image:tag"],
+    not_match = ["docker pull image:tag", "docker build ."],
+)
+
+prefix_rule(
+    pattern = ["rtk", "docker", "push"],
+    decision = "forbidden",
+    justification = "Publishing container images through RTK is blocked for agents; inspect the image and push it manually.",
+    match = ["rtk docker push image:tag"],
+    not_match = ["rtk docker pull image:tag", "rtk docker build ."],
+)
+
+prefix_rule(
+    pattern = ["docker", ["image", "compose"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images is blocked for agents.",
+    match = ["docker image push image:tag", "docker compose push"],
+    not_match = ["docker image ls", "docker compose build"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "docker", ["image", "compose"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images through RTK is blocked.",
+    match = ["rtk docker image push image:tag", "rtk docker compose push"],
+    not_match = ["rtk docker image ls", "rtk docker compose build"],
+)
+
+prefix_rule(
+    pattern = [["podman", "oras"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images or OCI artifacts is blocked for agents.",
+    match = ["podman push image:tag", "oras push registry.example/artifact:tag file"],
+    not_match = ["podman pull image:tag", "oras pull registry.example/artifact:tag"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["podman", "oras"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images or OCI artifacts through RTK is blocked.",
+    match = ["rtk podman push image:tag", "rtk oras push registry.example/artifact:tag file"],
+    not_match = ["rtk podman pull image:tag", "rtk oras pull registry.example/artifact:tag"],
+)
+
+prefix_rule(
+    pattern = ["helm", "push"],
+    decision = "forbidden",
+    justification = "Publishing Helm charts is blocked for agents.",
+    match = ["helm push chart.tgz oci://registry.example/charts"],
+    not_match = ["helm show chart chart"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "helm", "push"],
+    decision = "forbidden",
+    justification = "Publishing Helm charts through RTK is blocked.",
+    match = ["rtk helm push chart.tgz oci://registry.example/charts"],
+    not_match = ["rtk helm show chart chart"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "destroy"],
+    decision = "forbidden",
+    justification = "Infrastructure destruction is blocked for agents; create a reviewed destroy plan for a human to apply.",
+    match = ["terraform destroy", "terraform destroy -auto-approve", "tofu destroy"],
+    not_match = ["terraform plan"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu"], "destroy"],
+    decision = "forbidden",
+    justification = "Infrastructure destruction through RTK is blocked for agents; create a reviewed plan for a human to apply.",
+    match = ["rtk terraform destroy", "rtk terraform destroy -auto-approve", "rtk tofu destroy"],
+    not_match = ["rtk terraform plan"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "apply"],
+    decision = "forbidden",
+    justification = "Applying infrastructure changes is blocked for agents; prepare a reviewed plan for a human to apply.",
+    match = ["terraform apply", "terraform apply plan.tfplan", "tofu apply"],
+    not_match = ["terraform plan", "tofu plan"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu"], "apply"],
+    decision = "forbidden",
+    justification = "Applying infrastructure changes through RTK is blocked for agents; prepare a reviewed plan for a human to apply.",
+    match = ["rtk terraform apply", "rtk terraform apply plan.tfplan", "rtk tofu apply"],
+    not_match = ["rtk terraform plan", "rtk tofu plan"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "state", ["rm", "push"]],
+    decision = "forbidden",
+    justification = "Direct infrastructure-state deletion or replacement is blocked for agents.",
+    match = ["terraform state rm resource.name", "terraform state push state.tfstate", "tofu state rm resource.name"],
+    not_match = ["terraform state list", "tofu state show resource.name"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu"], "state", ["rm", "push"]],
+    decision = "forbidden",
+    justification = "Direct infrastructure-state deletion or replacement through RTK is blocked.",
+    match = ["rtk terraform state rm resource.name", "rtk terraform state push state.tfstate", "rtk tofu state rm resource.name"],
+    not_match = ["rtk terraform state list", "rtk tofu state show resource.name"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], ["force-unlock", "taint"]],
+    decision = "forbidden",
+    justification = "Force-unlocking or tainting infrastructure state is blocked for agents.",
+    match = ["terraform force-unlock lock-id", "terraform taint resource.name", "tofu force-unlock lock-id"],
+    not_match = ["terraform plan", "tofu plan"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu"], ["force-unlock", "taint"]],
+    decision = "forbidden",
+    justification = "Force-unlocking or tainting infrastructure state through RTK is blocked.",
+    match = ["rtk terraform force-unlock lock-id", "rtk terraform taint resource.name", "rtk tofu force-unlock lock-id"],
+    not_match = ["rtk terraform plan", "rtk tofu plan"],
+)
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "workspace", "delete"],
+    decision = "forbidden",
+    justification = "Infrastructure workspace deletion is blocked for agents.",
+    match = ["terraform workspace delete old", "tofu workspace delete old"],
+    not_match = ["terraform workspace list"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["terraform", "tofu"], "workspace", "delete"],
+    decision = "forbidden",
+    justification = "Infrastructure workspace deletion through RTK is blocked.",
+    match = ["rtk terraform workspace delete old", "rtk tofu workspace delete old"],
+    not_match = ["rtk terraform workspace list"],
+)
+
+prefix_rule(
+    pattern = ["pulumi", ["up", "destroy"]],
+    decision = "forbidden",
+    justification = "Applying or destroying Pulumi infrastructure is blocked; prepare a reviewed preview for a human.",
+    match = ["pulumi up", "pulumi destroy"],
+    not_match = ["pulumi preview", "pulumi stack ls"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "pulumi", ["up", "destroy"]],
+    decision = "forbidden",
+    justification = "Applying or destroying Pulumi infrastructure through RTK is blocked.",
+    match = ["rtk pulumi up", "rtk pulumi destroy"],
+    not_match = ["rtk pulumi preview", "rtk pulumi stack ls"],
+)
+
+prefix_rule(
+    pattern = ["pulumi", ["state", "stack"], ["delete", "rm"]],
+    decision = "forbidden",
+    justification = "Pulumi state or stack deletion is blocked for agents.",
+    match = ["pulumi state delete urn", "pulumi stack rm old"],
+    not_match = ["pulumi stack ls"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "pulumi", ["state", "stack"], ["delete", "rm"]],
+    decision = "forbidden",
+    justification = "Pulumi state or stack deletion through RTK is blocked.",
+    match = ["rtk pulumi state delete urn", "rtk pulumi stack rm old"],
+    not_match = ["rtk pulumi stack ls"],
+)
+
+prefix_rule(
+    pattern = ["kubectl", ["apply", "create", "replace", "patch", "edit", "delete", "drain", "scale", "set", "run", "expose", "autoscale", "annotate", "label", "taint", "cordon", "uncordon"]],
+    decision = "forbidden",
+    justification = "Cluster mutations are blocked for agents; prepare manifests, diffs, or reviewed commands for a human to apply.",
+    match = ["kubectl apply -f app.yaml", "kubectl create deployment app --image image", "kubectl patch deployment app -p patch", "kubectl delete pod app", "kubectl scale deployment app --replicas 3"],
+    not_match = ["kubectl get pods", "kubectl diff -f app.yaml"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "kubectl", ["apply", "create", "replace", "patch", "edit", "delete", "drain", "scale", "set", "run", "expose", "autoscale", "annotate", "label", "taint", "cordon", "uncordon"]],
+    decision = "forbidden",
+    justification = "Cluster mutations through RTK are blocked for agents.",
+    match = ["rtk kubectl apply -f app.yaml", "rtk kubectl create deployment app --image image", "rtk kubectl delete pod app", "rtk kubectl scale deployment app --replicas 3"],
+    not_match = ["rtk kubectl get pods", "rtk kubectl diff -f app.yaml"],
+)
+
+prefix_rule(
+    pattern = ["kubectl", "rollout", ["restart", "undo", "pause", "resume"]],
+    decision = "forbidden",
+    justification = "Mutating Kubernetes rollout operations are blocked; status and history inspection remain available with approval.",
+    match = ["kubectl rollout restart deployment/app", "kubectl rollout undo deployment/app"],
+    not_match = ["kubectl rollout status deployment/app", "kubectl rollout history deployment/app"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "kubectl", "rollout", ["restart", "undo", "pause", "resume"]],
+    decision = "forbidden",
+    justification = "Mutating Kubernetes rollout operations through RTK are blocked.",
+    match = ["rtk kubectl rollout restart deployment/app", "rtk kubectl rollout undo deployment/app"],
+    not_match = ["rtk kubectl rollout status deployment/app", "rtk kubectl rollout history deployment/app"],
+)
+
+prefix_rule(
+    pattern = ["helm", ["install", "upgrade", "rollback", "uninstall"]],
+    decision = "forbidden",
+    justification = "Helm release mutations are blocked for agents; prepare reviewed values and commands for a human.",
+    match = ["helm install app chart", "helm upgrade app chart", "helm rollback app 1", "helm uninstall app"],
+    not_match = ["helm list", "helm template app chart"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "helm", ["install", "upgrade", "rollback", "uninstall"]],
+    decision = "forbidden",
+    justification = "Helm release mutations through RTK are blocked for agents.",
+    match = ["rtk helm install app chart", "rtk helm upgrade app chart", "rtk helm rollback app 1", "rtk helm uninstall app"],
+    not_match = ["rtk helm list", "rtk helm template app chart"],
+)
+
+prefix_rule(
+    pattern = ["docker", ["system", "builder", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Docker pruning is blocked for agents.",
+    match = ["docker system prune", "docker builder prune", "docker image prune", "docker container prune", "docker network prune", "docker volume prune"],
+    not_match = ["docker system df", "docker volume ls", "docker image ls"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "docker", ["system", "builder", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Docker pruning through RTK is blocked for agents.",
+    match = ["rtk docker system prune", "rtk docker builder prune", "rtk docker image prune", "rtk docker container prune", "rtk docker network prune", "rtk docker volume prune"],
+    not_match = ["rtk docker system df", "rtk docker volume ls", "rtk docker image ls"],
+)
+
+prefix_rule(
+    pattern = [["docker", "podman"], "volume", ["rm", "remove"]],
+    decision = "forbidden",
+    justification = "Container volume deletion can destroy persistent data and is blocked.",
+    match = ["docker volume rm data", "podman volume rm data"],
+    not_match = ["docker volume ls", "podman volume inspect data"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["docker", "podman"], "volume", ["rm", "remove"]],
+    decision = "forbidden",
+    justification = "Container volume deletion through RTK is blocked.",
+    match = ["rtk docker volume rm data", "rtk podman volume rm data"],
+    not_match = ["rtk docker volume ls", "rtk podman volume inspect data"],
+)
+
+prefix_rule(
+    pattern = ["podman", ["system", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Podman pruning is blocked for agents.",
+    match = ["podman system prune", "podman image prune", "podman volume prune"],
+    not_match = ["podman system df", "podman image ls"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "podman", ["system", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Podman pruning through RTK is blocked for agents.",
+    match = ["rtk podman system prune", "rtk podman image prune", "rtk podman volume prune"],
+    not_match = ["rtk podman system df", "rtk podman image ls"],
+)
+
+prefix_rule(
+    pattern = [["docker", "podman"], "compose", "down", ["-v", "--volumes"]],
+    decision = "forbidden",
+    justification = "Compose teardown with volume deletion is blocked because it can destroy persistent data.",
+    match = ["docker compose down -v", "podman compose down --volumes"],
+    not_match = ["docker compose down", "podman compose ps"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["docker", "podman"], "compose", "down", ["-v", "--volumes"]],
+    decision = "forbidden",
+    justification = "Compose teardown with volume deletion through RTK is blocked.",
+    match = ["rtk docker compose down -v", "rtk podman compose down --volumes"],
+    not_match = ["rtk docker compose down", "rtk podman compose ps"],
+)
+
+prefix_rule(
+    pattern = [["shutdown", "reboot", "halt", "poweroff", "setenforce", "csrutil"]],
+    decision = "forbidden",
+    justification = "Power and operating-system security-state changes are blocked for agents.",
+    match = ["shutdown -h now", "reboot", "setenforce 0", "csrutil disable"],
+    not_match = ["uname -a"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["shutdown", "reboot", "halt", "poweroff", "setenforce", "csrutil"]],
+    decision = "forbidden",
+    justification = "Power and operating-system security-state changes through RTK are blocked for agents.",
+    match = ["rtk shutdown -h now", "rtk reboot", "rtk setenforce 0", "rtk csrutil disable"],
+    not_match = ["rtk uname -a"],
+)
+
+prefix_rule(
+    pattern = [["eval", "yes", "stress", "stress-ng"]],
+    decision = "forbidden",
+    justification = "Dynamic evaluation and unbounded resource-generation commands are blocked for agents.",
+    match = ["eval command", "yes", "stress --cpu 8"],
+    not_match = ["echo yes"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["eval", "yes", "stress", "stress-ng"]],
+    decision = "forbidden",
+    justification = "Dynamic evaluation and unbounded resource-generation through RTK are blocked for agents.",
+    match = ["rtk eval command", "rtk yes", "rtk stress --cpu 8"],
+    not_match = ["rtk echo yes"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["run", "proxy", "err", "test", "smart", "summary"]],
+    decision = "forbidden",
+    justification = "RTK command-execution wrappers can hide nested commands from prefix policy and are blocked until the deferred hook can unwrap them.",
+    match = ["rtk run 'rm -rf path'", "rtk proxy rm -rf path", "rtk err command", "rtk test command", "rtk smart command", "rtk summary command"],
+    not_match = ["rtk git status", "rtk codex execpolicy check --rules default.rules -- git status"],
+)
+
+prefix_rule(
+    pattern = ["codex", ["exec", "resume", "fork", "review"]],
+    decision = "forbidden",
+    justification = "Nested Codex agent sessions are blocked; continue in the current reviewed session.",
+    match = ["codex exec task", "codex resume", "codex fork", "codex review"],
+    not_match = ["codex --version", "codex execpolicy check --rules default.rules -- git status"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", ["exec", "resume", "fork", "review"]],
+    decision = "forbidden",
+    justification = "Nested Codex agent sessions through RTK are blocked; continue in the current reviewed session.",
+    match = ["rtk codex exec task", "rtk codex resume", "rtk codex fork", "rtk codex review"],
+    not_match = ["rtk codex --version", "rtk codex execpolicy check --rules default.rules -- git status"],
+)
+
+prefix_rule(
+    pattern = ["codex", ["--dangerously-bypass-approvals-and-sandbox", "--yolo"]],
+    decision = "forbidden",
+    justification = "Bypassing Codex approvals and sandboxing is blocked.",
+    match = ["codex --dangerously-bypass-approvals-and-sandbox", "codex --yolo"],
+    not_match = ["codex --version"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", ["--dangerously-bypass-approvals-and-sandbox", "--yolo"]],
+    decision = "forbidden",
+    justification = "Bypassing Codex approvals and sandboxing through RTK is blocked.",
+    match = ["rtk codex --dangerously-bypass-approvals-and-sandbox", "rtk codex --yolo"],
+    not_match = ["rtk codex --version"],
+)
+
+prefix_rule(
+    pattern = ["codex", ["--sandbox", "-s"], "danger-full-access"],
+    decision = "forbidden",
+    justification = "Starting Codex with unrestricted filesystem access is blocked.",
+    match = ["codex --sandbox danger-full-access", "codex -s danger-full-access"],
+    not_match = ["codex --sandbox workspace-write"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "codex", ["--sandbox", "-s"], "danger-full-access"],
+    decision = "forbidden",
+    justification = "Starting Codex with unrestricted filesystem access through RTK is blocked.",
+    match = ["rtk codex --sandbox danger-full-access", "rtk codex -s danger-full-access"],
+    not_match = ["rtk codex --sandbox workspace-write"],
+)
