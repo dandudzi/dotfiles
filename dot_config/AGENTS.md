@@ -10,6 +10,22 @@ Do not assume tool-specific active settings are shared just because the shared f
 
 MCP configs are not one universal file across these tools. Keep reusable MCP names, commands, URLs, and non-secret notes in `agents/mcp.md`, then update each active tool wrapper in its native schema when requested. Do not claim MCP servers are shared unless Codex, Claude Code, and OpenCode have each been checked or configured explicitly.
 
+## Chezmoi Aliases & Sync Workflow
+The interactive zsh aliases in `zsh/alias.zsh` are:
+
+- `dot="chezmoi"`
+- `dota="chezmoi add"` (copy live target state into chezmoi source state)
+- `dotap="chezmoi apply"` (apply chezmoi source state to live targets)
+- `doti="chezmoi init"`
+- `dotat="chezmoi add --template"`
+- `dote="chezmoi edit --watch"`
+- `econfig="dote ~/.config"`, `ez="dote ~/.config/zsh/init.zsh"`, `ezals="dote ~/.config/zsh/alias.zsh"`, and `envim="dote ~/.config/nvim"`
+- `dots="dot status"`
+
+When working interactively with these aliases loaded, confirm a mapping with `dot source-path <path>` when needed, sync an approved live-file edit into source state with `dota <path>`, and verify with `dots <path>` plus the chezmoi source Git status. This machine has chezmoi `git.autoCommit` and `git.autoPush` enabled, so `dota` can commit and push immediately.
+
+These aliases are unavailable in non-interactive agent shells. In agent-run commands, use their expanded forms through `rtk`, especially `rtk chezmoi source-path <path>`, `rtk chezmoi add <path>`, and `rtk chezmoi status <path>`; run `rtk git status` from the source directory reported by `rtk chezmoi source-path`. Do not run `rtk dota` or other alias names directly. Use `dotap`/`rtk chezmoi apply` only for intentional source-to-live changes after reviewing `dot diff`/`rtk chezmoi diff`; applying may execute scripts. Use `dotat` only when deliberately creating or replacing a template, and do not use `doti` for routine synchronization.
+
 ## Commit & Pull Request Guidelines
 Changes here are meant to become part of the `chezmoi`-managed dotfiles set. Before adding or moving config files in this live `~/.config` tree, locate the `chezmoi` source with `chezmoi source-path` or use `chezmoi add` after the live edit so the change is not a machine-only leftover. Prefer editing the `chezmoi` source directly when the mapping is clear, then apply or verify the rendered target.
 
