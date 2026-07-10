@@ -3,7 +3,8 @@
 Last researched: 2026-07-10
 
 This is the living research, decision, and interview document for improving the
-Kitty setup and evaluating a careful migration away from local tmux usage.
+Kitty setup around a permanent tmux workspace layer. Earlier research about
+replacing local tmux is retained below but is explicitly archived.
 
 No configuration recommendation in this file is approved for implementation
 until it has been discussed in the interview queue. Changes should be made one
@@ -25,29 +26,27 @@ small, reversible step at a time and verified before moving to the next item.
    window; tmux owns projects, windows, panes, scrollback, copy mode, navigation,
    status information, and live process persistence.
 
-2. **Dropping tmux is not a single-line change.** It requires replacements for
-   sesh, zoxide-backed project discovery, tmux popups, cross-Neovim navigation,
-   copy mode, the status bar, the which-key menu, and detached processes.
+2. **tmux will remain permanent.** Daniel uses it for workspace organization,
+   live shell/process persistence after Kitty closes, and the existing
+   sesh/zoxide project-switching workflow.
 
 3. **sesh cannot currently become the Kitty backend.** Installed sesh 2.26.2 is
    a tmux session manager. Native Kitty support is an open enhancement request,
    [sesh issue #393](https://github.com/joshmedeski/sesh/issues/393), not a
    released feature.
 
-4. **The safest likely destination is hybrid.** Use Kitty-native windows,
-   layouts, sessions, shell integration, and scrollback for local interactive
-   work. Retain tmux only where live detached processes or remote persistence
-   are genuinely needed.
+4. **The selected destination is tmux-first with a better Kitty layer.** Kitty
+   remains the renderer and macOS terminal while selected integration, hint,
+   interaction, close-safety, and reboot-restoration improvements are evaluated
+   around tmux.
 
-5. **Neovim already contains part of the replacement.** LazyVim ships native
-   split navigation, persistence.nvim sessions, project-aware pickers, and
-   Snacks terminals. The only explicit Neovim-to-tmux dependency is
-   `vim-tmux-navigator`, but replacing its edge-crossing behavior needs care.
+5. **Neovim/tmux navigation remains unchanged.** The replacement candidates
+   researched below are archived because they solve a migration that is no
+   longer planned.
 
-6. **The migration must begin by learning actual behavior, not editing config.**
-   The first interview must determine whether closing Kitty and reattaching to
-   still-running processes is essential. Kitty session files restore structure
-   and commands; they do not keep processes alive like a detached tmux server.
+6. **The remaining work is a six-topic improvement queue.** Each topic will be
+   investigated and interviewed one at a time before a small, reversible change
+   is implemented and verified.
 
 ## Verified environment
 
@@ -279,7 +278,9 @@ Observed behavior:
 - LazyVim checks changed files on `FocusGained`, which pairs well with native
   Kitty window focus events.
 
-Potential division of responsibility after migration:
+### Archived Kitty-native ownership model
+
+Potential division of responsibility after the abandoned migration:
 
 | State | Suggested owner |
 | --- | --- |
@@ -294,7 +295,7 @@ Avoid asking Kitty session restore and persistence.nvim to own the same editor
 layout. Kitty should launch one Neovim process in the correct cwd;
 persistence.nvim should restore editor-internal state.
 
-## Migration dependency matrix
+## Archived Kitty-native migration dependency matrix
 
 | Capability | Current implementation | Candidate replacement | Risk or open question |
 | --- | --- | --- | --- |
@@ -345,7 +346,9 @@ Costs:
 - Project switching must know how to focus Kitty sessions and persistent tmux
   jobs separately.
 
-This is the current research recommendation, subject to interview answers.
+This was the initial research recommendation. It was rejected after the
+interview established that tmux workspace organization, live shell persistence,
+and the existing sesh/zoxide workflow are all daily requirements.
 
 ### Candidate B: fully Kitty-native local workflow
 
@@ -367,14 +370,21 @@ Costs:
 
 ### Candidate C: retain current tmux-first workflow and improve Kitty around it
 
-Keep tmux as the main workspace manager, manually enable Kitty shell integration
-inside zsh, add a direct-zsh quick-access terminal, and use Kitty hints/SSH/file
-transfer where passthrough permits.
+**Selected on 2026-07-10.**
 
-This gains productivity with the least risk but does not achieve the goal of
-removing local tmux.
+Keep tmux permanently as the workspace manager, live-process persistence layer,
+and runtime used by the existing sesh/zoxide project selector. Improve Kitty at
+the outer terminal layer where tmux passthrough permits, including manual shell
+integration, easier hints, clearer ownership of overlapping features, and safer
+close/reboot behavior.
 
-## Project namespace models to discuss
+The proposed direct-zsh quick-access terminal was explicitly rejected. Removing
+local tmux is no longer an active goal.
+
+## Archived replacement-only research: project namespace models
+
+The following models are retained for reference but are not part of the active
+plan because Kitty will not replace tmux as the workspace manager.
 
 Kitty provides several layers, and choosing the wrong one will recreate the
 current duplication.
@@ -400,10 +410,10 @@ current duplication.
 - Needs a clear decision about whether switching sessions hides, closes, or
   leaves other project processes running.
 
-The interview must establish how Daniel mentally distinguishes a **project**, a
-tmux **session**, a tmux **window**, and a tmux **pane** today.
+No further interview on Kitty project namespaces is required while tmux and
+sesh remain the permanent project model.
 
-## Neovim navigation candidates
+## Archived replacement-only research: Neovim navigation candidates
 
 ### Candidate: remove cross-terminal navigation
 
@@ -441,7 +451,7 @@ inside Neovim and only asks Kitty to focus a neighbor at an editor edge.
 - Smaller dependency surface.
 - Becomes custom code we must own, test, and secure.
 
-No navigation candidate is approved yet.
+No navigation candidate is needed for the selected tmux-first architecture.
 
 ## Earlier Kitty productivity findings retained
 
@@ -452,28 +462,40 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
 1. **Completed:** replace the generated 3,000-line Kitty template with a small,
    annotated configuration while preserving every active directive.
 2. **Completed:** verify the command palette, URL hints, and visible-path hints.
-   The file-oriented sequences work but need simpler Phase 2 mappings.
+   The file-oriented sequences work but need simpler follow-up mappings.
 3. **Skipped:** `kitten ssh` is low value because SSH sessions are rarely used.
 4. **Completed:** keep `background_opacity 0.9` with blur disabled.
 5. **Completed:** keep `text_composition_strategy 0.1 0`; the current rendering
    is comfortable.
 6. **Completed:** retain `allow_remote_control no` throughout Phase 1.
 
-The following earlier findings are deliberately deferred until a Phase 2
-profile launches zsh directly instead of tmux:
+## Active tmux-first improvement plan
 
-- Enable and verify Kitty shell integration.
-- Add long-command notifications after prompt marks work.
-- Configure a direct-zsh macOS quick-access terminal.
-- Revisit close confirmation using Kitty's knowledge of active commands.
-- Replace the cumbersome default `Ctrl+Shift+P` file sequences with reviewed
-  single-chord mappings for inserting visible paths, opening `path:line` in
-  Neovim, and choosing files or directories. Choose the actual keys only after
-  auditing Kitty, tmux, zsh, and Neovim conflicts for the direct-Kitty profile.
+The selection interview retained these topics for investigation and later
+one-by-one implementation decisions:
 
-## Proposed migration stages
+1. Manually enable Kitty zsh shell integration inside tmux, then evaluate prompt
+   navigation and long-command notifications without disturbing zsh vi-mode.
+2. Replace cumbersome file/path hint sequences with easy single-chord bindings
+   for the actions that prove useful. Audit Kitty, tmux, zsh, and Neovim key
+   conflicts before selecting keys.
+3. Investigate and correct the current inert or incorrect
+   `KITTY_CONFIG_DIRECTORY` assignment.
+4. Decide whether Kitty or tmux should own scrollback, search, selection, and
+   clipboard actions, prioritizing whichever is easiest to bind and use.
+5. Improve Kitty close safety while preserving tmux sessions and their running
+   processes.
+6. Investigate restoration of the tmux/sesh workspace set after a macOS reboot,
+   where the original processes cannot remain alive.
 
-These stages are a research sequence, not authorization to implement them.
+Explicitly excluded: a separate direct-zsh quick-access terminal and all work
+whose only purpose was replacing tmux with Kitty sessions, layouts, or project
+namespaces.
+
+## Archived Kitty-native migration stages
+
+These stages are retained as research history. They are not an active plan and
+do not authorize implementation now that the tmux-first architecture is final.
 
 ### Stage 0: interview and baseline
 
@@ -528,7 +550,7 @@ These stages are a research sequence, not authorization to implement them.
 - Remove unused tmux plugins and Neovim integration only after rollback period.
 - Remove any transitional Kitty settings only after the rollback period.
 
-## Acceptance tests for a tmux-free local profile
+## Archived acceptance tests for a tmux-free local profile
 
 - New terminal starts direct zsh with full shell integration.
 - zsh vi-mode cursor remains correct.
@@ -548,10 +570,12 @@ These stages are a research sequence, not authorization to implement them.
 - A long build/server is either deliberately terminated, automatically
   restartable, or placed in the retained persistence layer.
 
-## Interview queue
+## Archived tmux-replacement interview queue
 
-We will ask these one at a time. Answers and decisions should be recorded in
-the decision log.
+These questions drove the original replacement research. They are retained as
+history, but unanswered replacement-only questions are closed and will not be
+asked while tmux remains permanent. The active six-topic plan above gets its
+own focused questions one at a time.
 
 ### 1. Process persistence — first question
 
@@ -637,17 +661,22 @@ longer protects those processes?
 
 | Date | Topic | Decision | Evidence/answer | Implementation status |
 | --- | --- | --- | --- | --- |
-| 2026-07-10 | Phase ordering | Finish tmux-independent Kitty recommendations before starting the tmux replacement experiment | Daniel explicitly separated the work into Phase 1 and Phase 2 | Recorded |
-| 2026-07-10 | Direct-zsh features | Defer shell integration, notifications, quick access, and command-aware close behavior until Phase 2 | These features should be evaluated after switching the experimental profile away from tmux | Deferred to Phase 2 |
-| 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings during Phase 2 | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Planned for Phase 2 |
+| 2026-07-10 | Phase ordering | Finish the initial tmux-independent Kitty recommendations before later investigations | Daniel explicitly separated the initial cleanup/tests from deeper workflow work | Completed |
+| 2026-07-10 | Shell integration | Investigate manual Kitty shell integration inside tmux for prompt navigation and long-command notifications | Automatic integration does not initialize shells started through tmux; Daniel wants both features investigated | Selected follow-up |
+| 2026-07-10 | Direct-zsh quick access | Do not add a separate direct-zsh quick-access terminal | Daniel explicitly rejected this topic during the selection interview | Closed |
+| 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings within the tmux-first setup | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Selected follow-up |
 | 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
-| 2026-07-10 | tmux persistence | Preserve live shell state after Kitty closes, or provide an explicit retained persistence layer | Daniel uses tmux both for workspace organization and shell-state survival | Hard Phase 2 requirement |
-| 2026-07-10 | Project switching | Preserve sesh plus zoxide semantics rather than replacing it with static Kitty sessions | The live selector combines persistent tmux sessions, configured startup workspaces, frecency-ranked directories, filesystem search, previews, source filters, last-session, and session deletion | Hard Phase 2 requirement |
+| 2026-07-10 | tmux persistence | Retain tmux permanently as the workspace organization and live-process persistence layer | Daniel uses tmux both for workspace organization and shell-state survival after Kitty closes | Selected architecture |
+| 2026-07-10 | Project switching | Retain the existing sesh plus zoxide workflow rather than replacing it with Kitty sessions | The live selector combines persistent tmux sessions, configured startup workspaces, frecency-ranked directories, filesystem search, previews, source filters, last-session, and session deletion | Selected architecture |
 | 2026-07-10 | Transparency and blur | Retain `background_opacity 0.9` and leave `background_blur` disabled | Daniel prefers the current appearance | Completed; no config change |
 | 2026-07-10 | Text rendering | Retain `text_composition_strategy 0.1 0` | Daniel finds the current rendering comfortable | Completed; no config change |
-| 2026-07-10 | Phase 1 | Close the tmux-independent Kitty review and begin the tmux migration interview | Cleanup and feature tests completed; SSH skipped; appearance and security defaults intentionally retained | Completed |
+| 2026-07-10 | Phase 1 | Close the initial Kitty review and begin the selected tmux-first follow-up investigations | Cleanup and feature tests completed; SSH skipped; appearance and security defaults intentionally retained | Completed |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
-| 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
+| 2026-07-10 | Architecture | Keep tmux permanently and improve Kitty around it | Daniel confirmed that replacing tmux is no longer relevant; tmux remains necessary for workspace organization, sesh, and live shell persistence | Selected |
+| 2026-07-10 | Config environment | Investigate the current `KITTY_CONFIG_DIRECTORY` assignment | Daniel selected this topic during the follow-up interview | Selected follow-up |
+| 2026-07-10 | Interaction ownership | Compare Kitty and tmux ownership of scrollback, search, selection, and clipboard; prefer the easier keybinding model | Daniel selected the topic and identified ease of binding as the decision criterion | Selected follow-up |
+| 2026-07-10 | Close safety | Improve Kitty close behavior without sacrificing tmux session/process persistence | Daniel selected this topic during the follow-up interview | Selected follow-up |
+| 2026-07-10 | Reboot restoration | Investigate restoring tmux/sesh workspaces after macOS reboot | Daniel selected restoration even though reboot necessarily restarts rather than preserves processes | Selected follow-up |
 
 ## Sources
 
