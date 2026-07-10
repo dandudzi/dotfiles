@@ -1,5 +1,7 @@
 tap "anomalyco/tap"
-tap "felixkratz/formulae"
+tap "felixkratz/formulae", trusted: {
+  formula: "sketchybar"
+}
 tap "joshmedeski/sesh"
 # Code searching, linting, rewriting
 brew "ast-grep"
@@ -101,6 +103,8 @@ brew "ripgrep"
 brew "rtk"
 # 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
+# Highly customizable macOS status bar
+brew "sketchybar"
 # Change macOS audio source from the command-line
 brew "switchaudio-osx"
 # Simplified and community-driven man pages
