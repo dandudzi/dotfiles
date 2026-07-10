@@ -64,7 +64,7 @@ defaults write com.apple.dock show-process-indicators -bool true
 # # 10: Put display to sleep
 # # 11: Launchpad
 # # 12: Notification Center
-# # Bottom left >> Put display to sleep
+# # Bottom left >> Notification Center
 defaults write com.apple.dock wvous-bl-corner -int 12
 defaults write com.apple.dock wvous-ul-corner -int 2
 defaults write com.apple.dock wvous-br-corner -int 4
