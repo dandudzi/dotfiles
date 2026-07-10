@@ -36,7 +36,7 @@
    1. Raycast
       - rebind `⌘ + space` - `Keyboard->Shortcuts->Spotlight`
       - enable hyper
-      - add command script directory `/.config/scripts`
+      - add command script directory `~/.config/scripts`
 1. Install OpenLeaf for LED management
 
 ## Issues
