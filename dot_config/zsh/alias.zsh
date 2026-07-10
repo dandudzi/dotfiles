@@ -120,7 +120,6 @@ alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
 
 # 🤖 Claude
-alias claude-mem="bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/scripts/worker-service.cjs"
 alias uClaude="brew upgrade claude-code@latest claude"
 alias aClaude="rtk discover --all && npx ccusage session --compact"
 function cc() {
