@@ -50,8 +50,6 @@ brew "git-delta"
 brew "git-open"
 # GNU Privacy Guard (OpenPGP)
 brew "gnupg"
-# Colorize logfiles and command output
-brew "grc"
 # Tool for glamorous shell scripts
 brew "gum"
 # User-friendly cURL replacement (command-line HTTP client)
