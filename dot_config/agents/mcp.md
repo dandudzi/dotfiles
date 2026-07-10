@@ -26,3 +26,12 @@ Keep server names, commands, URLs, and non-secret setup notes here. Keep tokens,
 - Transport: Local stdio MCP via npm package.
 - Command: `npx -y @upstash/context7-mcp`
 - Authentication: Optional for basic usage. `CONTEXT7_API_KEY` can be added in private tool configs for higher limits or private repositories.
+
+### serena
+
+- Purpose: Language-server-backed semantic code navigation, reference lookup, diagnostics, and symbol-level editing.
+- Transport: Local stdio MCP.
+- Installation: Global mise tool `pipx:serena-agent`, installed through mise's uv-backed pipx backend with Python 3.13.
+- Command: `/opt/homebrew/bin/mise exec -- serena start-mcp-server --project-from-cwd --context=codex`
+- Authentication: None.
+- Setup note: Initialize once with `mise exec -- serena init`. Codex sessions may need to activate the current directory as a Serena project.

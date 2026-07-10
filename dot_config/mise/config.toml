@@ -7,6 +7,8 @@ maven = "latest"
 gradle = "latest"
 kotlin = "latest"
 rust = "latest"
+uv = "latest"
+"pipx:serena-agent" = { version = "latest", uvx_args = "--python 3.13" }
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"
