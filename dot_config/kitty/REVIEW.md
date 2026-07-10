@@ -423,13 +423,17 @@ No navigation candidate is approved yet.
 
 Phase 1 covers only improvements that leave the tmux-first architecture intact:
 
+**Phase 1 completed and user-verified on 2026-07-10.**
+
 1. **Completed:** replace the generated 3,000-line Kitty template with a small,
    annotated configuration while preserving every active directive.
-2. Learn the Kitty command palette and current hint shortcuts.
+2. **Completed:** verify the command palette, URL hints, and visible-path hints.
+   The file-oriented sequences work but need simpler Phase 2 mappings.
 3. **Skipped:** `kitten ssh` is low value because SSH sessions are rarely used.
 4. **Completed:** keep `background_opacity 0.9` with blur disabled.
-5. Review the unusually thin text composition setting separately.
-6. Keep `allow_remote_control no` throughout Phase 1.
+5. **Completed:** keep `text_composition_strategy 0.1 0`; the current rendering
+   is comfortable.
+6. **Completed:** retain `allow_remote_control no` throughout Phase 1.
 
 The following earlier findings are deliberately deferred until a Phase 2
 profile launches zsh directly instead of tmux:
@@ -609,6 +613,8 @@ longer protects those processes?
 | 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
 | 2026-07-10 | tmux persistence | Preserve live shell state after Kitty closes, or provide an explicit retained persistence layer | Daniel uses tmux both for workspace organization and shell-state survival | Hard Phase 2 requirement |
 | 2026-07-10 | Transparency and blur | Retain `background_opacity 0.9` and leave `background_blur` disabled | Daniel prefers the current appearance | Completed; no config change |
+| 2026-07-10 | Text rendering | Retain `text_composition_strategy 0.1 0` | Daniel finds the current rendering comfortable | Completed; no config change |
+| 2026-07-10 | Phase 1 | Close the tmux-independent Kitty review and begin the tmux migration interview | Cleanup and feature tests completed; SSH skipped; appearance and security defaults intentionally retained | Completed |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
