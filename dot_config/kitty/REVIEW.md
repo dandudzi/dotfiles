@@ -437,6 +437,10 @@ profile launches zsh directly instead of tmux:
 - Add long-command notifications after prompt marks work.
 - Configure a direct-zsh macOS quick-access terminal.
 - Revisit close confirmation using Kitty's knowledge of active commands.
+- Replace the cumbersome default `Ctrl+Shift+P` file sequences with reviewed
+  single-chord mappings for inserting visible paths, opening `path:line` in
+  Neovim, and choosing files or directories. Choose the actual keys only after
+  auditing Kitty, tmux, zsh, and Neovim conflicts for the direct-Kitty profile.
 
 ## Proposed migration stages
 
@@ -462,6 +466,8 @@ These stages are a research sequence, not authorization to implement them.
 - Launch a separate experimental Kitty instance/profile without automatic tmux.
 - Enable shell integration, notifications, direct-zsh quick access, and
   command-aware close safety only within the direct-zsh workflow.
+- Add ergonomic single-chord mappings for the daily file/path hint actions that
+  were verified in Phase 1 but found too awkward as multi-key sequences.
 - Recreate one low-risk project, likely Vim Kata or Downloads.
 - Test zsh, Neovim, Yazi, clipboard, scrollback, fzf-tab, window creation, and
   closing behavior.
@@ -584,6 +590,7 @@ longer protects those processes?
 | --- | --- | --- | --- | --- |
 | 2026-07-10 | Phase ordering | Finish tmux-independent Kitty recommendations before starting the tmux replacement experiment | Daniel explicitly separated the work into Phase 1 and Phase 2 | Recorded |
 | 2026-07-10 | Direct-zsh features | Defer shell integration, notifications, quick access, and command-aware close behavior until Phase 2 | These features should be evaluated after switching the experimental profile away from tmux | Deferred to Phase 2 |
+| 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings during Phase 2 | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Planned for Phase 2 |
 | 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines; normalized effective directives match; Daniel confirmed the restarted UI and mappings | Completed and user-verified |
 | 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
