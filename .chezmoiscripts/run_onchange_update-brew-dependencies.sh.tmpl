@@ -5,5 +5,5 @@ set -euo pipefail
 
 echo "📦 Installing CLI tools..."
 trap 'echo "An error occurred, while installing brew dependencies but continue";' ERR
-brew bundle --no-upgrade --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
+HOMEBREW_DOTFILES_SKIP_MAS=1 brew bundle --no-upgrade --file="~/.local/share/chezmoi/dot_config/brewfile/Brewfile"
 trap - ERR

@@ -159,18 +159,20 @@ cask "steam"
 cask "visual-studio-code"
 # Web browser with built-in email client focusing on customization and control
 cask "vivaldi"
-mas "ATEN KVM Utility", id: 6450888492
-mas "GarageBand", id: 682658836
-mas "Goodnotes", id: 1444383602
-mas "HP", id: 1474276998
-mas "iMovie", id: 408981434
-mas "Keynote", id: 409183694
-mas "Kindle", id: 302584613
-mas "Microsoft Excel", id: 462058435
-mas "Microsoft Word", id: 462054704
-mas "Numbers", id: 409203825
-mas "Pages", id: 409201541
-mas "Xcode", id: 497799835
+unless ENV["HOMEBREW_DOTFILES_SKIP_MAS"] == "1"
+  mas "ATEN KVM Utility", id: 6450888492
+  mas "GarageBand", id: 682658836
+  mas "Goodnotes", id: 1444383602
+  mas "HP", id: 1474276998
+  mas "iMovie", id: 408981434
+  mas "Keynote", id: 409183694
+  mas "Kindle", id: 302584613
+  mas "Microsoft Excel", id: 462058435
+  mas "Microsoft Word", id: 462054704
+  mas "Numbers", id: 409203825
+  mas "Pages", id: 409201541
+  mas "Xcode", id: 497799835
+end
 cargo "recon"
 uv "claude-monitor"
 npm "corepack"
