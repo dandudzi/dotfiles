@@ -44,9 +44,9 @@ small, reversible step at a time and verified before moving to the next item.
    researched below are archived because they solve a migration that is no
    longer planned.
 
-6. **The remaining work is a two-topic improvement queue.** Each topic will be
-   investigated and interviewed one at a time before a small, reversible change
-   is implemented and verified.
+6. **The remaining work is one final investigation.** Reboot restoration will
+   be researched and interviewed before any small, reversible change is
+   implemented and verified.
 
 ## Verified environment
 
@@ -489,9 +489,7 @@ Phase 1 covers only improvements that leave the tmux-first architecture intact:
 The selection interview retained these topics for investigation and later
 one-by-one implementation decisions:
 
-1. Improve Kitty close safety while preserving tmux sessions and their running
-   processes.
-2. Investigate restoration of the tmux/sesh workspace set after a macOS reboot,
+1. Investigate restoration of the tmux/sesh workspace set after a macOS reboot,
    where the original processes cannot remain alive.
 
 Explicitly excluded: a separate direct-zsh quick-access terminal and all work
@@ -684,7 +682,7 @@ longer protects those processes?
 | 2026-07-10 | Architecture | Keep tmux permanently and improve Kitty around it | Daniel confirmed that replacing tmux is no longer relevant; tmux remains necessary for workspace organization, sesh, and live shell persistence | Selected |
 | 2026-07-10 | Config environment | Remove the stale `KITTY_CONFIG_DIRECTORY` assignment | Official docs require a directory; the value was a file path, unexported, absent from live launch environments, and unused; Git history tied it to initial Kitty setup; Daniel confirmed there is no alternate-profile workflow | Completed |
 | 2026-07-10 | Interaction ownership | Keep the current Kitty/tmux scrollback, search, selection, and clipboard behavior unchanged | Daniel does not need this investigation or a workflow change | Closed; no config change |
-| 2026-07-10 | Close safety | Improve Kitty close behavior without sacrificing tmux session/process persistence | Daniel selected this topic during the follow-up interview | Selected follow-up |
+| 2026-07-10 | Close safety | Keep `confirm_os_window_close 0` and current close behavior unchanged | tmux already preserves sessions and processes after Kitty closes; Daniel chose to skip additional confirmation behavior | Closed; no config change |
 | 2026-07-10 | Reboot restoration | Investigate restoring tmux/sesh workspaces after macOS reboot | Daniel selected restoration even though reboot necessarily restarts rather than preserves processes | Selected follow-up |
 
 ## Sources
