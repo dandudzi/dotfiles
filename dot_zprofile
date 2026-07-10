@@ -17,14 +17,3 @@ path=(
     "$HOME/.config/scripts"
 )
 export PATH
-
-# Fitness tracker LaunchAgents (once per login, not every shell)
-CONFIG_HOME="$HOME/.config"
-for plist in "$CONFIG_HOME/scripts"/com.fitness-track.*.plist(N); do
-    [[ -e "$plist" ]] || continue
-    name=$(basename "$plist")
-    target="$HOME/Library/LaunchAgents/$name"
-    label="${name%.plist}"
-    [[ -L "$target" ]] || ln -sf "$plist" "$target"
-    launchctl list "$label" &>/dev/null || launchctl bootstrap "gui/$(id -u)" "$target" 2>/dev/null
-done
