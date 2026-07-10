@@ -124,6 +124,8 @@ brew "zsh-syntax-highlighting"
 cask "bitwarden"
 # Anthropic's official Claude AI desktop app
 cask "claude"
+# Anthropic's terminal coding agent; track latest to match the uClaude update alias
+cask "claude-code@latest"
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
 # Voice and text chat software
