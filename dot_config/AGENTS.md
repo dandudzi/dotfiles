@@ -32,3 +32,5 @@ Changes here are meant to become part of the `chezmoi`-managed dotfiles set. Bef
 Do not run `chezmoi add` for native tool files outside `~/.config` from this repository, even if a tool installer creates or changes them. Examples that must stay unmanaged unless explicitly requested by exact path include `~/.codex/RTK.md`, `~/.claude/RTK.md`, `~/.claude/settings.json`, and `~/Library/Application Support/rtk/filters.toml`. Only capture files outside `~/.config` when the user explicitly asks to manage that exact file or directory.
 
 Keep related changes grouped by tool, and describe them by config area, for example `nvim: tweak LSP defaults` or `tmux: adjust session picker bindings`. For visual changes, record what was reloaded or checked so the corresponding `chezmoi` update is easy to review and apply.
+
+When adding or changing configuration, include a concise nearby comment explaining why the setting or change exists whenever the file format supports comments. Document the intent or tradeoff instead of merely restating what the setting does.
