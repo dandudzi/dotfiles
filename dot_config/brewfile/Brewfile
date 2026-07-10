@@ -54,8 +54,6 @@ brew "gum"
 brew "httpie"
 # Tools and libraries to manipulate images in select formats
 brew "imagemagick"
-# Java language specific implementation of the Language Server Protocol
-brew "jdtls"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Simple terminal UI for git commands
