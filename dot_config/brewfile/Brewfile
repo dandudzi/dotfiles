@@ -1,4 +1,6 @@
-tap "anomalyco/tap"
+tap "anomalyco/tap", trusted: {
+  formula: "opencode"
+}
 tap "felixkratz/formulae", trusted: {
   formula: "sketchybar"
 }
@@ -84,6 +86,8 @@ brew "nmap"
 brew "nowplaying-cli"
 # Command-line Git information tool
 brew "onefetch"
+# AI coding agent built for the terminal
+brew "anomalyco/tap/opencode"
 # Swiss-army knife of markup format conversion
 brew "pandoc"
 # Pinentry for GPG on Mac
