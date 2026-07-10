@@ -33,7 +33,7 @@ if [ ! -f "$UPDATE_FILE" ] || [ "$(date +%s)" -gt "$(( $(cat "$UPDATE_FILE") + 8
 
   run_step "Updating Oh My Zsh" "$ZSH/tools/upgrade.sh" || failed=1
 
-  if ! run_step "Updating chezmoi dependencies" chezmoi update; then
+  if ! run_step "Updating chezmoi dependencies" env HOMEBREW_DOTFILES_SKIP_MAS=1 chezmoi update; then
     echo "chezmoi uses git@github.com:dandudzi/dotfiles.git, so this step needs valid GitHub SSH access." >&2
     failed=1
   fi
