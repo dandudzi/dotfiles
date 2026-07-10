@@ -166,4 +166,3 @@ unless ENV["HOMEBREW_DOTFILES_SKIP_MAS"] == "1"
   mas "Pages", id: 409201541
   mas "Xcode", id: 497799835
 end
-uv "claude-monitor"
