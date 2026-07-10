@@ -16,6 +16,7 @@ small, reversible step at a time and verified before moving to the next item.
 - `Inference`: likely based on configuration, but needs confirmation from Daniel.
 - `Decision needed`: must be answered before choosing an implementation.
 - `Candidate`: a possible solution, not an approved change.
+- `Completed`: approved, implemented, verified, and recorded below.
 
 ## Executive conclusions
 
@@ -420,20 +421,22 @@ No navigation candidate is approved yet.
 
 ## Earlier Kitty productivity findings retained
 
-These do not require dropping tmux, though some work better without it:
+Phase 1 covers only improvements that leave the tmux-first architecture intact:
 
-1. Learn the Kitty command palette and current hint shortcuts.
-2. Manually load Kitty shell integration in zsh while Kitty launches tmux;
-   preserve the existing vi-mode cursor by using `no-cursor`.
-3. Add long-command notifications only after prompt marks are verified.
-4. Configure a macOS quick-access terminal that overrides the global tmux shell
-   and launches direct zsh.
-5. Try `kitten ssh`, keeping transfer confirmation and clipboard-read prompts.
-6. Keep `allow_remote_control no` unless a narrowly scoped, reviewed feature
-   genuinely needs it.
-7. Consider native blur and review the unusually thin text composition setting.
-8. Eventually replace the generated 3,000-line Kitty template with a small,
-   intentional configuration and includes.
+1. **Completed:** replace the generated 3,000-line Kitty template with a small,
+   annotated configuration while preserving every active directive.
+2. Learn the Kitty command palette and current hint shortcuts.
+3. Try `kitten ssh`, keeping transfer confirmation and clipboard-read prompts.
+4. Consider native blur and review the unusually thin text composition setting.
+5. Keep `allow_remote_control no` throughout Phase 1.
+
+The following earlier findings are deliberately deferred until a Phase 2
+profile launches zsh directly instead of tmux:
+
+- Enable and verify Kitty shell integration.
+- Add long-command notifications after prompt marks work.
+- Configure a direct-zsh macOS quick-access terminal.
+- Revisit close confirmation using Kitty's knowledge of active commands.
 
 ## Proposed migration stages
 
@@ -448,15 +451,17 @@ These stages are a research sequence, not authorization to implement them.
 
 ### Stage 1: improvements that do not remove tmux
 
+- Compact and annotate `kitty.conf` without changing effective behavior.
 - Learn command palette/hints.
-- Verify Kitty shell integration through tmux.
-- Create a direct-zsh quick-access terminal.
-- Fix inert/misleading Kitty and zsh config only after approval.
+- Review `kitten ssh` and tmux-independent visual settings one at a time.
+- Keep tmux startup and remote-control policy unchanged.
 
 ### Stage 2: one experimental Kitty-native project
 
 - Keep the normal Kitty startup unchanged.
 - Launch a separate experimental Kitty instance/profile without automatic tmux.
+- Enable shell integration, notifications, direct-zsh quick access, and
+  command-aware close safety only within the direct-zsh workflow.
 - Recreate one low-risk project, likely Vim Kata or Downloads.
 - Test zsh, Neovim, Yazi, clipboard, scrollback, fzf-tab, window creation, and
   closing behavior.
@@ -479,7 +484,7 @@ These stages are a research sequence, not authorization to implement them.
 - Remove automatic tmux startup only after the experimental profile passes.
 - Keep a separate explicit command/profile for persistent tmux work.
 - Remove unused tmux plugins and Neovim integration only after rollback period.
-- Compact Kitty configuration last, when every retained behavior is known.
+- Remove any transitional Kitty settings only after the rollback period.
 
 ## Acceptance tests for a tmux-free local profile
 
@@ -577,7 +582,10 @@ longer protects those processes?
 
 | Date | Topic | Decision | Evidence/answer | Implementation status |
 | --- | --- | --- | --- | --- |
-| 2026-07-10 | Initial architecture | Pending interview | Research completed; no config changed | Not started |
+| 2026-07-10 | Phase ordering | Finish tmux-independent Kitty recommendations before starting the tmux replacement experiment | Daniel explicitly separated the work into Phase 1 and Phase 2 | Recorded |
+| 2026-07-10 | Direct-zsh features | Defer shell integration, notifications, quick access, and command-aware close behavior until Phase 2 | These features should be evaluated after switching the experimental profile away from tmux | Deferred to Phase 2 |
+| 2026-07-10 | Kitty config cleanup | Use one compact annotated `kitty.conf`; retain the separate theme include and every active value | Zero bad lines before and after; normalized effective directives match | Completed |
+| 2026-07-10 | Initial architecture | Pending interview | Research completed; no architecture change | Not started |
 
 ## Sources
 
