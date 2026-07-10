@@ -24,8 +24,6 @@ brew "coreutils"
 brew "direnv"
 # Tool for managing dock items
 brew "dockutil"
-# Select default apps for documents and URL schemes on macOS
-brew "duti"
 # Run arbitrary commands when files change
 brew "entr"
 # Modern, maintained replacement for ls
