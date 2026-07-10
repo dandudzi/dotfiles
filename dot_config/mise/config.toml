@@ -9,6 +9,8 @@ kotlin = "latest"
 rust = "latest"
 uv = "latest"
 "pipx:serena-agent" = { version = "latest", uvx_args = "--python 3.13" }
+"npm:@playwright/mcp" = "latest"
+"npm:mcp-mermaid" = { version = "latest", allow_builds = ["mcp-mermaid"] }
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"
