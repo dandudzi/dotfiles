@@ -193,6 +193,30 @@ sesh also exposes more projects than these three because it combines zoxide and
 active tmux sessions. Replacing only the three static entries would remove the
 current frecency-based project workflow.
 
+Live snapshot on 2026-07-10:
+
+- `Config`: attached tmux session with two windows.
+- `main`: detached tmux session with one window.
+- `Vim Kata`: detached tmux session with two windows.
+- The unified selector deduplicates those live sessions against configured and
+  zoxide entries, while preserving the configured startup behavior for new
+  sessions.
+- The highest-frequency zoxide projects include `~/.config`, Vim Kata,
+  `zakupki`, `backend_zakupki`, and `tracker`; the list also contains arbitrary
+  recently visited directories rather than repositories only.
+
+Required parity for any replacement project switcher:
+
+- One fuzzy interface for live workspaces, configured workspaces, zoxide
+  directories, and an explicit filesystem search fallback.
+- Frecency ordering, deduplication, source filters, and directory previews.
+- Reattach/switch to a live workspace without restarting its processes.
+- Create a workspace at a selected directory and run its configured startup
+  command only on first creation.
+- Switch to the last workspace and deliberately kill a selected live workspace.
+- Support a transition where persistent tmux workspaces and experimental Kitty
+  workspaces are both discoverable from the same mental entry point.
+
 Current upstream status:
 
 - sesh is explicitly a smart **tmux** session manager.
@@ -481,7 +505,10 @@ These stages are a research sequence, not authorization to implement them.
 ### Stage 3: navigation and project switching
 
 - Choose native-only navigation or a reviewed Kitty/Neovim bridge.
-- Replace sesh for the experiment with Kitty sessions and/or zoxide/fzf.
+- Replace sesh only with a selector that preserves its unified tmux, configured,
+  zoxide, filesystem-search, preview, last-workspace, and kill workflows.
+- Do not substitute a static list of Kitty session files for the current
+  frecency-based project discovery.
 - Decide OS-window versus tab versus session project namespaces.
 - Rebuild Cmd+number and last-project switching.
 
@@ -553,6 +580,9 @@ The exact meaning of its sessions, windows, and panes still needs follow-up.
 Which do you use and how often: opening Kitty, `Prefix+j`, `Prefix+k`, `Alt+s`,
 `Prefix+r`, Cmd+number, `ta`, `ts`, or other commands?
 
+Partial answer, 2026-07-10: sesh with zoxide is used heavily for switching
+between projects. The primary entry-point shortcut still needs confirmation.
+
 ### 4. Typical project topology
 
 For a normal coding project, which panes/windows do you create: Neovim, shell,
@@ -612,6 +642,7 @@ longer protects those processes?
 | 2026-07-10 | File workflow shortcuts | Replace the default multi-key file/path sequences with ergonomic single-chord mappings during Phase 2 | Command palette, URL hints, and path insertion work; Daniel finds the file-oriented multi-step sequence too cumbersome for daily use | Planned for Phase 2 |
 | 2026-07-10 | SSH kitten | Skip during Phase 1 | SSH sessions are rarely used | Skipped |
 | 2026-07-10 | tmux persistence | Preserve live shell state after Kitty closes, or provide an explicit retained persistence layer | Daniel uses tmux both for workspace organization and shell-state survival | Hard Phase 2 requirement |
+| 2026-07-10 | Project switching | Preserve sesh plus zoxide semantics rather than replacing it with static Kitty sessions | The live selector combines persistent tmux sessions, configured startup workspaces, frecency-ranked directories, filesystem search, previews, source filters, last-session, and session deletion | Hard Phase 2 requirement |
 | 2026-07-10 | Transparency and blur | Retain `background_opacity 0.9` and leave `background_blur` disabled | Daniel prefers the current appearance | Completed; no config change |
 | 2026-07-10 | Text rendering | Retain `text_composition_strategy 0.1 0` | Daniel finds the current rendering comfortable | Completed; no config change |
 | 2026-07-10 | Phase 1 | Close the tmux-independent Kitty review and begin the tmux migration interview | Cleanup and feature tests completed; SSH skipped; appearance and security defaults intentionally retained | Completed |
