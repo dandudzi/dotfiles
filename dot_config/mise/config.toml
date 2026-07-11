@@ -7,7 +7,7 @@ pnpm = "latest"
 maven = "latest"
 gradle = "latest"
 kotlin = "latest"
-rust = "latest"
+rust = { version = "latest", components = "rust-analyzer" }
 uv = "latest"
 "pipx:serena-agent" = { version = "latest", uvx_args = "--python 3.13" }
 "npm:@playwright/mcp" = "latest"
