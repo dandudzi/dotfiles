@@ -142,6 +142,8 @@ cask "homerow"
 cask "jetbrains-toolbox"
 # GPU-based terminal emulator
 cask "kitty"
+# Desktop controller required by the managed Nanoleaf gaming automation
+cask "nanoleaf"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Control your tools with a few keystrokes
