@@ -1,6 +1,14 @@
-# Codex execution policy — review draft.
+# Codex execution policy — active user policy.
 #
-# This file is intentionally not installed in ~/.codex/rules yet.
+# Audited against Codex CLI 0.144.1 on 2026-07-11. The live
+# ~/.codex/rules/default.rules path is intentionally a symlink to this shared
+# file so Codex, Claude Code, and OpenCode policy work can retain one reviewed
+# source of intent where their native rule formats permit it.
+#
+# Official documentation still describes the preview `codex execpolicy check`
+# tester. The packaged 0.144.1 CLI does not expose that subcommand, so the
+# policy's inline `match`/`not_match` tests and a clean fresh-session load are
+# the available validation gates until the preview tester ships in the binary.
 # Codex uses the strictest decision across all matching prefixes:
 # forbidden > prompt > allow.
 #
@@ -123,7 +131,7 @@ prefix_rule(
 prefix_rule(
     pattern = ["codex", "execpolicy", "check"],
     decision = "allow",
-    justification = "Validate Codex execution-policy rules without starting an agent.",
+    justification = "Run the official preview execution-policy tester when the installed Codex binary provides it.",
     match = ["codex execpolicy check --rules default.rules -- git status"],
     not_match = ["codex exec task"],
 )
@@ -147,7 +155,7 @@ prefix_rule(
 prefix_rule(
     pattern = ["rtk", "codex", "execpolicy", "check"],
     decision = "allow",
-    justification = "Validate Codex execution-policy rules through RTK without starting an agent.",
+    justification = "Run the official preview execution-policy tester through RTK when the installed Codex binary provides it.",
     match = ["rtk codex execpolicy check --rules default.rules -- git status"],
     not_match = ["rtk codex exec task"],
 )

@@ -1,6 +1,6 @@
 ---
 name: obsidian-cli
-description: Operate a local Obsidian vault through the official desktop CLI. Use for app-aware note reading, search, creation, properties, links, opening files, moves, command discovery, plugin state, or CLI troubleshooting. Use a format-specific Obsidian skill for Tasks, Bases, Canvas, Excalidraw, Mermaid, or LaTeX.
+description: Use the official Obsidian desktop CLI for general vault operations and command discovery. Trigger for reading, searching, creating, opening, moving, or updating properties in local Obsidian notes.
 ---
 
 # Obsidian CLI
