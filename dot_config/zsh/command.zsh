@@ -1,4 +1,5 @@
-#👾 usefull comands setup
+# Interactive helpers for files, sessions, archives, containers, and processes.
+# Build one shared fd exclusion list for the file-picker helpers below.
 dd_excluded(){
 	DIRS_TO_EXCLUDE=(".git" ".mvn" ".conf" ".cache" ".m2" ".docker" ".Trash" ".hawtjni" ".iterm2" ".oh-my-zsh" ".tldr" ".local")
 	EXCLUDE_OPTION="--exclude"
@@ -17,13 +18,13 @@ dd_fd_command_files() {
 	echo "fd --type f --hidden $exclude"
 }
 
-# functions to go or copy paths
+# Navigate, copy, or edit paths selected through fd and fzf.
 cx() { cd "$@" && lg; }
 fls() { cd "$(eval $(dd_fd_command_directory) | fzf)" && l; }
 fp() { echo "$(eval $(dd_fd_command_files) | fzf)" | pbcopy }
 fv() { nvim "$(eval $(dd_fd_command_files) | fzf)" }
 
-# yazi wraper to change directory on exit
+# Preserve Yazi's final directory in the calling shell when it exits.
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	yazi "$@" --cwd-file="$tmp"
@@ -33,6 +34,7 @@ function y() {
 	rm -f -- "$tmp"
 }
 
+# Pick and connect to a sesh session from an interactive ZLE widget.
 function sesh-sessions() {
   {
     exec </dev/tty
@@ -50,6 +52,7 @@ bindkey -M emacs '\es' sesh-sessions
 bindkey -M vicmd '\es' sesh-sessions
 bindkey -M viins '\es' sesh-sessions 
 
+# Extract the supported archive formats into the current directory.
 function extract() {
     local f="$1"
     if [ -f "$f" ]; then
@@ -69,6 +72,7 @@ function extract() {
     fi
 }
 
+# Select one or more running containers and print their IDs.
 function did(){
     local containerId=$(docker ps --format 'table {{.ID}}\t{{.Names}}' | eval "fzf -m --header='docker:containerId' --layout=reverse --height=40%" | awk '{print $1}')
 
@@ -78,6 +82,7 @@ function did(){
     fi
 }
 
+# Kill selected processes; the optional first argument is a signal and defaults to SIGKILL (9).
 function kp(){
     local pid=$(ps -ef | sed 1d | eval "fzf -m --header='[kill:process]'" | awk '{print $2}')
 
@@ -86,5 +91,4 @@ function kp(){
         echo $pid | xargs kill -${1:-9}
     fi
 }
-
 

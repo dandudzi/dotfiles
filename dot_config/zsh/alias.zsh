@@ -1,4 +1,5 @@
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
+# Use btop as the interactive system monitor behind the familiar htop name.
 alias htop="btop"
 
 # Get week number
@@ -10,13 +11,16 @@ alias rgf="rg --fixed-strings"          # search fixed string
 alias rfv="~/.config/scripts/rfv"       # fzf with rg fo searching files and its content 
 alias kb="cat ~/.config/zsh/alias.zsh ~/.config/zsh/command.zsh | fzf"
 
-#🩳 aliases
-#🪛 tools aliases
+#🪛 Tool aliases that intentionally change familiar command behavior.
+# Clear first so the system summary starts on a clean screen.
 alias fastfetch="clear && fastfetch"
+# Show the process hierarchy; this is not a filesystem tree.
 alias tree=pstree
+# Use bat for interactive file viewing; `command cat` bypasses this alias.
 alias cat=bat
 alias lals="cat ~/.config/zsh/alias.zsh"
 alias lkey="cat ~/.config/zsh/alias.zsh ~/.config/zsh/command.zsh"
+# Keep traditional editor command names on Neovim.
 alias vi="nvim"
 alias vim="nvim"
 
@@ -24,12 +28,15 @@ alias vim="nvim"
 alias fig="find . -print | grep -iw"
 alias lport="sudo lsof -i -P -n | grep LISTEN"
 alias nm="nmap -sC -sV -oN nmap"
+# Report the public IP through OpenDNS; this is not an interface-management command.
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias localip="ipconfig getifaddr en0"
 alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
+# Keep routine DNS lookups concise by returning only short answers.
 alias dig="dig +short"
 
 #🎬 Git
+# Open the current Git repository; this intentionally shadows the Go executable name.
 alias go="git-open"
 alias g="git"
 alias gavv="git branch -avv"
@@ -69,12 +76,14 @@ alias gsc="git switch -c" #create new branch
 alias gb="git branch"
 alias gba="git branch -a" #list all branches even remote
 
+# Destructive: discard tracked changes and delete untracked files and directories.
 alias gwipe="git reset --hard && git clean --force -df"
 alias gitstat="onefetch"
 alias git-list-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}"'
+# Destructive: force-delete local branches that lack matching remote tracking branches.
 alias git-remove-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}" | xargs git branch -D'
 
-#🌳 eza aliases
+#🌳 Replace interactive ls output with eza; `command ls` retains the system behavior.
 eza_params='--git --group --header --group-directories-first --icons'
 alias lt='eza -l --sort=modified'      # Sort by modification time
 alias l="eza -l --icons $eza_params"                # Simple long list with icons
@@ -94,7 +103,7 @@ alias tl="tmux list-sessions"                   # Displays a list of running tmu
 alias tmuxconf='${EDITOR:-nvim} ~/.config/tmux/tmux.conf' # Open tmux config with an editor
 alias ts="tmux new-session -s"                  # Create a new named tmux session
 
-#🐍 make sure that we are using python3 instead of python2
+#🐍 Keep unversioned Python commands on Python 3.
 alias python=python3
 alias pip=pip3
 
@@ -111,7 +120,7 @@ alias ezals="dote ~/.config/zsh/alias.zsh"
 alias envim="dote ~/.config/nvim"
 alias dots="dot status"
 
-# Dirs
+# Use zoxide for directory changes; `builtin cd` retains the shell builtin.
 alias cd="z"
 alias ..="cd .."
 alias ...="cd ../.."
@@ -121,6 +130,7 @@ alias ......="cd ../../../../.."
 
 # 🤖 Claude
 alias uClaude="brew upgrade claude-code@latest claude"
+# Treat the first argument as the shared task-list ID and pass the rest to Claude Opus Plan.
 function cc() {
   CLAUDE_CODE_TASK_LIST_ID="$1" claude --model opusplan "${@:2}"
 }
