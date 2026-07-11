@@ -159,14 +159,16 @@ if [[ -S "$HOME/.bitwarden-ssh-agent.sock" ]]; then
     export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 fi
 
-#🍻 Source brew auto update script
-source $CONFIG_HOME/scripts/update_packages.sh
+#🍻 Finish the required first-shell setup before running maintenance.
+source $CONFIG_HOME/scripts/setUpCITools.sh
+
+# Skip updates until every required setup phase has created the success sentinel.
+if [[ -f "$HOME/.isCISetUpRun" ]]; then
+    source $CONFIG_HOME/scripts/update_packages.sh
+fi
 
 #🎖️ Command used in command line
 source $CONFIG_HOME/zsh/command.zsh
-
-#🍻 Source script that runs only once to setUp CI tools
-source $CONFIG_HOME/scripts/setUpCITools.sh
 
 # Keep pnpm-installed global commands available without shadowing mise's pnpm.
 export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
