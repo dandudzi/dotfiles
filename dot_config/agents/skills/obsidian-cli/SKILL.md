@@ -1,6 +1,6 @@
 ---
 name: obsidian-cli
-description: Operate and automate local Obsidian vaults through the official desktop CLI. Use for app-aware vault inspection, search, notes, daily notes, tasks, properties, tags, links, Bases, templates, recovery, plugins, themes, workspaces, or developer diagnostics, and when choosing between Obsidian CLI, direct Markdown access, Obsidian URI, or Headless Sync.
+description: Operate and automate local Obsidian vaults through the official desktop CLI and installed plugin formats. Use for app-aware vault inspection, search, notes, Tasks, properties, tags, links, Bases, Canvas, Excalidraw, Mermaid, MathJax/LaTeX, templates, recovery, plugins, workspaces, developer diagnostics, or choosing between CLI, direct files, plugin APIs, URI, and Headless Sync.
 ---
 
 # Obsidian CLI
@@ -30,6 +30,14 @@ Never rely on the active file or active vault for unattended mutation. On unfami
 
 Read [references/everyday-commands.md](references/everyday-commands.md) for common operations. Read [references/alternatives-and-safety.md](references/alternatives-and-safety.md) before structural, bulk, Tasks-plugin, or fallback work. Read [references/admin-developer-commands.md](references/admin-developer-commands.md) only for recovery, plugins, UI, Sync, or development.
 
+Load feature references only when needed:
+
+- [references/tasks-plugin.md](references/tasks-plugin.md) for Tasks queries, recurrence, statuses, and safe completion.
+- [references/bases-and-canvas.md](references/bases-and-canvas.md) for `.base` YAML and `.canvas` JSON Canvas.
+- [references/excalidraw.md](references/excalidraw.md) for Excalidraw commands, files, embeds, and automation boundaries.
+- [references/mermaid-and-math.md](references/mermaid-and-math.md) for Mermaid diagrams and MathJax/LaTeX notation.
+- [references/other-installed-plugins.md](references/other-installed-plugins.md) for Tag Wrangler, Iconize, Importer, and Editing Toolbar.
+
 ## Apply Command Conventions
 
 ```bash
@@ -46,12 +54,15 @@ rtk obsidian vault="Vault Name" <command> key=value
 
 ## Guard Mutations
 
+- Inspect `plugins:enabled` and `plugin id=<id>` before assuming a community plugin or version is available.
 - Inspect, mutate, then verify. Re-read immediately before a content-changing operation.
 - Prefer `append`, `prepend`, and typed `property:set` over full-note overwrite.
 - Create without `overwrite` unless replacement is explicitly requested.
 - Use CLI `move` or `rename` instead of shell `mv` when links must be updated. Confirm automatic link updating and validate unresolved links afterward.
 - Re-query a task immediately before using a line-based `task ref="<path>:<line>"`.
-- Do not assume core CLI task toggles implement Tasks-plugin recurrence, completion-date, dependency, or custom-status behavior. Use the plugin's registered command when those semantics matter.
+- Do not assume core CLI task toggles implement Tasks-plugin recurrence, completion-date, dependency, custom-status, or `onCompletion` behavior. Use the Tasks UI with an established editor context or a reviewed API integration when those semantics or the plugin settings are uncertain.
+- Preserve unknown fields when editing `.base` or `.canvas` files. Validate the syntax before opening them in Obsidian.
+- Never hand-edit compressed Excalidraw scene data. Use plugin commands or a reviewed Excalidraw Automate workflow.
 - Treat orphans and dead ends as findings, not automatic defects.
 - Never use `delete permanent`, restore history, change Sync state, install/uninstall plugins or themes, execute arbitrary `command` IDs, run `eval`, or use `dev:cdp` without explicit authorization.
 
