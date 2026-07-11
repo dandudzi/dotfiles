@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Note Import"
+  short_description: "Track quarantined imports in SQLite"
+  default_prompt: "Use $obsidian-import-notes to coordinate a SQLite-tracked quarantine import through separate importer, reviewer, and integrator subagents."

@@ -23,9 +23,9 @@ Keep server names, commands, URLs, and non-secret setup notes here. Keep tokens,
 ### context7
 
 - Purpose: Up-to-date library and API documentation lookup.
-- Transport: Local stdio MCP via npm package.
-- Command: `npx -y @upstash/context7-mcp`
-- Authentication: Optional for basic usage. `CONTEXT7_API_KEY` can be added in private tool configs for higher limits or private repositories.
+- Transport: Remote HTTP MCP, matching the active Codex setup.
+- URL: `https://mcp.context7.com/mcp`
+- Authentication: Optional for basic usage. When used, keep the `CONTEXT7_API_KEY` value only in private tool-specific configuration; never record it here.
 
 ### serena
 

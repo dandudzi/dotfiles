@@ -14,6 +14,12 @@
 - Use a mutating tool from these servers only when the user's current request explicitly authorizes that action and target. Otherwise, describe the exact mutation and obtain approval first.
 - Do not infer authorization for repository edits, Linear changes, form submissions, account actions, or other external-state changes from a request to inspect, research, review, diagnose, or test.
 
+## Long-Task State
+
+- For multi-phase work likely to span compaction, handoff, or another session, maintain a concise state file in the approved workspace. Record the objective, constraints, decisions, progress, verification, and next action.
+- Update the state file at meaningful milestones and immediately before compaction or handoff so work can resume without relying on transcript memory.
+- Reuse an existing project state or plan file when available. Do not create state files for simple tasks, and never persist credentials or other secrets in them.
+
 <!-- context7 -->
 Use Context7 MCP to fetch current documentation whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service -- even well-known ones like React, Next.js, Prisma, Express, Tailwind, Django, or Spring Boot. This includes API syntax, configuration, version migration, library-specific debugging, setup instructions, and CLI tool usage. Use even when you think you know the answer -- your training data may not reflect recent changes. Prefer this over web search for library docs.
 

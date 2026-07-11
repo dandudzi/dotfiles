@@ -15,6 +15,23 @@ Keep each skill concise and focused on one tool, format, or workflow. Put durabl
 - Avoid catch-all plugin inventories and broad alternatives or safety reference files unless the user explicitly requests them.
 - Keep essential instructions in `SKILL.md`; add references only when the domain genuinely needs detailed material.
 
+## Note Import Design
+Keep note migrations repeatable and the destination vault organized.
+
+- Preserve raw exports and inventory them before conversion.
+- Do not create migration backups unless the user changes this rule.
+- Place every imported note in source- and run-specific quarantine; never import directly into permanent vault folders.
+- The primary agent coordinates three distinct subagents: one imports to quarantine, another independently reviews duplicates and recommends placement, and a third integrates only owner-approved decisions.
+- Use `_Imports/imports.sqlite3` as the import ledger. Compute each SHA-256 fingerprint from NFC filename, byte size, stable source label, and lowercase file type, in that order with unambiguous separators.
+- Retain fingerprint history. An exact fingerprint and content-hash match is unchanged; a prior record with the same source, filename, file type, and source-relative path but a different fingerprint is a changed version that must be reimported to quarantine.
+- Store source-relative paths and separate content hashes so same-size content changes and fingerprint collisions become review items rather than silent skips. Use one database writer at a time and transactional subagent handoffs.
+- Treat SQLite as authoritative. Quarantine or report files without matching committed rows indicate an interrupted run that the importer must reconcile before review.
+- Never merge, overwrite, delete, or permanently place an imported note based only on a filename or fuzzy duplicate match.
+- After conversion, check each note for exact and probable duplicates. For a unique note, provide a short summary and recommended location, links, tags, or properties, then ask the owner for approval.
+- Keep the ledger, review reports, and quarantine out of permanent content folders. Integrate notes only after independent review and owner approval.
+- Never remove vault files with raw filesystem deletion. Use `rtk obsidian delete path="<vault-relative-path>"` so Obsidian applies its configured trash behavior; verify `Moved to trash` and active-path absence.
+- After a run is fully resolved and verified, move its quarantined working copies through Obsidian trash. Verify their active-path absence before recording cleanup in SQLite. Preserve original sources, the ledger, reports, and integrated notes.
+
 ## Shared Surfaces
 Docs checked on 2026-06-24 against official Codex, Claude Code, OpenCode, and Open Agent Skills documentation. Use this table as the compatibility map before adding symlinks.
 
