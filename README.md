@@ -16,7 +16,8 @@
 1. Set up `Night shift`
 1. Unbind ⌘+⇧+a - `Keyboard settings -> Shortcuts -> Services -> Text -> Search Man Pages`
 1. Disable work capitalization and adding period in the end `Keyboard settings -> Text Input -> Edit`
-1. Load Intellij settings from `.config/idea`
+1. Install IntelliJ IDEA through JetBrains Toolbox
+1. Open IntelliJ IDEA and import settings from `~/.config/idea/settings.zip`
 1. Add `login items` in Mac
    1. Docker
    1. Flameshot
