@@ -6,7 +6,7 @@
    1. `chmod 600 id_ed25519.pub`
    1. `pbpaste > id_ed25519.pub`
 1. Run `sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --force dandudzi --ssh`
-   1. During the installation pick if this is work laptop or not `y/n`
+   1. During installation, choose whether this is a work machine and enter the Git email address.
 1. Enable in Bitwarden ssh agent
 1. Open Kitty to start an interactive Zsh shell and finish the first-shell setup
 1. Sometimes `tmux` has an issue with installing dependencies then enter it and refresh `<c-b> -> <⇧+i>`
