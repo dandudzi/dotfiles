@@ -147,6 +147,63 @@ if [[ $1 = --list ]]; then
   fi
 fi
 
+if [[ $1 = --menu ]]; then
+  menu_output=$2
+  [[ -n $menu_output ]] || exit 2
+
+  labels=(
+    'Files [f]'
+    'Branches [b]'
+    'Tags [t]'
+    'Remotes [r]'
+    'Hashes [h]'
+    'Stashes [s]'
+    'Reflogs [l]'
+    'Refs [e]'
+    'Worktrees [w]'
+  )
+  types=(files branches tags remotes hashes stashes lreflogs each_ref worktrees)
+  keys=(f b t r h s l e w)
+  selected=1
+
+  while true; do
+    # Gum styles the dialog while this loop adds immediate single-letter actions.
+    print -n $'\e[H\e[2J'
+    for ((i = 1; i <= ${#labels}; i++)); do
+      if ((i == selected)); then
+        gum style --bold --foreground 212 "> ${labels[i]}"
+      else
+        print -r -- "  ${labels[i]}"
+      fi
+    done
+    print
+    gum style --foreground 240 'j/k navigate • enter select • letter choose • esc cancel'
+
+    IFS= read -rs -k1 key || exit 1
+    key=${(L)key}
+    case $key in
+      j) ((selected = selected == ${#labels} ? 1 : selected + 1)) ;;
+      k) ((selected = selected == 1 ? ${#labels} : selected - 1)) ;;
+      ''|$'\r'|$'\n')
+        print -r -- "${types[selected]}" > "$menu_output"
+        exit 0
+        ;;
+      $'\e')
+        : > "$menu_output"
+        exit 0
+        ;;
+      *)
+        for ((i = 1; i <= ${#keys}; i++)); do
+          if [[ $key = ${keys[i]} ]]; then
+            print -r -- "${types[i]}" > "$menu_output"
+            exit 0
+          fi
+        done
+        ;;
+    esac
+  done
+fi
+
 if [[ $- =~ i ]] || [[ $1 = --run ]]; then # ----------------------------------
 
 # Redefine this function to change the options
@@ -338,50 +395,31 @@ elif [[ -n "${ZSH_VERSION:-}" ]]; then
       done
     done
 
-    # Keep Ctrl-G discoverable while retaining the fast Ctrl-G + letter bindings.
+    # Use a tmux popup so the menu is a dialog and the selected action runs directly.
     fzf-git-menu-widget() {
-      local choice type result
+      local menu_output type result
 
-      if ! command -v gum > /dev/null; then
-        zle -M 'gum is required for the Git picker menu'
+      if ! command -v gum > /dev/null || ! command -v tmux > /dev/null; then
+        zle -M 'gum and tmux are required for the Git picker menu'
+        return 1
+      fi
+      if [[ -z $TMUX ]]; then
+        zle -M 'the Git picker menu requires an active tmux session'
         return 1
       fi
 
-      # Flush ZLE before handing terminal control to Gum's interactive UI.
+      menu_output=$(mktemp "${TMPDIR:-/tmp}/fzf-git-menu.XXXXXX") || return 1
       zle -I
-      choice=$(gum choose --header 'Git picker' --height 9 \
-        'Files [f]' \
-        'Branches [b]' \
-        'Tags [t]' \
-        'Remotes [r]' \
-        'Hashes [h]' \
-        'Stashes [s]' \
-        'Reflogs [l]' \
-        'Refs [e]' \
-        'Worktrees [w]' < /dev/tty) || {
-          zle reset-prompt
-          return
-        }
+      tmux display-popup -E -w 48 -h 15 -T ' Git picker ' \
+        zsh "$__fzf_git" --menu "$menu_output"
+      type=$(< "$menu_output")
+      command rm -f -- "$menu_output"
 
-      case $choice in
-        'Files [f]')     type=files ;;
-        'Branches [b]')  type=branches ;;
-        'Tags [t]')      type=tags ;;
-        'Remotes [r]')   type=remotes ;;
-        'Hashes [h]')    type=hashes ;;
-        'Stashes [s]')   type=stashes ;;
-        'Reflogs [l]')   type=lreflogs ;;
-        'Refs [e]')      type=each_ref ;;
-        'Worktrees [w]') type=worktrees ;;
-        *)
-          zle reset-prompt
-          return
-          ;;
-      esac
-
-      result=$(_fzf_git_$type | __fzf_git_join)
+      if [[ -n $type ]]; then
+        result=$(_fzf_git_$type | __fzf_git_join)
+        LBUFFER+=$result
+      fi
       zle reset-prompt
-      LBUFFER+=$result
     }
     zle -N fzf-git-menu-widget
 
