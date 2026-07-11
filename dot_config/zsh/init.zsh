@@ -83,6 +83,7 @@ plugins=(
   aws                 # AWS management
   gpg-agent           # GPG agent support
   mise                # UI enhancements or interaction tweaks
+  bun                 # Completions for the mise-managed Bun runtime
   
   fzf-tab             # FZF-based tab completion
   fzf-tab-source      # Source plugins for fzf-tab
@@ -206,6 +207,3 @@ function zle-keymap-select() {
 
 # Bind the combined function
 zle -N zle-keymap-select
-
-# bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

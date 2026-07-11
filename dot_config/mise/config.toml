@@ -1,6 +1,7 @@
 [tools]
 java = "latest"
 node = "24"
+bun = "latest"
 lua = "5.1"
 pnpm = "latest"
 maven = "latest"

@@ -7,10 +7,8 @@ fi
 
 # PATH additions
 typeset -U path PATH
-export BUN_INSTALL="$HOME/.bun"
 path=(
     "$HOME/.local/bin"
-    "$BUN_INSTALL/bin"
     $path
     "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
     "/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
