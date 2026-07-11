@@ -6,6 +6,7 @@ _setup_ci_tools() {
   local sketchybar_dir="$HOME/.config/sketchybar"
   local brew_shellenv
   local chezmoi_source
+  local git_email
   local lua_version
 
   if [ -f "$sentinel" ]; then
@@ -77,8 +78,12 @@ _setup_ci_tools() {
   git -C "$chezmoi_source" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
   git -C "$chezmoi_source" config user.signingkey \
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFmLNYerRzGP9de3D3jblBa6orRzAlQcMUbANqoLK5" || return 1
-  git -C "$chezmoi_source" config user.email \
-    "20063579+dandudzi@users.noreply.github.com" || return 1
+  git_email="$(git config --global user.email)" || return 1
+  if [ -z "$git_email" ]; then
+    echo "Global Git email is not configured." >&2
+    return 1
+  fi
+  git -C "$chezmoi_source" config user.email "$git_email" || return 1
 
   touch "$sentinel" || return 1
   echo "✅ First-shell setup completed successfully"

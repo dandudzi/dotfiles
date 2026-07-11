@@ -1,11 +1,8 @@
 {{ $work := promptBoolOnce . "work" "Is this work machine?" false -}}
+{{ $email := promptStringOnce . "email" "Git email address" -}}
 [data]
     work = {{ $work }}
-    {{ if $work -}}
-    email = "ddudziak@atlassian.com"
-    {{ else -}}
-    email = "20063579+dandudzi@users.noreply.github.com"
-    {{ end -}}
+    email = {{ $email | quote }}
     name = "Daniel Dudziak"
 
 [diff]
