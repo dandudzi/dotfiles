@@ -62,12 +62,10 @@ _setup_ci_tools() {
       fi
     done
 
+    # Fonts installed in the standard user font directory are available by family name.
     mkdir -p "$HOME/Library/Fonts" || exit 1
     curl -fL https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.28/sketchybar-app-font.ttf \
       -o "$HOME/Library/Fonts/sketchybar-app-font.ttf" || exit 1
-    sketchybar --load-font "Symbols Nerd Font" || exit 1
-    sketchybar --load-font "Symbols Nerd Font Mono" || exit 1
-    sketchybar --load-font "CommitMono" || exit 1
     brew services restart sketchybar || exit 1
   ) || return 1
 
