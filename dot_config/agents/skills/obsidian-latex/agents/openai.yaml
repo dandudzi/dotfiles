@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian LaTeX"
+  short_description: "Write MathJax-compatible LaTeX notation"
+  default_prompt: "Use $obsidian-latex to write or revise mathematical notation in Obsidian."

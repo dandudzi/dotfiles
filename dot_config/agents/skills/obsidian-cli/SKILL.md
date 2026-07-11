@@ -1,84 +1,56 @@
 ---
 name: obsidian-cli
-description: Operate and automate local Obsidian vaults through the official desktop CLI and installed plugin formats. Use for app-aware vault inspection, search, notes, Tasks, properties, tags, links, Bases, Canvas, Excalidraw, Mermaid, MathJax/LaTeX, templates, recovery, plugins, workspaces, developer diagnostics, or choosing between CLI, direct files, plugin APIs, URI, and Headless Sync.
+description: Operate a local Obsidian vault through the official desktop CLI. Use for app-aware note reading, search, creation, properties, links, opening files, moves, command discovery, plugin state, or CLI troubleshooting. Use a format-specific Obsidian skill for Tasks, Bases, Canvas, Excalidraw, Mermaid, or LaTeX.
 ---
 
 # Obsidian CLI
 
-Use the official `obsidian` CLI when Obsidian's index, link resolution, properties, plugins, commands, or UI state add value. Use direct file tools when an operation is plain offline Markdown work.
+Follow the vault's `AGENTS.md`. Run from the vault root so the CLI targets the intended vault, and use exact vault-relative `path=` values. Obsidian must be running.
 
-## Follow the Safe Workflow
-
-1. Read the applicable `AGENTS.md` and preserve vault-specific rules.
-2. Classify the request as read-only, content-changing, structural, administrative, or destructive.
-3. Preflight with `rtk command -v obsidian` and `rtk obsidian version`.
-4. Establish the target vault. Prefer running from its root. Otherwise place `vault="<name>"` immediately after `obsidian` and before the command.
-5. Use exact vault-relative `path=` for automation. Use `file=` only when wikilink-style name resolution is intentional.
-6. Inspect the target and related state before changing anything.
-7. Run the narrowest authorized command.
-8. Verify with a matching read/query command and report affected paths or exceptions.
-
-Never rely on the active file or active vault for unattended mutation. On unfamiliar or version-dependent syntax, run `rtk obsidian help <command>` instead of guessing.
-
-## Choose the Interface
-
-- Use CLI for search, backlinks, tags, tasks, typed properties, Bases, templates, recovery, registered commands, plugin state, and link-aware moves.
-- Use direct files or `rg` for offline reads, literal searches, focused middle-of-note patches, bulk staging imports, and attachment copying.
-- Use Obsidian URI for opening, focusing, searching, or simple cross-app capture when structured output is unnecessary.
-- Use Headless Sync only for syncing an Obsidian Sync vault without the desktop app; it is not a note automation CLI.
-- Consider MCP or a custom plugin only for persistent cross-client or event-driven integration.
-
-Read [references/everyday-commands.md](references/everyday-commands.md) for common operations. Read [references/alternatives-and-safety.md](references/alternatives-and-safety.md) before structural, bulk, Tasks-plugin, or fallback work. Read [references/admin-developer-commands.md](references/admin-developer-commands.md) only for recovery, plugins, UI, Sync, or development.
-
-Load feature references only when needed:
-
-- [references/tasks-plugin.md](references/tasks-plugin.md) for Tasks queries, recurrence, statuses, and safe completion.
-- [references/bases-and-canvas.md](references/bases-and-canvas.md) for `.base` YAML and `.canvas` JSON Canvas.
-- [references/excalidraw.md](references/excalidraw.md) for Excalidraw commands, files, embeds, and automation boundaries.
-- [references/mermaid-and-math.md](references/mermaid-and-math.md) for Mermaid diagrams and MathJax/LaTeX notation.
-- [references/other-installed-plugins.md](references/other-installed-plugins.md) for Tag Wrangler, Iconize, Importer, and Editing Toolbar.
-
-## Apply Command Conventions
+## Common actions
 
 ```bash
-rtk obsidian <command> key=value flag
-rtk obsidian vault="Vault Name" <command> key=value
+rtk obsidian read path="Projects/Plan.md"
 ```
 
-- Quote values containing spaces.
-- Encode multiline content as `\n` and tabs as `\t`.
-- Prefer `format=json` for structured results, then TSV when JSON is unavailable.
-- Use `total` when only a count is needed.
-- Use `search:context ... format=json` for matching lines; plain `search` returns matching paths.
-- Use `--copy` only when clipboard output is explicitly useful.
+Read one exact note through Obsidian. Prefer this when app-level file resolution matters.
 
-## Guard Mutations
+```bash
+rtk obsidian search:context query="migration" format=json
+```
 
-- Inspect `plugins:enabled` and `plugin id=<id>` before assuming a community plugin or version is available.
-- Inspect, mutate, then verify. Re-read immediately before a content-changing operation.
-- Prefer `append`, `prepend`, and typed `property:set` over full-note overwrite.
-- Create without `overwrite` unless replacement is explicitly requested.
-- Use CLI `move` or `rename` instead of shell `mv` when links must be updated. Confirm automatic link updating and validate unresolved links afterward.
-- Re-query a task immediately before using a line-based `task ref="<path>:<line>"`.
-- Do not assume core CLI task toggles implement Tasks-plugin recurrence, completion-date, dependency, custom-status, or `onCompletion` behavior. Use the Tasks UI with an established editor context or a reviewed API integration when those semantics or the plugin settings are uncertain.
-- Preserve unknown fields when editing `.base` or `.canvas` files. Validate the syntax before opening them in Obsidian.
-- Never hand-edit compressed Excalidraw scene data. Use plugin commands or a reviewed Excalidraw Automate workflow.
-- Treat orphans and dead ends as findings, not automatic defects.
-- Never use `delete permanent`, restore history, change Sync state, install/uninstall plugins or themes, execute arbitrary `command` IDs, run `eval`, or use `dev:cdp` without explicit authorization.
+Search the indexed vault and return matching files, lines, and text as structured data.
 
-## Handle Failures
+```bash
+rtk obsidian create path="Inbox/New note.md" content="# New note"
+```
 
-The CLI controls a running Obsidian desktop instance. If the binary exists but cannot find Obsidian, distinguish that from a missing CLI. Use filesystem fallbacks only when semantically equivalent.
+Create a note only if the path is absent. Add `open` only when the user wants to see it immediately.
 
-If Obsidian is visibly running but the CLI still cannot connect, a sandbox may be blocking IPC. Request narrowly scoped permission for read-only CLI access instead of repeatedly relaunching the app.
+```bash
+rtk obsidian property:set name=status value=active type=text path="Projects/Plan.md"
+```
 
-Do not trust exit status alone: Obsidian CLI 1.12.7 can print `Error:` and still exit with status 0. Inspect output and verify the result.
+Set a typed frontmatter property without rewriting the entire frontmatter block.
 
-Runtime help is authoritative. Do not copy undocumented compatibility flags from older examples. In validated 1.12.7 behavior:
+```bash
+rtk obsidian move path="Inbox/Plan.md" to="Projects/Plan.md"
+```
 
-- `tasks todo` is already vault-wide; an `all` flag is undocumented and unnecessary.
-- `search:context query="..." format=json` returns files, matching lines, and text.
-- `search ... matches` is undocumented and ignored.
-- `create` opens a note only with `open`; there is no documented `silent` flag.
+Move a note through Obsidian so internal links can be updated when that vault setting is enabled.
 
-If an indexed result is unexpectedly empty, confirm the correct vault, exact path, enabled plugin, and index readiness before falling back.
+```bash
+rtk obsidian open path="Projects/Plan.md" newtab
+```
+
+Open an exact file in the running desktop app.
+
+## Discover more
+
+- Run `rtk obsidian help` to list command groups.
+- Run `rtk obsidian help <command>` before using unfamiliar options.
+- Run `rtk obsidian` for the interactive TUI with autocomplete when working manually.
+- Run `rtk obsidian commands filter=<prefix>` to discover core or plugin command IDs.
+- Run `rtk obsidian plugins:enabled versions format=json` to inspect active plugins.
+
+Prefer `format=json` for automation. Treat output containing `Error:` as failure even when the process exits successfully.

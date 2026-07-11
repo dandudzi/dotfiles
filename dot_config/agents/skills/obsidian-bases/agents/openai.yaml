@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Bases"
+  short_description: "Create and query Obsidian Bases"
+  default_prompt: "Use $obsidian-bases to work with this vault's Base files."

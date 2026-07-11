@@ -3,10 +3,12 @@
 _setup_ci_tools() {
   local sentinel="$HOME/.isCISetUpRun"
   local lock_dir="$HOME/.isCISetUpRun.lock"
+  local lock_pid_file="$lock_dir/pid"
   local sketchybar_dir="$HOME/.config/sketchybar"
   local brew_shellenv
   local chezmoi_source
   local git_email
+  local lock_pid=""
   local lua_version
 
   if [ -f "$sentinel" ]; then
@@ -14,10 +16,36 @@ _setup_ci_tools() {
   fi
 
   if ! mkdir "$lock_dir" 2>/dev/null; then
-    echo "⚠️ First-shell setup is already running in another shell." >&2
+    if [ -r "$lock_pid_file" ]; then
+      IFS= read -r lock_pid <"$lock_pid_file" || lock_pid=""
+    fi
+
+    case "$lock_pid" in
+      ''|*[!0-9]*)
+        echo "❌ First-shell setup lock has no valid owner PID: $lock_dir" >&2
+        return 1
+        ;;
+    esac
+
+    if kill -0 "$lock_pid" 2>/dev/null; then
+      echo "⚠️ First-shell setup is already running as PID $lock_pid." >&2
+      return 1
+    fi
+
+    # The recorded process is gone, so the lock is safe to replace.
+    echo "🧹 Removing stale first-shell setup lock from PID $lock_pid"
+    rm -rf "$lock_dir" || return 1
+    if ! mkdir "$lock_dir" 2>/dev/null; then
+      echo "⚠️ Another shell acquired the first-shell setup lock." >&2
+      return 1
+    fi
+  fi
+
+  if ! printf '%s\n' "$$" >"$lock_pid_file"; then
+    rm -rf "$lock_dir"
     return 1
   fi
-  trap 'rmdir "$HOME/.isCISetUpRun.lock" 2>/dev/null || true' EXIT
+  trap 'rm -rf "$HOME/.isCISetUpRun.lock" 2>/dev/null || true' EXIT
 
   echo "📲 Checking Xcode Command Line Tools"
   if ! xcode-select -p >/dev/null 2>&1; then

@@ -1,4 +1,4 @@
 interface:
   display_name: "Obsidian CLI"
-  short_description: "Operate Obsidian CLI, plugins, and formats"
-  default_prompt: "Use $obsidian-cli to manage this Obsidian vault and its plugin-backed formats safely."
+  short_description: "Operate the official Obsidian desktop CLI"
+  default_prompt: "Use $obsidian-cli to inspect or manage this Obsidian vault."

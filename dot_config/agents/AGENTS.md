@@ -6,6 +6,15 @@ This folder is the canonical shared configuration area for AI coding agents used
 ## Organization
 Keep portable content in neutral locations first, then link it into tool-specific paths when the file format is shared. Prefer direct symlinks for shared global instructions, shared `SKILL.md`-based skills, and shared Claude/OpenCode Markdown agents. Keep tool-specific settings, permissions, model choices, credentials, caches, logs, and session state out of this shared folder unless they are intentionally safe to version and reuse.
 
+## Skill Design
+Keep each skill concise and focused on one tool, format, or workflow. Put durable safety rules and general operating practices in the applicable `AGENTS.md`, not in every skill.
+
+- Include a small set of common operations with a short explanation of what each one does.
+- Teach agents how to discover current commands, options, and documentation instead of copying large command references.
+- Split unrelated formats or plugins into separate skills so only relevant instructions load.
+- Avoid catch-all plugin inventories and broad alternatives or safety reference files unless the user explicitly requests them.
+- Keep essential instructions in `SKILL.md`; add references only when the domain genuinely needs detailed material.
+
 ## Shared Surfaces
 Docs checked on 2026-06-24 against official Codex, Claude Code, OpenCode, and Open Agent Skills documentation. Use this table as the compatibility map before adding symlinks.
 

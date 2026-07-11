@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Tasks"
+  short_description: "Manage Obsidian Tasks plugin workflows"
+  default_prompt: "Use $obsidian-tasks to manage Tasks plugin items safely."

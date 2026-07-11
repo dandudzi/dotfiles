@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Mermaid"
+  short_description: "Author Mermaid diagrams in Obsidian"
+  default_prompt: "Use $obsidian-mermaid to create or revise a Mermaid diagram."

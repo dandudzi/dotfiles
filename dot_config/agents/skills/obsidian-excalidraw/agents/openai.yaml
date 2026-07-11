@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Excalidraw"
+  short_description: "Work with Obsidian Excalidraw drawings"
+  default_prompt: "Use $obsidian-excalidraw to work with an Excalidraw drawing in this vault."
