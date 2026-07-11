@@ -337,6 +337,57 @@ elif [[ -n "${ZSH_VERSION:-}" ]]; then
         eval "bindkey -M $m '^g${o[1]}' fzf-git-$o-widget"
       done
     done
+
+    # Keep Ctrl-G discoverable while retaining the fast Ctrl-G + letter bindings.
+    fzf-git-menu-widget() {
+      local choice type result
+
+      if ! command -v gum > /dev/null; then
+        zle -M 'gum is required for the Git picker menu'
+        return 1
+      fi
+
+      # Flush ZLE before handing terminal control to Gum's interactive UI.
+      zle -I
+      choice=$(gum choose --header 'Git picker' --height 9 \
+        'Files [f]' \
+        'Branches [b]' \
+        'Tags [t]' \
+        'Remotes [r]' \
+        'Hashes [h]' \
+        'Stashes [s]' \
+        'Reflogs [l]' \
+        'Refs [e]' \
+        'Worktrees [w]' < /dev/tty) || {
+          zle reset-prompt
+          return
+        }
+
+      case $choice in
+        'Files [f]')     type=files ;;
+        'Branches [b]')  type=branches ;;
+        'Tags [t]')      type=tags ;;
+        'Remotes [r]')   type=remotes ;;
+        'Hashes [h]')    type=hashes ;;
+        'Stashes [s]')   type=stashes ;;
+        'Reflogs [l]')   type=lreflogs ;;
+        'Refs [e]')      type=each_ref ;;
+        'Worktrees [w]') type=worktrees ;;
+        *)
+          zle reset-prompt
+          return
+          ;;
+      esac
+
+      result=$(_fzf_git_$type | __fzf_git_join)
+      zle reset-prompt
+      LBUFFER+=$result
+    }
+    zle -N fzf-git-menu-widget
+
+    for m in emacs vicmd viins; do
+      bindkey -M $m '^g' fzf-git-menu-widget
+    done
   }
 fi
 # first letter works as keybinding 
