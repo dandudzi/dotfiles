@@ -50,6 +50,18 @@ _setup_ci_tools() {
       exit 1
     fi
 
+    echo "🔨 Building SketchyBar helpers"
+    make -C "$sketchybar_dir/helpers" || exit 1
+    for helper in \
+      "$sketchybar_dir/helpers/event_providers/cpu_load/bin/cpu_load" \
+      "$sketchybar_dir/helpers/event_providers/network_load/bin/network_load" \
+      "$sketchybar_dir/helpers/menus/bin/menus"; do
+      if [ ! -x "$helper" ]; then
+        echo "❌ Missing SketchyBar helper: $helper" >&2
+        exit 1
+      fi
+    done
+
     mkdir -p "$HOME/Library/Fonts" || exit 1
     curl -fL https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.28/sketchybar-app-font.ttf \
       -o "$HOME/Library/Fonts/sketchybar-app-font.ttf" || exit 1

@@ -3,3 +3,4 @@ README.md
 .config/raycast
 .config/context7/credentials.json
 **/.DS_Store
+.config/sketchybar/helpers/**/bin/**
