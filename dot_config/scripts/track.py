@@ -11,20 +11,6 @@ import time
 STATE_FILE = os.path.expanduser("~/.fitness-state.json")
 PROMPT_FILE = os.path.expanduser("~/.fitness-prompt.json")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SUPPRESS_FOCUS_MODES = {"Do Not Disturb", "Sleep", "Work", "Sick leave", "Driving", "Holiday", "Gym", "Fitness", "Mindfulness"}
-
-
-def get_active_focus():
-    """Return the active Focus Mode name, or None."""
-    try:
-        result = subprocess.run(
-            ["shortcuts", "run", "Get Focus Mode"],
-            capture_output=True, text=True, timeout=5
-        )
-        name = result.stdout.strip()
-        return name if name and name != "None" else None
-    except subprocess.TimeoutExpired:
-        return None
 
 
 def check_triggers(state, prompt_data, now=None):
@@ -150,14 +136,6 @@ def do_track(state_file=None, prompt_file=None):
         state = json.load(f)
     with open(prompt_file) as f:
         prompt_data = json.load(f)
-
-    focus = get_active_focus()
-    if focus and focus in SUPPRESS_FOCUS_MODES:
-        state["last_reminder_timestamp"] = int(time.time())
-        with open(state_file, "w") as f:
-            json.dump(state, f)
-        print(f"Focus mode active ({focus}), skipping reminder.")
-        return
 
     triggered, reason, remaining = check_triggers(state, prompt_data)
 
