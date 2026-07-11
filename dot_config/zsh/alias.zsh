@@ -121,7 +121,6 @@ alias ......="cd ../../../../.."
 
 # 🤖 Claude
 alias uClaude="brew upgrade claude-code@latest claude"
-alias aClaude="rtk discover --all && npx ccusage session --compact"
 function cc() {
   CLAUDE_CODE_TASK_LIST_ID="$1" claude --model opusplan "${@:2}"
 }
