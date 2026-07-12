@@ -161,9 +161,10 @@ if [[ $1 = --menu ]]; then
     'Reflogs [l]'
     'Refs [e]'
     'Worktrees [w]'
+    'Log views [g]'
   )
-  types=(files branches tags remotes hashes stashes lreflogs each_ref worktrees)
-  keys=(f b t r h s l e w)
+  types=(files branches tags remotes hashes stashes lreflogs each_ref worktrees log_views)
+  keys=(f b t r h s l e w g)
   selected=1
 
   while true; do
@@ -196,6 +197,77 @@ if [[ $1 = --menu ]]; then
         for ((i = 1; i <= ${#keys}; i++)); do
           if [[ $key = ${keys[i]} ]]; then
             print -r -- "${types[i]}" > "$menu_output"
+            exit 0
+          fi
+        done
+        ;;
+    esac
+  done
+fi
+
+if [[ $1 = --log-menu ]]; then
+  menu_output=$2
+  [[ -n $menu_output ]] || exit 2
+
+  # Keep these command names aligned with the history aliases in zsh/alias.zsh.
+  labels=(
+    'glog [o] Compact decorated graph across all refs'
+    'glall [a] Detailed colored graph across all refs'
+    'glpa [p] History with file stats and full patches'
+    'glg [g] Detailed graph with author and relative age'
+    'gsh [s] Signed details for one commit'
+    'gshort [h] Commits grouped by author'
+    'gNewWhoWrote [w] Contributor totals excluding merges'
+    'gNewWhoWroteLast6Months [6] Recent contributor totals'
+    'gNewWhereBugsCluster [b] Files most often touched by bug fixes'
+    'gNewIsProjectDying [d] Monthly commit activity'
+    'gNewFirefightingDetect [f] Reverts and emergency fixes from last year'
+  )
+  log_commands=(
+    glog
+    glall
+    glpa
+    glg
+    gsh
+    gshort
+    gNewWhoWrote
+    gNewWhoWroteLast6Months
+    gNewWhereBugsCluster
+    gNewIsProjectDying
+    gNewFirefightingDetect
+  )
+  keys=(o a p g s h w 6 b d f)
+  selected=1
+
+  while true; do
+    print -n $'\e[H\e[2J'
+    for ((i = 1; i <= ${#labels}; i++)); do
+      if ((i == selected)); then
+        gum style --bold --foreground 212 "> ${labels[i]}"
+      else
+        print -r -- "  ${labels[i]}"
+      fi
+    done
+    print
+    gum style --foreground 240 'j/k navigate • enter run • shortcut run • esc cancel'
+
+    IFS= read -rs -k1 key || exit 1
+    key=${(L)key}
+    case $key in
+      j) ((selected = selected == ${#labels} ? 1 : selected + 1)) ;;
+      k) ((selected = selected == 1 ? ${#labels} : selected - 1)) ;;
+      ''|$'\r'|$'\n')
+        print -r -- "${log_commands[selected]}" > "$menu_output"
+        exit 0
+        ;;
+      $'\e')
+        : > "$menu_output"
+        exit 0
+        ;;
+      *)
+        for ((i = 1; i <= ${#keys}; i++)); do
+          if [[ $key = ${keys[i]} ]]; then
+            print -r -- "${log_commands[i]}" > "$menu_output"
             exit 0
           fi
         done
@@ -397,7 +469,7 @@ elif [[ -n "${ZSH_VERSION:-}" ]]; then
 
     # Use a tmux popup so the menu is a dialog and the selected action runs directly.
     fzf-git-menu-widget() {
-      local menu_output type result
+      local menu_output log_output type command result
 
       if ! command -v gum > /dev/null || ! command -v tmux > /dev/null; then
         zle -M 'gum and tmux are required for the Git picker menu'
@@ -410,12 +482,27 @@ elif [[ -n "${ZSH_VERSION:-}" ]]; then
 
       menu_output=$(mktemp "${TMPDIR:-/tmp}/fzf-git-menu.XXXXXX") || return 1
       zle -I
-      tmux display-popup -E -w 48 -h 15 -T ' Git picker ' \
+      tmux display-popup -E -w 48 -h 16 -T ' Git picker ' \
         zsh "$__fzf_git" --menu "$menu_output"
       type=$(< "$menu_output")
       command rm -f -- "$menu_output"
 
-      if [[ -n $type ]]; then
+      if [[ $type = log_views ]]; then
+        log_output=$(mktemp "${TMPDIR:-/tmp}/fzf-git-log-menu.XXXXXX") || return 1
+        tmux display-popup -E -w 95% -h 18 -T ' Git log views ' \
+          zsh "$__fzf_git" --log-menu "$log_output"
+        command=$(< "$log_output")
+        command rm -f -- "$log_output"
+
+        if [[ -n $command ]]; then
+          # Run the existing Zsh alias in the current shell so paging stays in this CLI.
+          BUFFER=$command
+          CURSOR=${#BUFFER}
+          zle reset-prompt
+          zle accept-line
+          return
+        fi
+      elif [[ -n $type ]]; then
         result=$(_fzf_git_$type | __fzf_git_join)
         LBUFFER+=$result
       fi

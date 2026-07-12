@@ -2,33 +2,15 @@
 
 @RTK.md
 
-## Required Tool Usage
+## Global Rules
 
-- Always run shell commands through `rtk`, for example `rtk git status` or `rtk npm test`.
-- For library, framework, API, package, MCP, tool, or configuration questions, use Context7 and Exa together before answering or editing: Context7 for current official docs/API details, and Exa for current web/source verification or page fetching.
-- For web search, current facts, external docs, release notes, package behavior, or anything likely to change, use Exa search/fetch first. If Context7 or Exa is unavailable, say that explicitly and continue with the best available source.
-
-## MCP Mutation Safety
-
-- Treat Serena, Linear, and Playwright as write-capable MCP servers. Read-only inspection within the user's requested scope may proceed normally.
-- Use a mutating tool from these servers only when the user's current request explicitly authorizes that action and target. Otherwise, describe the exact mutation and obtain approval first.
-- Do not infer authorization for repository edits, Linear changes, form submissions, account actions, or other external-state changes from a request to inspect, research, review, diagnose, or test.
-
-## Long-Task State
-
-- For multi-phase work likely to span compaction, handoff, or another session, maintain a concise state file in the approved workspace. Record the objective, constraints, decisions, progress, verification, and next action.
-- Update the state file at meaningful milestones and immediately before compaction or handoff so work can resume without relying on transcript memory.
-- Reuse an existing project state or plan file when available. Do not create state files for simple tasks, and never persist credentials or other secrets in them.
-
-<!-- context7 -->
-Use Context7 MCP to fetch current documentation whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service -- even well-known ones like React, Next.js, Prisma, Express, Tailwind, Django, or Spring Boot. This includes API syntax, configuration, version migration, library-specific debugging, setup instructions, and CLI tool usage. Use even when you think you know the answer -- your training data may not reflect recent changes. Prefer this over web search for library docs.
-
-Do not use for: refactoring, writing scripts from scratch, debugging business logic, code review, or general programming concepts.
-
-## Steps
-
-1. Always start with `resolve-library-id` using the library name and the user's question, unless the user provides an exact library ID in `/org/project` format
-2. Pick the best match (ID format: `/org/project`) by: exact name match, description relevance, code snippet count, source reputation (High/Medium preferred), and benchmark score (higher is better). If results don't look right, try alternate names or queries (e.g., "next.js" not "nextjs", or rephrase the question). Use version-specific IDs when the user mentions a version
-3. `query-docs` with the selected library ID and the user's full question (not single words)
-4. Answer using the fetched docs
-<!-- context7 -->
+- Run all shell commands through `rtk`.
+- Use local tools first for local files and configuration.
+- For installed CLI behavior, check local `--help`, version, and config before upstream documentation.
+- Use Context7 for version-aware technical documentation and examples.
+- Use Exa for broad web discovery, current facts, release notes, and external pages; verify consequential claims with primary sources.
+- Use Playwright or browser controls for rendered or interactive behavior, not documentation search.
+- Use Serena for semantic code navigation and Linear for issue or project context.
+- If a required tool is unavailable, say so and use the best available source.
+- Keep Serena, Linear, and Playwright read-only unless the user authorizes an exact mutation.
+- For multi-phase work likely to span sessions or handoffs, maintain a concise state file with the objective, constraints, decisions, progress, verification, and next action; never store secrets.
