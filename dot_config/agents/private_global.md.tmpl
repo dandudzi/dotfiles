@@ -5,6 +5,8 @@
 ## Global Rules
 
 - Run all shell commands through `rtk`.
+- Make every rule as specific as possible: scope it to the exact intended operation and avoid broad tool-wide matches.
+- When adding or editing Codex execution-policy rules, include equivalent direct and `rtk`-prefixed forms and test both matches and nearby non-matches.
 - Use local tools first for local files and configuration.
 - For installed CLI behavior, check local `--help`, version, and config before upstream documentation.
 - Use Context7 for version-aware technical documentation and examples.
