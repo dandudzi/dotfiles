@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Charts"
+  short_description: "Create and maintain Obsidian Charts blocks"
+  default_prompt: "Use $obsidian-charts to create or revise an Obsidian Charts visualization in this vault."
