@@ -1,0 +1,4 @@
+interface:
+  display_name: "Persist Config with Chezmoi"
+  short_description: "Persist config changes safely with chezmoi"
+  default_prompt: "Use $persist-config-with-chezmoi to persist this configuration change safely through chezmoi."
