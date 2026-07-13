@@ -234,6 +234,24 @@ prefix_rule(
     not_match = ["rtk pwd"],
 )
 
+# Headless Neovim loads the full editor configuration and plugins unless the
+# approved invocation explicitly limits them, so review each run before launch.
+prefix_rule(
+    pattern = ["nvim", "--headless"],
+    decision = "prompt",
+    justification = "Headless Neovim can load plugins or leave runaway background processes; approve the exact invocation.",
+    match = ["nvim --headless", "nvim --headless -u NONE +qa"],
+    not_match = ["nvim file.lua", "nvim --clean", "nvim file.lua --headless"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "nvim", "--headless"],
+    decision = "prompt",
+    justification = "Headless Neovim through RTK can load plugins or leave runaway background processes; approve the exact invocation.",
+    match = ["rtk nvim --headless", "rtk nvim --headless -u NONE +qa"],
+    not_match = ["rtk nvim file.lua", "rtk nvim --clean", "rtk nvim file.lua --headless"],
+)
+
 prefix_rule(
     pattern = [["cmake", "ninja", "meson"]],
     decision = "prompt",
