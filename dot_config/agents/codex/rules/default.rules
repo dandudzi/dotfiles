@@ -164,11 +164,10 @@ prefix_rule(
 # PROMPT — potentially modifying, networked, executable, sensitive, or external
 # operations. Approval should be granted for the exact invocation only.
 #
-# Ordinary workspace-scoped inspection, builds, and tests intentionally have no
-# blanket prompt rule. They remain governed by Codex's sandbox and only require
-# escalation when they need capabilities outside it. Broad allows are avoided
-# because tools such as find, sed, awk, rg, and build runners have executable or
-# mutating modes.
+# Commands outside the explicit classes below remain governed by Codex's
+# sandbox and only require escalation when they cross its boundaries. Broad
+# allows are avoided because tools such as find, sed, awk, and rg have
+# executable or mutating modes.
 # -----------------------------------------------------------------------------
 
 prefix_rule(
@@ -249,6 +248,57 @@ prefix_rule(
     justification = "Build-system frontends through RTK can execute project or third-party code.",
     match = ["rtk cmake --build build", "rtk ninja test", "rtk meson compile -C build"],
     not_match = ["rtk git status"],
+)
+
+# Keep package managers, toolchain managers, compilers, and build runners
+# explicit even when a particular invocation would fit inside the sandbox.
+# Existing forbidden publish/deploy rules remain stricter than these prompts.
+prefix_rule(
+    pattern = [["brew", "mise", "rustup", "corepack", "pipx"]],
+    decision = "prompt",
+    justification = "Package and toolchain managers can install executable code or change machine-level state.",
+    match = ["brew install ripgrep", "mise install node@lts", "rustup update", "corepack enable", "pipx install tool"],
+    not_match = ["git status", "python3 script.py"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["brew", "mise", "rustup", "corepack", "pipx"]],
+    decision = "prompt",
+    justification = "Package and toolchain managers through RTK can install executable code or change machine-level state.",
+    match = ["rtk brew install ripgrep", "rtk mise install node@lts", "rtk rustup update", "rtk corepack enable", "rtk pipx install tool"],
+    not_match = ["rtk git status", "rtk python3 script.py"],
+)
+
+prefix_rule(
+    pattern = [["javac", "jar", "javadoc", "jdeps", "jlink", "javap", "mvn", "mvnw", "./mvnw", "gradle", "gradlew", "./gradlew", "rustc", "cargo"]],
+    decision = "prompt",
+    justification = "Java and Rust compilers, build runners, and dependency managers can execute project code or mutate dependency state.",
+    match = ["javac Main.java", "jar --create --file app.jar Main.class", "mvn test", "./mvnw package", "gradle test", "./gradlew build", "rustc main.rs", "cargo test"],
+    not_match = ["java Main", "node app.js"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["javac", "jar", "javadoc", "jdeps", "jlink", "javap", "mvn", "mvnw", "./mvnw", "gradle", "gradlew", "./gradlew", "rustc", "cargo"]],
+    decision = "prompt",
+    justification = "Java and Rust compilers, build runners, and dependency managers through RTK can execute project code or mutate dependency state.",
+    match = ["rtk javac Main.java", "rtk jar --create --file app.jar Main.class", "rtk mvn test", "rtk ./mvnw package", "rtk gradle test", "rtk ./gradlew build", "rtk rustc main.rs", "rtk cargo test"],
+    not_match = ["rtk java Main", "rtk node app.js"],
+)
+
+prefix_rule(
+    pattern = [["npm", "npx", "pnpm", "pnpx", "yarn", "bun", "pip", "pip3", "uv", "poetry", "twine", "pytest"]],
+    decision = "prompt",
+    justification = "JavaScript and Python package, task, build, and test runners can download dependencies or execute project and third-party code.",
+    match = ["npm test", "npx eslint .", "pnpm install", "yarn test", "bun test", "pip install pyyaml", "uv run pytest", "poetry install", "twine check dist/*", "pytest -q"],
+    not_match = ["node app.js", "python3 script.py"],
+)
+
+prefix_rule(
+    pattern = ["rtk", ["npm", "npx", "pnpm", "pnpx", "yarn", "bun", "pip", "pip3", "uv", "poetry", "twine", "pytest"]],
+    decision = "prompt",
+    justification = "JavaScript and Python package, task, build, and test runners through RTK can download dependencies or execute project and third-party code.",
+    match = ["rtk npm test", "rtk npx eslint .", "rtk pnpm install", "rtk yarn test", "rtk bun test", "rtk pip install pyyaml", "rtk uv run pytest", "rtk poetry install", "rtk twine check dist/*", "rtk pytest -q"],
+    not_match = ["rtk node app.js", "rtk python3 script.py"],
 )
 
 prefix_rule(

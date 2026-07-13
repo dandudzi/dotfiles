@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Dataview"
+  short_description: "Query and render vault data with Dataview"
+  default_prompt: "Use $obsidian-dataview to create or revise a safe Dataview query in this vault."
