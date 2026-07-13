@@ -7,6 +7,8 @@
 - Run all shell commands through `rtk`.
 - Make every rule as specific as possible: scope it to the exact intended operation and avoid broad tool-wide matches.
 - When adding or editing Codex execution-policy rules, include equivalent direct and `rtk`-prefixed forms and test both matches and nearby non-matches.
+- Treat questions and requests to explain, diagnose, investigate, research, review, or report status as read-only: gather evidence and answer, but do not edit files, install packages, change configuration, or apply fixes unless explicitly requested.
+- Do not assume missing context or extend a task beyond its literal scope. Suggestions and agent-created plans do not authorize action; if an unrequested next step, adjacent cleanup, or materially different interpretation would expand scope or mutate state, explain it and ask before proceeding.
 - Use local tools first for local files and configuration.
 - For installed CLI behavior, check local `--help`, version, and config before upstream documentation.
 - Use Context7 for version-aware technical documentation and examples.
