@@ -251,39 +251,39 @@ prefix_rule(
 )
 
 # Package and toolchain installation operations are explicit even when they
-# would otherwise fit inside the sandbox. Routine list, info, build, and test
-# operations are intentionally excluded. Existing forbidden publish/deploy
-# rules remain stricter than these prompts.
+# would otherwise fit inside the sandbox. Upgrade/update and routine list,
+# info, build, and test operations are intentionally excluded. Existing
+# forbidden publish/deploy rules remain stricter than these prompts.
 prefix_rule(
-    pattern = ["brew", ["install", "reinstall", "upgrade", "bundle"]],
+    pattern = ["brew", ["install", "reinstall", "bundle"]],
     decision = "prompt",
-    justification = "Homebrew installation and upgrade operations can download executable code and change machine-level state.",
-    match = ["brew install ripgrep", "brew reinstall python", "brew upgrade", "brew bundle"],
-    not_match = ["brew list", "brew info ripgrep", "brew --version"],
+    justification = "Homebrew installation operations can download executable code and change machine-level state.",
+    match = ["brew install ripgrep", "brew reinstall python", "brew bundle"],
+    not_match = ["brew upgrade", "brew list", "brew info ripgrep"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "brew", ["install", "reinstall", "upgrade", "bundle"]],
+    pattern = ["rtk", "brew", ["install", "reinstall", "bundle"]],
     decision = "prompt",
-    justification = "Homebrew installation and upgrade operations through RTK can download executable code and change machine-level state.",
-    match = ["rtk brew install ripgrep", "rtk brew reinstall python", "rtk brew upgrade", "rtk brew bundle"],
-    not_match = ["rtk brew list", "rtk brew info ripgrep", "rtk brew --version"],
+    justification = "Homebrew installation operations through RTK can download executable code and change machine-level state.",
+    match = ["rtk brew install ripgrep", "rtk brew reinstall python", "rtk brew bundle"],
+    not_match = ["rtk brew upgrade", "rtk brew list", "rtk brew info ripgrep"],
 )
 
 prefix_rule(
-    pattern = ["mise", ["install", "use", "upgrade"]],
+    pattern = ["mise", "install"],
     decision = "prompt",
-    justification = "Mise installation and upgrade operations can download executable toolchains and change configuration.",
-    match = ["mise install node@lts", "mise use --global python@3.14", "mise upgrade"],
-    not_match = ["mise ls", "mise current", "mise --version"],
+    justification = "Mise installation can download executable toolchains.",
+    match = ["mise install node@lts"],
+    not_match = ["mise use --global python@3.14", "mise upgrade", "mise ls"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "mise", ["install", "use", "upgrade"]],
+    pattern = ["rtk", "mise", "install"],
     decision = "prompt",
-    justification = "Mise installation and upgrade operations through RTK can download executable toolchains and change configuration.",
-    match = ["rtk mise install node@lts", "rtk mise use --global python@3.14", "rtk mise upgrade"],
-    not_match = ["rtk mise ls", "rtk mise current", "rtk mise --version"],
+    justification = "Mise installation through RTK can download executable toolchains.",
+    match = ["rtk mise install node@lts"],
+    not_match = ["rtk mise use --global python@3.14", "rtk mise upgrade", "rtk mise ls"],
 )
 
 prefix_rule(
@@ -303,83 +303,83 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = [["gradle", "gradlew", "./gradlew"], ["install", "installDist", "publishToMavenLocal"]],
+    pattern = [["gradle", "gradlew", "./gradlew"], ["install", "installDist"]],
     decision = "prompt",
     justification = "Gradle installation tasks can install distributions or artifacts outside the project build directory.",
-    match = ["gradle install", "gradlew installDist", "./gradlew publishToMavenLocal"],
-    not_match = ["gradle test", "./gradlew build"],
+    match = ["gradle install", "gradlew installDist"],
+    not_match = ["gradle test", "./gradlew build", "./gradlew publishToMavenLocal"],
 )
 
 prefix_rule(
-    pattern = ["rtk", ["gradle", "gradlew", "./gradlew"], ["install", "installDist", "publishToMavenLocal"]],
+    pattern = ["rtk", ["gradle", "gradlew", "./gradlew"], ["install", "installDist"]],
     decision = "prompt",
     justification = "Gradle installation tasks through RTK can install distributions or artifacts outside the project build directory.",
-    match = ["rtk gradle install", "rtk gradlew installDist", "rtk ./gradlew publishToMavenLocal"],
-    not_match = ["rtk gradle test", "rtk ./gradlew build"],
+    match = ["rtk gradle install", "rtk gradlew installDist"],
+    not_match = ["rtk gradle test", "rtk ./gradlew build", "rtk ./gradlew publishToMavenLocal"],
 )
 
 prefix_rule(
-    pattern = ["cargo", ["install", "add", "update"]],
+    pattern = ["cargo", "install"],
     decision = "prompt",
-    justification = "Cargo package installation and dependency-change operations can download executable code or modify project dependency state.",
-    match = ["cargo install cargo-nextest", "cargo add serde", "cargo update"],
-    not_match = ["cargo test", "cargo build"],
+    justification = "Cargo package installation can download and install executable code.",
+    match = ["cargo install cargo-nextest"],
+    not_match = ["cargo add serde", "cargo update", "cargo test"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "cargo", ["install", "add", "update"]],
+    pattern = ["rtk", "cargo", "install"],
     decision = "prompt",
-    justification = "Cargo package installation and dependency-change operations through RTK can download executable code or modify project dependency state.",
-    match = ["rtk cargo install cargo-nextest", "rtk cargo add serde", "rtk cargo update"],
-    not_match = ["rtk cargo test", "rtk cargo build"],
+    justification = "Cargo package installation through RTK can download and install executable code.",
+    match = ["rtk cargo install cargo-nextest"],
+    not_match = ["rtk cargo add serde", "rtk cargo update", "rtk cargo test"],
 )
 
 prefix_rule(
-    pattern = ["rustup", ["install", "update"]],
+    pattern = ["rustup", "install"],
     decision = "prompt",
-    justification = "Rustup installation and update operations change installed Rust toolchains.",
-    match = ["rustup install stable", "rustup update"],
-    not_match = ["rustup show", "rustup --version"],
+    justification = "Rustup installation changes installed Rust toolchains.",
+    match = ["rustup install stable"],
+    not_match = ["rustup update", "rustup show", "rustup --version"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "rustup", ["install", "update"]],
+    pattern = ["rtk", "rustup", "install"],
     decision = "prompt",
-    justification = "Rustup installation and update operations through RTK change installed Rust toolchains.",
-    match = ["rtk rustup install stable", "rtk rustup update"],
-    not_match = ["rtk rustup show", "rtk rustup --version"],
+    justification = "Rustup installation through RTK changes installed Rust toolchains.",
+    match = ["rtk rustup install stable"],
+    not_match = ["rtk rustup update", "rtk rustup show", "rtk rustup --version"],
 )
 
 prefix_rule(
-    pattern = [["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci", "update", "up", "upgrade"]],
+    pattern = [["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci"]],
     decision = "prompt",
-    justification = "JavaScript package installation and dependency-change operations can download and execute third-party code.",
-    match = ["npm install", "npm ci", "pnpm add react", "yarn install", "bun update"],
-    not_match = ["npm test", "pnpm run lint", "yarn --version", "bun test"],
+    justification = "JavaScript package installation operations can download and execute third-party code.",
+    match = ["npm install", "npm ci", "pnpm add react", "yarn install"],
+    not_match = ["npm update", "pnpm up", "yarn upgrade", "bun test"],
 )
 
 prefix_rule(
-    pattern = ["rtk", ["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci", "update", "up", "upgrade"]],
+    pattern = ["rtk", ["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci"]],
     decision = "prompt",
-    justification = "JavaScript package installation and dependency-change operations through RTK can download and execute third-party code.",
-    match = ["rtk npm install", "rtk npm ci", "rtk pnpm add react", "rtk yarn install", "rtk bun update"],
-    not_match = ["rtk npm test", "rtk pnpm run lint", "rtk yarn --version", "rtk bun test"],
+    justification = "JavaScript package installation operations through RTK can download and execute third-party code.",
+    match = ["rtk npm install", "rtk npm ci", "rtk pnpm add react", "rtk yarn install"],
+    not_match = ["rtk npm update", "rtk pnpm up", "rtk yarn upgrade", "rtk bun test"],
 )
 
 prefix_rule(
-    pattern = ["corepack", ["enable", "install", "use", "up"]],
+    pattern = ["corepack", "install"],
     decision = "prompt",
-    justification = "Corepack package-manager installation operations can change executable shims and downloaded tool versions.",
-    match = ["corepack enable", "corepack install --global pnpm", "corepack use yarn@stable"],
-    not_match = ["corepack --version", "corepack cache clean"],
+    justification = "Corepack package-manager installation can download executable tool versions.",
+    match = ["corepack install --global pnpm"],
+    not_match = ["corepack enable", "corepack use yarn@stable", "corepack up"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "corepack", ["enable", "install", "use", "up"]],
+    pattern = ["rtk", "corepack", "install"],
     decision = "prompt",
-    justification = "Corepack package-manager installation operations through RTK can change executable shims and downloaded tool versions.",
-    match = ["rtk corepack enable", "rtk corepack install --global pnpm", "rtk corepack use yarn@stable"],
-    not_match = ["rtk corepack --version", "rtk corepack cache clean"],
+    justification = "Corepack package-manager installation through RTK can download executable tool versions.",
+    match = ["rtk corepack install --global pnpm"],
+    not_match = ["rtk corepack enable", "rtk corepack use yarn@stable", "rtk corepack up"],
 )
 
 prefix_rule(
@@ -463,35 +463,35 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["poetry", ["install", "add", "update"]],
+    pattern = ["poetry", ["install", "add"]],
     decision = "prompt",
-    justification = "Poetry package installation and dependency-change operations can download and install third-party code.",
-    match = ["poetry install", "poetry add pyyaml", "poetry update"],
-    not_match = ["poetry show", "poetry build"],
+    justification = "Poetry package installation operations can download and install third-party code.",
+    match = ["poetry install", "poetry add pyyaml"],
+    not_match = ["poetry update", "poetry show", "poetry build"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "poetry", ["install", "add", "update"]],
+    pattern = ["rtk", "poetry", ["install", "add"]],
     decision = "prompt",
-    justification = "Poetry package installation and dependency-change operations through RTK can download and install third-party code.",
-    match = ["rtk poetry install", "rtk poetry add pyyaml", "rtk poetry update"],
-    not_match = ["rtk poetry show", "rtk poetry build"],
+    justification = "Poetry package installation operations through RTK can download and install third-party code.",
+    match = ["rtk poetry install", "rtk poetry add pyyaml"],
+    not_match = ["rtk poetry update", "rtk poetry show", "rtk poetry build"],
 )
 
 prefix_rule(
-    pattern = ["pipx", ["install", "inject", "upgrade", "upgrade-all"]],
+    pattern = ["pipx", ["install", "inject"]],
     decision = "prompt",
-    justification = "Pipx installation and upgrade operations install executable Python tools outside the project.",
-    match = ["pipx install ruff", "pipx inject tool dependency", "pipx upgrade-all"],
-    not_match = ["pipx list", "pipx --version"],
+    justification = "Pipx installation operations install executable Python tools outside the project.",
+    match = ["pipx install ruff", "pipx inject tool dependency"],
+    not_match = ["pipx upgrade-all", "pipx list", "pipx --version"],
 )
 
 prefix_rule(
-    pattern = ["rtk", "pipx", ["install", "inject", "upgrade", "upgrade-all"]],
+    pattern = ["rtk", "pipx", ["install", "inject"]],
     decision = "prompt",
-    justification = "Pipx installation and upgrade operations through RTK install executable Python tools outside the project.",
-    match = ["rtk pipx install ruff", "rtk pipx inject tool dependency", "rtk pipx upgrade-all"],
-    not_match = ["rtk pipx list", "rtk pipx --version"],
+    justification = "Pipx installation operations through RTK install executable Python tools outside the project.",
+    match = ["rtk pipx install ruff", "rtk pipx inject tool dependency"],
+    not_match = ["rtk pipx upgrade-all", "rtk pipx list", "rtk pipx --version"],
 )
 
 prefix_rule(
