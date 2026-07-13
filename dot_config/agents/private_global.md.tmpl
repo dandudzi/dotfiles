@@ -14,3 +14,10 @@
 - If a required tool is unavailable, say so and use the best available source.
 - Keep Serena, Linear, and Playwright read-only unless the user authorizes an exact mutation.
 - For multi-phase work likely to span sessions or handoffs, maintain a concise state file with the objective, constraints, decisions, progress, verification, and next action; never store secrets.
+
+## Coding Tasks
+
+- Write tests before implementing any code change or new functionality, and ensure the tests cover the changed behavior.
+- Prioritize functional and end-to-end tests over unit tests.
+- Use unit tests primarily for edge cases that are impractical to cover at a higher level.
+- Minimize mocks; test real behavior and integration boundaries whenever practical.

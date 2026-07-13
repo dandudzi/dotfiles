@@ -6,6 +6,7 @@ mise.local.toml
 node_modules
 .tmux/plugins
 .vscode/*
+.serena/
 docs/*
 
 # cache directories
