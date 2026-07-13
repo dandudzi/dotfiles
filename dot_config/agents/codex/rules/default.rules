@@ -348,6 +348,23 @@ prefix_rule(
     not_match = ["rtk du -sh ."],
 )
 
+# Obsidian plugin installation changes vault configuration and can download code.
+prefix_rule(
+    pattern = ["obsidian", "plugin:install"],
+    decision = "prompt",
+    justification = "Installing an Obsidian plugin mutates vault state and may download executable code.",
+    match = ["obsidian plugin:install example-plugin"],
+    not_match = ["obsidian plugin:list", "obsidian plugin:enable example-plugin"],
+)
+
+prefix_rule(
+    pattern = ["rtk", "obsidian", "plugin:install"],
+    decision = "prompt",
+    justification = "Installing an Obsidian plugin through RTK mutates vault state and may download executable code.",
+    match = ["rtk obsidian plugin:install example-plugin"],
+    not_match = ["rtk obsidian plugin:list", "rtk obsidian plugin:enable example-plugin"],
+)
+
 # -----------------------------------------------------------------------------
 # FORBIDDEN — agents must not execute these. A human may run them manually.
 # -----------------------------------------------------------------------------
