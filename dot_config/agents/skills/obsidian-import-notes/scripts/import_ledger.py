@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 TERMINAL_STATES = {"integrated", "skipped", "discarded"}
 GENERATED_KEYS = {"import_run", "imported_at", "destination"}
 
@@ -101,12 +101,88 @@ CREATE TABLE IF NOT EXISTS integration_outputs (
     output_role TEXT NOT NULL CHECK (output_role IN ('primary', 'additional')),
     transformation TEXT,
     integrated_at TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     UNIQUE (run_id, version_id, destination),
     FOREIGN KEY (run_id, version_id) REFERENCES run_items(run_id, version_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_integration_outputs_item
     ON integration_outputs(run_id, version_id);
+
+CREATE INDEX IF NOT EXISTS idx_integration_outputs_active_item
+    ON integration_outputs(run_id, version_id, active);
+
+CREATE TABLE IF NOT EXISTS decision_history (
+    history_id INTEGER PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    version_id INTEGER NOT NULL,
+    previous_state TEXT NOT NULL,
+    previous_decision TEXT,
+    previous_destination TEXT,
+    previous_destination_hash TEXT CHECK
+        (previous_destination_hash IS NULL OR length(previous_destination_hash) = 64),
+    new_state TEXT NOT NULL,
+    new_decision TEXT NOT NULL,
+    reason TEXT NOT NULL CHECK (length(trim(reason)) > 0),
+    recorded_at TEXT NOT NULL,
+    FOREIGN KEY (run_id, version_id) REFERENCES run_items(run_id, version_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_decision_history_item
+    ON decision_history(run_id, version_id, history_id);
+
+CREATE TRIGGER IF NOT EXISTS decision_history_no_update
+BEFORE UPDATE ON decision_history
+BEGIN
+    SELECT RAISE(ABORT, 'decision history is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS decision_history_no_delete
+BEFORE DELETE ON decision_history
+BEGIN
+    SELECT RAISE(ABORT, 'decision history is append-only');
+END;
+
+CREATE TABLE IF NOT EXISTS run_artifacts (
+    artifact_id INTEGER PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES runs(run_id),
+    artifact_path TEXT NOT NULL,
+    artifact_hash TEXT NOT NULL CHECK (length(artifact_hash) = 64),
+    artifact_role TEXT NOT NULL,
+    reason TEXT NOT NULL CHECK (length(trim(reason)) > 0),
+    active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+    previous_artifact_id INTEGER REFERENCES run_artifacts(artifact_id),
+    recorded_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_run_artifacts_active_path
+    ON run_artifacts(run_id, artifact_path, active, artifact_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_run_artifacts_one_active
+    ON run_artifacts(run_id, artifact_path) WHERE active = 1;
+
+CREATE TRIGGER IF NOT EXISTS run_artifacts_deactivate_only
+BEFORE UPDATE ON run_artifacts
+WHEN NOT (
+    OLD.active = 1 AND NEW.active = 0
+    AND NEW.artifact_id IS OLD.artifact_id
+    AND NEW.run_id IS OLD.run_id
+    AND NEW.artifact_path IS OLD.artifact_path
+    AND NEW.artifact_hash IS OLD.artifact_hash
+    AND NEW.artifact_role IS OLD.artifact_role
+    AND NEW.reason IS OLD.reason
+    AND NEW.previous_artifact_id IS OLD.previous_artifact_id
+    AND NEW.recorded_at IS OLD.recorded_at
+)
+BEGIN
+    SELECT RAISE(ABORT, 'artifact revisions are append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS run_artifacts_no_delete
+BEFORE DELETE ON run_artifacts
+BEGIN
+    SELECT RAISE(ABORT, 'artifact revisions are append-only');
+END;
 """
 
 
@@ -221,6 +297,34 @@ def table_columns(connection: sqlite3.Connection, table: str) -> set[str]:
     return {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
 
 
+def table_exists(connection: sqlite3.Connection, table: str) -> bool:
+    return (
+        connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+        ).fetchone()
+        is not None
+    )
+
+
+def ensure_v3_output_table(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS integration_outputs (
+            output_id INTEGER PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            version_id INTEGER NOT NULL,
+            destination TEXT NOT NULL,
+            destination_hash TEXT NOT NULL CHECK (length(destination_hash) = 64),
+            output_role TEXT NOT NULL CHECK (output_role IN ('primary', 'additional')),
+            transformation TEXT,
+            integrated_at TEXT NOT NULL,
+            UNIQUE (run_id, version_id, destination),
+            FOREIGN KEY (run_id, version_id) REFERENCES run_items(run_id, version_id)
+        )
+        """
+    )
+
+
 def migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
     columns = table_columns(connection, "run_items")
     additions = {
@@ -271,6 +375,28 @@ def migrate_v2_to_v3(connection: sqlite3.Connection) -> None:
         )
         """
     )
+
+
+def migrate_v3_to_v4(connection: sqlite3.Connection) -> None:
+    columns = table_columns(connection, "integration_outputs")
+    if "active" not in columns:
+        connection.execute(
+            "ALTER TABLE integration_outputs ADD COLUMN active INTEGER NOT NULL "
+            "DEFAULT 1 CHECK (active IN (0, 1))"
+        )
+
+
+def execute_schema(connection: sqlite3.Connection) -> None:
+    """Execute the schema statement-by-statement inside the caller's transaction."""
+    statement = ""
+    for line in SCHEMA.splitlines(keepends=True):
+        statement += line
+        if sqlite3.complete_statement(statement):
+            if statement.strip():
+                connection.execute(statement)
+            statement = ""
+    if statement.strip():
+        raise LedgerError("ledger schema contains an incomplete SQL statement")
 
 
 def ensure_schema(connection: sqlite3.Connection) -> None:
@@ -411,31 +537,49 @@ def init_command(args: argparse.Namespace) -> dict[str, Any]:
     db_path = Path(args.db).expanduser().resolve()
     connection = connect(db_path, create=True)
     try:
-        connection.executescript(SCHEMA)
         with transaction(connection):
-            existing = connection.execute(
-                "SELECT value FROM schema_meta WHERE key='schema_version'"
-            ).fetchone()
-            if existing is None:
+            if not table_exists(connection, "schema_meta"):
+                execute_schema(connection)
                 connection.execute(
                     "INSERT INTO schema_meta(key, value) VALUES('schema_version', ?)",
                     (str(SCHEMA_VERSION),),
                 )
-            elif int(existing["value"]) == 1:
-                migrate_v1_to_v2(connection)
-                migrate_v2_to_v3(connection)
-                connection.execute(
-                    "UPDATE schema_meta SET value=? WHERE key='schema_version'",
-                    (str(SCHEMA_VERSION),),
-                )
-            elif int(existing["value"]) == 2:
-                migrate_v2_to_v3(connection)
-                connection.execute(
-                    "UPDATE schema_meta SET value=? WHERE key='schema_version'",
-                    (str(SCHEMA_VERSION),),
-                )
-            elif int(existing["value"]) != SCHEMA_VERSION:
-                raise LedgerError("existing ledger has an unsupported schema version")
+            else:
+                existing = connection.execute(
+                    "SELECT value FROM schema_meta WHERE key='schema_version'"
+                ).fetchone()
+                if existing is None:
+                    raise LedgerError("existing ledger has no schema version")
+                version = int(existing["value"])
+                if version not in {1, 2, 3, SCHEMA_VERSION}:
+                    raise LedgerError("existing ledger has an unsupported schema version")
+                foreign_keys = list(connection.execute("PRAGMA foreign_key_check"))
+                if foreign_keys:
+                    raise LedgerError(
+                        "foreign key violations prevent schema migration: "
+                        + json.dumps([tuple(row) for row in foreign_keys])
+                    )
+                if version <= 2:
+                    ensure_v3_output_table(connection)
+                if version == 1:
+                    migrate_v1_to_v2(connection)
+                    migrate_v2_to_v3(connection)
+                elif version == 2:
+                    migrate_v2_to_v3(connection)
+                if version <= 3:
+                    migrate_v3_to_v4(connection)
+                execute_schema(connection)
+                foreign_keys = list(connection.execute("PRAGMA foreign_key_check"))
+                if foreign_keys:
+                    raise LedgerError(
+                        "foreign key violations prevent schema migration: "
+                        + json.dumps([tuple(row) for row in foreign_keys])
+                    )
+                if version != SCHEMA_VERSION:
+                    connection.execute(
+                        "UPDATE schema_meta SET value=? WHERE key='schema_version'",
+                        (str(SCHEMA_VERSION),),
+                    )
         return {"ok": True, "db": str(db_path), "schema_version": SCHEMA_VERSION}
     finally:
         connection.close()
@@ -505,16 +649,55 @@ def resolve_vault_path(vault_root: Path, value: str) -> Path:
     return candidate
 
 
+def require_quarantine_path(value: str, run_id: str) -> None:
+    expected = ("_Imports", "Quarantine", run_id)
+    parts = Path(value).parts
+    if len(parts) <= len(expected) or parts[: len(expected)] != expected:
+        raise LedgerError(
+            "quarantine path must be under "
+            f"_Imports/Quarantine/{run_id}/"
+        )
+
+
+def verified_quarantine(
+    vault_root: Path,
+    item: sqlite3.Row,
+    *,
+    allow_absent: bool = False,
+) -> Path | None:
+    value = item["quarantine_path"]
+    if not value:
+        if allow_absent:
+            return None
+        raise LedgerError(
+            "item has no quarantine path; return it to the importer for reconciliation"
+        )
+    path = resolve_vault_path(vault_root, value)
+    if not path.is_file():
+        if allow_absent and not path.exists():
+            return None
+        raise LedgerError(
+            "quarantine file is missing; return the item to the importer for reconciliation"
+        )
+    if raw_hash(path) != item["raw_hash"]:
+        raise LedgerError(
+            "quarantine content hash changed; return the item to the importer for reconciliation"
+        )
+    return path
+
+
 def latest_resolution(
     connection: sqlite3.Connection, version_id: int
 ) -> sqlite3.Row | None:
     return connection.execute(
         """
-        SELECT run_id, version_id, state, decision, destination, destination_hash
+        SELECT run_id, version_id, state, decision, destination, destination_hash,
+               loss_details, loss_acknowledged
         FROM run_items
         WHERE version_id = ?
           AND state IN ('integrated', 'skipped', 'discarded')
           AND decision IS NOT NULL
+          AND NOT (state='skipped' AND decision='retain')
         ORDER BY rowid DESC
         LIMIT 1
         """,
@@ -529,7 +712,7 @@ def resolution_outputs(
         """
         SELECT destination, destination_hash
         FROM integration_outputs
-        WHERE run_id=? AND version_id=?
+        WHERE run_id=? AND version_id=? AND active=1
         ORDER BY CASE output_role WHEN 'primary' THEN 0 ELSE 1 END, output_id
         """,
         (resolution["run_id"], resolution["version_id"]),
@@ -587,11 +770,23 @@ def record_import_command(args: argparse.Namespace) -> dict[str, Any]:
                 version_id = int(result["matched_version_id"])
                 state = "skipped"
                 quarantine_path = None
+                if prior_resolution is None:
+                    raise LedgerError("unchanged item has no prior resolution")
+                decision = (
+                    "retain"
+                    if prior_resolution["state"] == "integrated"
+                    else prior_resolution["decision"]
+                )
+                destination = prior_resolution["destination"]
+                destination_hash = prior_resolution["destination_hash"]
+                loss_details = prior_resolution["loss_details"]
+                loss_acknowledged = int(prior_resolution["loss_acknowledged"])
             else:
                 if not args.quarantine_path:
                     raise LedgerError(
                         f"classification {classification} requires --quarantine-path"
                     )
+                require_quarantine_path(args.quarantine_path, args.run_id)
                 quarantine = resolve_vault_path(vault_root, args.quarantine_path)
                 if not quarantine.is_file():
                     raise LedgerError(f"quarantine file does not exist: {quarantine}")
@@ -626,6 +821,11 @@ def record_import_command(args: argparse.Namespace) -> dict[str, Any]:
                     version_id = int(cursor.lastrowid)
                 state = "quarantined"
                 quarantine_path = args.quarantine_path
+                decision = None
+                destination = None
+                destination_hash = None
+                loss_details = args.loss_details
+                loss_acknowledged = 0
             prior = connection.execute(
                 "SELECT state FROM run_items WHERE run_id = ? AND version_id = ?",
                 (args.run_id, version_id),
@@ -635,8 +835,9 @@ def record_import_command(args: argparse.Namespace) -> dict[str, Any]:
                     """
                     INSERT INTO run_items(
                         run_id, version_id, classification, state,
-                        quarantine_path, loss_details
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        quarantine_path, loss_details, loss_acknowledged,
+                        decision, destination, destination_hash
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         args.run_id,
@@ -644,13 +845,18 @@ def record_import_command(args: argparse.Namespace) -> dict[str, Any]:
                         classification,
                         state,
                         quarantine_path,
-                        args.loss_details,
+                        loss_details,
+                        loss_acknowledged,
+                        decision,
+                        destination,
+                        destination_hash,
                     ),
                 )
             connection.execute(
                 "UPDATE runs SET status='imported', imported_at=? WHERE run_id=?",
                 (now(), args.run_id),
             )
+            refresh_resolution_status(connection, args.run_id)
         row = connection.execute(
             """
             SELECT ri.*, fv.fingerprint, fv.raw_hash, fv.normalized_hash,
@@ -737,15 +943,7 @@ def review_command(args: argparse.Namespace) -> dict[str, Any]:
             item = run_item(connection, args.run_id, args.relative_path)
             if item["state"] != "quarantined":
                 raise LedgerError(f"cannot review item in state {item['state']}")
-            quarantine = resolve_vault_path(vault_root, item["quarantine_path"])
-            if not quarantine.is_file():
-                raise LedgerError(
-                    "quarantine file is missing; return the item to the importer for reconciliation"
-                )
-            if raw_hash(quarantine) != item["raw_hash"]:
-                raise LedgerError(
-                    "quarantine content hash changed; return the item to the importer for reconciliation"
-                )
+            verified_quarantine(vault_root, item)
             state = "failed" if args.classification == "failed" else "reviewed"
             connection.execute(
                 """
@@ -798,8 +996,9 @@ def integrate_command(args: argparse.Namespace) -> dict[str, Any]:
         ensure_schema(connection)
         with transaction(connection):
             item = run_item(connection, args.run_id, args.relative_path)
-            if item["state"] not in {"reviewed", "skipped"}:
+            if item["state"] != "reviewed":
                 raise LedgerError(f"cannot decide item in state {item['state']}")
+            verified_quarantine(vault_root, item)
             loss_acknowledged = bool(item["loss_acknowledged"] or args.acknowledge_loss)
             if item["loss_details"] and not loss_acknowledged:
                 raise LedgerError(
@@ -897,6 +1096,199 @@ def integrate_command(args: argparse.Namespace) -> dict[str, Any]:
         connection.close()
 
 
+def supersede_decision_command(args: argparse.Namespace) -> dict[str, Any]:
+    connection = connect(Path(args.db).expanduser().resolve())
+    vault_root = Path(args.vault_root).expanduser().resolve()
+    reason = args.reason.strip()
+    if not reason:
+        raise LedgerError("--reason must not be empty")
+    try:
+        ensure_schema(connection)
+        with transaction(connection):
+            item = run_item(connection, args.run_id, args.relative_path)
+            if item["state"] != args.expected_state:
+                raise LedgerError(
+                    f"expected state {args.expected_state}, found {item['state']}"
+                )
+            outputs = connection.execute(
+                """
+                SELECT output_id, destination, destination_hash
+                FROM integration_outputs
+                WHERE run_id=? AND version_id=? AND active=1
+                ORDER BY output_id
+                """,
+                (args.run_id, item["version_id"]),
+            ).fetchall()
+            if item["state"] not in TERMINAL_STATES:
+                raise LedgerError("only a terminal decision can be superseded")
+            if item["state"] == "integrated":
+                if (
+                    not args.expected_output_hash
+                    or len(args.expected_output_hash) != 64
+                ):
+                    raise LedgerError(
+                        "integrated supersession requires --expected-output-hash"
+                    )
+                if item["destination_hash"] != args.expected_output_hash:
+                    raise LedgerError(
+                        "expected output hash does not match the current decision"
+                    )
+                if not outputs:
+                    raise LedgerError("integrated decision has no active output records")
+                live_destinations = [
+                    output["destination"]
+                    for output in outputs
+                    if resolve_vault_path(vault_root, output["destination"]).exists()
+                ]
+                if live_destinations:
+                    raise LedgerError(
+                        "destination still exists; supersession never changes vault files: "
+                        + ", ".join(live_destinations)
+                    )
+            elif outputs:
+                raise LedgerError("non-integrated decision has active output records")
+            if args.decision == "reopen":
+                state = "reviewed"
+                stored_decision = None
+            else:
+                state = "discarded" if args.decision == "discard" else "skipped"
+                stored_decision = args.decision
+            recorded_at = now()
+            connection.execute(
+                """
+                INSERT INTO decision_history(
+                    run_id, version_id, previous_state, previous_decision,
+                    previous_destination, previous_destination_hash,
+                    new_state, new_decision, reason, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    args.run_id,
+                    item["version_id"],
+                    item["state"],
+                    item["decision"],
+                    item["destination"],
+                    item["destination_hash"],
+                    state,
+                    args.decision,
+                    reason,
+                    recorded_at,
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE integration_outputs SET active=0
+                WHERE run_id=? AND version_id=? AND active=1
+                """,
+                (args.run_id, item["version_id"]),
+            )
+            connection.execute(
+                """
+                UPDATE run_items SET
+                    state=?, decision=?, decision_manifest=NULL,
+                    destination=NULL, destination_hash=NULL, integrated_at=NULL
+                WHERE run_id=? AND version_id=?
+                """,
+                (state, stored_decision, args.run_id, item["version_id"]),
+            )
+            resolution_status = refresh_resolution_status(connection, args.run_id)
+        return {
+            "ok": True,
+            "run_id": args.run_id,
+            "version_id": item["version_id"],
+            "state": state,
+            "decision": args.decision,
+            "deactivated_outputs": len(outputs),
+            "resolution_status": resolution_status,
+        }
+    finally:
+        connection.close()
+
+
+def record_artifact_command(args: argparse.Namespace) -> dict[str, Any]:
+    connection = connect(Path(args.db).expanduser().resolve())
+    vault_root = Path(args.vault_root).expanduser().resolve()
+    artifact_path = unicodedata.normalize("NFC", args.path)
+    artifact = resolve_vault_path(vault_root, artifact_path)
+    role = args.role.strip()
+    reason = args.reason.strip()
+    if not role:
+        raise LedgerError("--role must not be empty")
+    if not reason:
+        raise LedgerError("--reason must not be empty")
+    if args.expected_previous_hash and len(args.expected_previous_hash) != 64:
+        raise LedgerError("--expected-previous-hash must be a SHA-256 hash")
+    try:
+        ensure_schema(connection)
+        with transaction(connection):
+            run = connection.execute(
+                "SELECT run_id FROM runs WHERE run_id=?", (args.run_id,)
+            ).fetchone()
+            if run is None:
+                raise LedgerError(f"run does not exist: {args.run_id}")
+            if not artifact.is_file():
+                raise LedgerError(f"artifact does not exist: {artifact}")
+            artifact_hash = raw_hash(artifact)
+            previous = connection.execute(
+                """
+                SELECT artifact_id, artifact_hash
+                FROM run_artifacts
+                WHERE run_id=? AND artifact_path=? AND active=1
+                ORDER BY artifact_id DESC LIMIT 1
+                """,
+                (args.run_id, artifact_path),
+            ).fetchone()
+            if previous is None:
+                if args.expected_previous_hash:
+                    raise LedgerError("expected previous artifact, but none is recorded")
+                previous_id = None
+            else:
+                if not args.expected_previous_hash:
+                    raise LedgerError(
+                        "artifact already exists; provide --expected-previous-hash to revise it"
+                    )
+                if previous["artifact_hash"] != args.expected_previous_hash:
+                    raise LedgerError(
+                        "expected previous hash does not match the active artifact revision"
+                    )
+                if previous["artifact_hash"] == artifact_hash:
+                    raise LedgerError("artifact content is unchanged")
+                previous_id = int(previous["artifact_id"])
+                connection.execute(
+                    "UPDATE run_artifacts SET active=0 WHERE artifact_id=?",
+                    (previous_id,),
+                )
+            cursor = connection.execute(
+                """
+                INSERT INTO run_artifacts(
+                    run_id, artifact_path, artifact_hash, artifact_role,
+                    reason, active, previous_artifact_id, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+                """,
+                (
+                    args.run_id,
+                    artifact_path,
+                    artifact_hash,
+                    role,
+                    reason,
+                    previous_id,
+                    now(),
+                ),
+            )
+            artifact_id = int(cursor.lastrowid)
+        return {
+            "ok": True,
+            "run_id": args.run_id,
+            "artifact_id": artifact_id,
+            "artifact_path": artifact_path,
+            "artifact_hash": artifact_hash,
+            "role": role,
+            "previous_artifact_id": previous_id,
+        }
+    finally:
+        connection.close()
+
+
 def merge_destination_command(args: argparse.Namespace) -> dict[str, Any]:
     connection = connect(Path(args.db).expanduser().resolve())
     vault_root = Path(args.vault_root).expanduser().resolve()
@@ -918,13 +1310,9 @@ def merge_destination_command(args: argparse.Namespace) -> dict[str, Any]:
             raise LedgerError("shared-destination merge requires --decision-manifest")
         with transaction(connection):
             item = run_item(connection, args.run_id, args.relative_path)
-            if item["state"] not in {"reviewed", "skipped"}:
+            if item["state"] != "reviewed":
                 raise LedgerError(f"cannot merge item in state {item['state']}")
-            quarantine = resolve_vault_path(vault_root, item["quarantine_path"])
-            if not quarantine.is_file() or raw_hash(quarantine) != item["raw_hash"]:
-                raise LedgerError(
-                    "quarantine content is missing or changed; return it to the importer"
-                )
+            verified_quarantine(vault_root, item)
             loss_acknowledged = bool(
                 item["loss_acknowledged"] or args.acknowledge_loss
             )
@@ -936,7 +1324,7 @@ def merge_destination_command(args: argparse.Namespace) -> dict[str, Any]:
                 """
                 SELECT output_id, run_id, version_id, destination_hash
                 FROM integration_outputs
-                WHERE destination=?
+                WHERE destination=? AND active=1
                 ORDER BY output_id
                 """,
                 (args.destination,),
@@ -973,7 +1361,7 @@ def merge_destination_command(args: argparse.Namespace) -> dict[str, Any]:
                 """
                 UPDATE integration_outputs
                 SET destination_hash=?
-                WHERE destination=?
+                WHERE destination=? AND active=1
                 """,
                 (merged_hash, args.destination),
             )
@@ -1042,58 +1430,212 @@ def merge_destination_command(args: argparse.Namespace) -> dict[str, Any]:
         connection.close()
 
 
+def active_artifact_problems(
+    connection: sqlite3.Connection,
+    vault_root: Path,
+    run_id: str | None = None,
+) -> list[dict[str, Any]]:
+    query = """
+        SELECT artifact_id, run_id, artifact_path, artifact_hash, artifact_role
+        FROM run_artifacts
+        WHERE active=1
+    """
+    params: tuple[Any, ...] = ()
+    if run_id is not None:
+        query += " AND run_id=?"
+        params = (run_id,)
+    query += " ORDER BY artifact_id"
+    problems = []
+    for artifact_row in connection.execute(query, params):
+        artifact = resolve_vault_path(vault_root, artifact_row["artifact_path"])
+        if not artifact.is_file():
+            problems.append({**dict(artifact_row), "problem": "missing artifact"})
+        elif raw_hash(artifact) != artifact_row["artifact_hash"]:
+            problems.append(
+                {**dict(artifact_row), "problem": "artifact hash changed"}
+            )
+    return problems
+
+
+def scoped_output_records(
+    connection: sqlite3.Connection,
+    run_id: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    records = [
+        dict(row)
+        for row in connection.execute(
+            """
+            SELECT run_id, version_id, destination, destination_hash
+            FROM integration_outputs
+            WHERE run_id=? AND active=1
+            ORDER BY output_id
+            """,
+            (run_id,),
+        )
+    ]
+    problems: list[dict[str, Any]] = []
+    retained = connection.execute(
+        """
+        SELECT rowid AS observation_rowid, version_id
+        FROM run_items
+        WHERE run_id=? AND state='skipped' AND decision='retain'
+        ORDER BY rowid
+        """,
+        (run_id,),
+    ).fetchall()
+    for observation in retained:
+        resolution = connection.execute(
+            """
+            SELECT run_id, version_id, destination, destination_hash
+            FROM run_items
+            WHERE version_id=? AND state='integrated' AND decision IS NOT NULL
+              AND rowid < ?
+            ORDER BY rowid DESC
+            LIMIT 1
+            """,
+            (observation["version_id"], observation["observation_rowid"]),
+        ).fetchone()
+        if resolution is None:
+            problems.append(
+                {
+                    "run_id": run_id,
+                    "version_id": observation["version_id"],
+                    "problem": "retained item has no prior integrated decision",
+                }
+            )
+            continue
+        outputs = resolution_outputs(connection, resolution)
+        if not outputs:
+            problems.append(
+                {
+                    "run_id": run_id,
+                    "version_id": observation["version_id"],
+                    "problem": "retained item has no active prior output",
+                }
+            )
+            continue
+        records.extend(
+            {
+                "run_id": run_id,
+                "version_id": observation["version_id"],
+                "destination": output["destination"],
+                "destination_hash": output["destination_hash"],
+                "retained_from_run_id": resolution["run_id"],
+            }
+            for output in outputs
+        )
+    return records, problems
+
+
+def output_problems(
+    connection: sqlite3.Connection,
+    vault_root: Path,
+    run_id: str | None = None,
+) -> list[dict[str, Any]]:
+    if run_id is None:
+        records = [
+            dict(row)
+            for row in connection.execute(
+                """
+                SELECT run_id, version_id, destination, destination_hash
+                FROM integration_outputs WHERE active=1 ORDER BY output_id
+                """
+            )
+        ]
+        problems: list[dict[str, Any]] = []
+    else:
+        records, problems = scoped_output_records(connection, run_id)
+    for record in records:
+        destination = resolve_vault_path(vault_root, record["destination"])
+        if not destination.is_file():
+            problems.append({**record, "problem": "missing destination"})
+        elif raw_hash(destination) != record["destination_hash"]:
+            problems.append({**record, "problem": "destination hash changed"})
+    if run_id is not None:
+        missing_output_items = connection.execute(
+            """
+            SELECT ri.run_id, ri.version_id, ri.destination,
+                   ri.destination_hash
+            FROM run_items ri
+            WHERE ri.run_id=? AND ri.state='integrated'
+              AND NOT EXISTS (
+                  SELECT 1 FROM integration_outputs io
+                  WHERE io.run_id=ri.run_id
+                    AND io.version_id=ri.version_id
+                    AND io.active=1
+              )
+            ORDER BY ri.rowid
+            """,
+            (run_id,),
+        )
+        problems.extend(
+            {**dict(item), "problem": "integrated item has no active output"}
+            for item in missing_output_items
+        )
+    return problems
+
+
+def cleanup_readiness(
+    connection: sqlite3.Connection,
+    vault_root: Path,
+    run_id: str,
+) -> dict[str, Any]:
+    rows = connection.execute(
+        """
+        SELECT ri.*, fv.raw_hash
+        FROM run_items ri
+        JOIN fingerprint_versions fv ON fv.version_id=ri.version_id
+        WHERE ri.run_id=? ORDER BY ri.rowid
+        """,
+        (run_id,),
+    ).fetchall()
+    if not rows:
+        raise LedgerError("run has no items")
+    unresolved = [row["state"] for row in rows if row["state"] not in TERMINAL_STATES]
+    if unresolved:
+        raise LedgerError(f"run has unresolved states: {sorted(set(unresolved))}")
+    if any(row["decision"] is None for row in rows):
+        raise LedgerError("run has terminal items without recorded owner decisions")
+    if any(row["loss_details"] and not row["loss_acknowledged"] for row in rows):
+        raise LedgerError("run has lossy items without owner acknowledgment")
+
+    destination_problems = output_problems(connection, vault_root, run_id)
+    if destination_problems:
+        raise LedgerError(
+            "integration outputs failed verification: "
+            + json.dumps(destination_problems, ensure_ascii=False)
+        )
+    artifact_problems = active_artifact_problems(connection, vault_root, run_id)
+    if artifact_problems:
+        raise LedgerError(
+            "run artifacts failed verification: "
+            + json.dumps(artifact_problems, ensure_ascii=False)
+        )
+
+    existing_paths = []
+    absent_paths = []
+    for row in rows:
+        if not row["quarantine_path"]:
+            continue
+        path = verified_quarantine(vault_root, row, allow_absent=True)
+        (existing_paths if path is not None else absent_paths).append(
+            row["quarantine_path"]
+        )
+    return {
+        "rows": rows,
+        "existing_paths": existing_paths,
+        "absent_paths": absent_paths,
+    }
+
+
 def cleanup_plan_command(args: argparse.Namespace) -> dict[str, Any]:
     connection = connect(Path(args.db).expanduser().resolve())
     vault_root = Path(args.vault_root).expanduser().resolve()
     try:
         ensure_schema(connection)
-        rows = connection.execute(
-            """
-            SELECT state, decision, quarantine_path, loss_details, loss_acknowledged
-            FROM run_items WHERE run_id=? ORDER BY rowid
-            """,
-            (args.run_id,),
-        ).fetchall()
-        if not rows:
-            raise LedgerError("run has no items")
-        unresolved = [row["state"] for row in rows if row["state"] not in TERMINAL_STATES]
-        if unresolved:
-            raise LedgerError(f"run has unresolved states: {sorted(set(unresolved))}")
-        if any(row["decision"] is None for row in rows):
-            raise LedgerError("run has terminal items without recorded owner decisions")
-        if any(row["loss_details"] and not row["loss_acknowledged"] for row in rows):
-            raise LedgerError("run has lossy items without owner acknowledgment")
-        destination_problems = []
-        for output in connection.execute(
-            """
-            SELECT destination, destination_hash FROM integration_outputs
-            WHERE run_id=? ORDER BY output_id
-            """,
-            (args.run_id,),
-        ):
-            destination = resolve_vault_path(vault_root, output["destination"])
-            if not destination.is_file():
-                destination_problems.append(
-                    {**dict(output), "problem": "missing destination"}
-                )
-            elif raw_hash(destination) != output["destination_hash"]:
-                destination_problems.append(
-                    {**dict(output), "problem": "destination hash changed"}
-                )
-        if destination_problems:
-            raise LedgerError(
-                "integration outputs failed verification: "
-                + json.dumps(destination_problems, ensure_ascii=False)
-            )
-        existing_paths = []
-        absent_paths = []
-        for row in rows:
-            if not row["quarantine_path"]:
-                continue
-            path = resolve_vault_path(vault_root, row["quarantine_path"])
-            (existing_paths if path.exists() else absent_paths).append(
-                row["quarantine_path"]
-            )
+        readiness = cleanup_readiness(connection, vault_root, args.run_id)
+        existing_paths = readiness["existing_paths"]
+        absent_paths = readiness["absent_paths"]
         return {
             "ok": True,
             "run_id": args.run_id,
@@ -1112,39 +1654,8 @@ def cleanup_command(args: argparse.Namespace) -> dict[str, Any]:
     try:
         ensure_schema(connection)
         with transaction(connection):
-            rows = connection.execute(
-                "SELECT state, quarantine_path FROM run_items WHERE run_id=?",
-                (args.run_id,),
-            ).fetchall()
-            if not rows:
-                raise LedgerError("run has no items")
-            unresolved = [row["state"] for row in rows if row["state"] not in TERMINAL_STATES]
-            if unresolved:
-                raise LedgerError(f"run has unresolved states: {sorted(set(unresolved))}")
-            undecided = connection.execute(
-                "SELECT count(*) FROM run_items WHERE run_id=? AND decision IS NULL",
-                (args.run_id,),
-            ).fetchone()[0]
-            if undecided:
-                raise LedgerError(f"run has {undecided} terminal item(s) without a recorded decision")
-            unacknowledged_loss = connection.execute(
-                """
-                SELECT count(*) FROM run_items
-                WHERE run_id=? AND loss_details IS NOT NULL
-                  AND loss_acknowledged=0
-                """,
-                (args.run_id,),
-            ).fetchone()[0]
-            if unacknowledged_loss:
-                raise LedgerError(
-                    f"run has {unacknowledged_loss} lossy item(s) without owner acknowledgment"
-                )
-            remaining = []
-            for row in rows:
-                if row["quarantine_path"]:
-                    path = resolve_vault_path(vault_root, row["quarantine_path"])
-                    if path.exists():
-                        remaining.append(row["quarantine_path"])
+            readiness = cleanup_readiness(connection, vault_root, args.run_id)
+            remaining = readiness["existing_paths"]
             if remaining:
                 raise LedgerError(
                     "quarantine paths still exist; move them through Obsidian trash first: "
@@ -1172,6 +1683,14 @@ def verify_command(args: argparse.Namespace) -> dict[str, Any]:
     connection = connect(Path(args.db).expanduser().resolve())
     try:
         ensure_schema(connection)
+        if args.run_id and not args.vault_root:
+            raise LedgerError("run-scoped verification requires --vault-root")
+        if args.run_id:
+            run = connection.execute(
+                "SELECT run_id FROM runs WHERE run_id=?", (args.run_id,)
+            ).fetchone()
+            if run is None:
+                raise LedgerError(f"run does not exist: {args.run_id}")
         integrity = [row[0] for row in connection.execute("PRAGMA integrity_check")]
         foreign_keys = [dict(row) for row in connection.execute("PRAGMA foreign_key_check")]
         counts = {}
@@ -1183,55 +1702,73 @@ def verify_command(args: argparse.Namespace) -> dict[str, Any]:
             "integration_outputs",
         ):
             counts[table] = connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+        item_scope = " AND run_id=?" if args.run_id else ""
+        item_params = (args.run_id,) if args.run_id else ()
         unresolved = connection.execute(
             """
             SELECT count(*) FROM run_items
             WHERE state NOT IN ('integrated', 'skipped', 'discarded')
+            """ + item_scope,
+            item_params,
+        ).fetchone()[0]
+        undecided = connection.execute(
             """
+            SELECT count(*) FROM run_items
+            WHERE decision IS NULL
+            """ + item_scope,
+            item_params,
         ).fetchone()[0]
         unacknowledged_lossy_terminal = connection.execute(
             """
             SELECT count(*) FROM run_items
             WHERE state IN ('integrated', 'skipped', 'discarded')
               AND loss_details IS NOT NULL AND loss_acknowledged=0
-            """
+            """ + item_scope,
+            item_params,
         ).fetchone()[0]
         review_group_count = connection.execute(
-            "SELECT count(DISTINCT review_group) FROM run_items WHERE review_group IS NOT NULL"
+            "SELECT count(DISTINCT review_group) FROM run_items "
+            "WHERE review_group IS NOT NULL" + item_scope,
+            item_params,
         ).fetchone()[0]
-        resolution_counts = {
-            row["resolution_status"]: row["count"]
-            for row in connection.execute(
-                """
-                SELECT resolution_status, count(*) AS count
-                FROM runs GROUP BY resolution_status
-                """
-            )
-        }
+        if args.run_id:
+            resolution_counts = {
+                row["resolution_status"]: row["count"]
+                for row in connection.execute(
+                    """
+                    SELECT resolution_status, count(*) AS count
+                    FROM runs WHERE run_id=? GROUP BY resolution_status
+                    """,
+                    (args.run_id,),
+                )
+            }
+        else:
+            resolution_counts = {
+                row["resolution_status"]: row["count"]
+                for row in connection.execute(
+                    """
+                    SELECT resolution_status, count(*) AS count
+                    FROM runs GROUP BY resolution_status
+                    """
+                )
+            }
         destination_problems = []
+        artifact_problems = []
         if args.vault_root:
             vault_root = Path(args.vault_root).expanduser().resolve()
-            for output in connection.execute(
-                """
-                SELECT run_id, version_id, destination, destination_hash
-                FROM integration_outputs ORDER BY output_id
-                """
-            ):
-                destination = resolve_vault_path(vault_root, output["destination"])
-                if not destination.is_file():
-                    destination_problems.append(
-                        {**dict(output), "problem": "missing destination"}
-                    )
-                elif raw_hash(destination) != output["destination_hash"]:
-                    destination_problems.append(
-                        {**dict(output), "problem": "destination hash changed"}
-                    )
-        return {
+            destination_problems = output_problems(
+                connection, vault_root, args.run_id
+            )
+            artifact_problems = active_artifact_problems(
+                connection, vault_root, args.run_id
+            )
+        result = {
             "ok": (
                 integrity == ["ok"]
                 and not foreign_keys
                 and not unacknowledged_lossy_terminal
                 and not destination_problems
+                and not artifact_problems
             ),
             "integrity_check": integrity,
             "foreign_key_check": foreign_keys,
@@ -1241,7 +1778,41 @@ def verify_command(args: argparse.Namespace) -> dict[str, Any]:
             "review_group_count": review_group_count,
             "resolution_counts": resolution_counts,
             "destination_problems": destination_problems,
+            "artifacts_valid": not artifact_problems,
+            "artifact_problems": artifact_problems,
         }
+        if not args.run_id:
+            return result
+
+        item_count = connection.execute(
+            "SELECT count(*) FROM run_items WHERE run_id=?", (args.run_id,)
+        ).fetchone()[0]
+        decision_complete = (
+            item_count > 0
+            and unresolved == 0
+            and undecided == 0
+            and unacknowledged_lossy_terminal == 0
+        )
+        outputs_valid = not destination_problems
+        artifacts_valid = not artifact_problems
+        cleanup_eligible = (
+            integrity == ["ok"]
+            and not foreign_keys
+            and decision_complete
+            and outputs_valid
+            and artifacts_valid
+        )
+        result.update(
+            {
+                "ok": cleanup_eligible,
+                "run_id": args.run_id,
+                "decision_complete": decision_complete,
+                "outputs_valid": outputs_valid,
+                "artifacts_valid": artifacts_valid,
+                "cleanup_eligible": cleanup_eligible,
+            }
+        )
+        return result
     finally:
         connection.close()
 
@@ -1321,6 +1892,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
     integrate.set_defaults(handler=integrate_command)
 
+    supersede = subparsers.add_parser(
+        "supersede-decision",
+        help="Record a replacement for an integrated decision without changing vault files",
+    )
+    add_db(supersede)
+    supersede.add_argument("--run-id", required=True)
+    supersede.add_argument("--relative-path", required=True)
+    supersede.add_argument("--vault-root", required=True)
+    supersede.add_argument("--expected-state", required=True)
+    supersede.add_argument("--expected-output-hash")
+    supersede.add_argument(
+        "--decision", required=True, choices=("skip", "discard", "reopen")
+    )
+    supersede.add_argument("--reason", required=True)
+    supersede.set_defaults(handler=supersede_decision_command)
+
+    artifact = subparsers.add_parser(
+        "record-artifact", help="Record or revise a run-owned vault artifact"
+    )
+    add_db(artifact)
+    artifact.add_argument("--run-id", required=True)
+    artifact.add_argument("--vault-root", required=True)
+    artifact.add_argument("--path", required=True)
+    artifact.add_argument("--role", required=True)
+    artifact.add_argument("--expected-previous-hash")
+    artifact.add_argument("--reason", required=True)
+    artifact.set_defaults(handler=record_artifact_command)
+
     merge_destination = subparsers.add_parser(
         "merge-destination",
         help="Atomically merge one reviewed item into a tracked destination",
@@ -1360,6 +1959,10 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument(
         "--vault-root",
         help="When supplied, verify every recorded integration output hash",
+    )
+    verify.add_argument(
+        "--run-id",
+        help="Limit output and artifact verification to one migration run",
     )
     verify.set_defaults(handler=verify_command)
     return parser
