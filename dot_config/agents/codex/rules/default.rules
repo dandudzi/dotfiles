@@ -40,10 +40,11 @@ host_executable(name = "basename", paths = ["/usr/bin/basename"])
 host_executable(name = "dirname", paths = ["/usr/bin/dirname"])
 host_executable(name = "codex", paths = ["/opt/homebrew/bin/codex"])
 
-# RTK accepts these documented global modifiers before its proxied command.
-# Mirror every RTK rule for exactly one modifier so the modified spelling keeps
-# the canonical rule's decision. Stacked modifiers and modifiers placed later
-# in the command are intentionally outside this native prefix coverage.
+# RTK accepts documented global modifiers and transparent command wrappers.
+# Mirror every RTK rule across those spellings so the underlying command keeps
+# the canonical rule's decision instead of the wrapper receiving a blanket
+# decision. Stacked modifiers, `run -c`, and reordered combinations remain
+# outside this native prefix coverage.
 RTK_SINGLE_MODIFIERS = [
     "--skip-env",
     "--ultra-compact",
@@ -53,11 +54,47 @@ RTK_SINGLE_MODIFIERS = [
     "-vvv",
 ]
 
+RTK_COMMAND_WRAPPERS = [
+    "run",
+    "proxy",
+    "err",
+    "test",
+    "summary",
+]
+
+RTK_WRAPPER_MODIFIERS = [
+    "--skip-env",
+    "--ultra-compact",
+]
+
 def _rtk_single_modifier_examples(examples):
     expanded = []
     for example in examples:
         for modifier in RTK_SINGLE_MODIFIERS:
             expanded.append("rtk " + modifier + example[3:])
+    return expanded
+
+def _rtk_wrapper_examples(examples):
+    expanded = []
+    for example in examples:
+        for wrapper in RTK_COMMAND_WRAPPERS:
+            expanded.append("rtk " + wrapper + example[3:])
+    return expanded
+
+def _rtk_modifier_wrapper_examples(examples):
+    expanded = []
+    for example in examples:
+        for modifier in RTK_SINGLE_MODIFIERS:
+            for wrapper in RTK_COMMAND_WRAPPERS:
+                expanded.append("rtk " + modifier + " " + wrapper + example[3:])
+    return expanded
+
+def _rtk_wrapper_modifier_examples(examples):
+    expanded = []
+    for example in examples:
+        for wrapper in RTK_COMMAND_WRAPPERS:
+            for modifier in RTK_WRAPPER_MODIFIERS:
+                expanded.append("rtk " + wrapper + " " + modifier + example[3:])
     return expanded
 
 def rtk_prefix_rule(pattern, decision, justification, match = [], not_match = []):
@@ -74,6 +111,27 @@ def rtk_prefix_rule(pattern, decision, justification, match = [], not_match = []
         justification = justification,
         match = _rtk_single_modifier_examples(match),
         not_match = _rtk_single_modifier_examples(not_match),
+    )
+    prefix_rule(
+        pattern = ["rtk", RTK_COMMAND_WRAPPERS] + pattern[1:],
+        decision = decision,
+        justification = justification,
+        match = _rtk_wrapper_examples(match),
+        not_match = _rtk_wrapper_examples(not_match),
+    )
+    prefix_rule(
+        pattern = ["rtk", RTK_SINGLE_MODIFIERS, RTK_COMMAND_WRAPPERS] + pattern[1:],
+        decision = decision,
+        justification = justification,
+        match = _rtk_modifier_wrapper_examples(match),
+        not_match = _rtk_modifier_wrapper_examples(not_match),
+    )
+    prefix_rule(
+        pattern = ["rtk", RTK_COMMAND_WRAPPERS, RTK_WRAPPER_MODIFIERS] + pattern[1:],
+        decision = decision,
+        justification = justification,
+        match = _rtk_wrapper_modifier_examples(match),
+        not_match = _rtk_wrapper_modifier_examples(not_match),
     )
 
 # -----------------------------------------------------------------------------
@@ -1751,14 +1809,6 @@ rtk_prefix_rule(
     justification = "Dynamic evaluation and unbounded resource-generation through RTK are blocked for agents.",
     match = ["rtk eval command", "rtk yes", "rtk stress --cpu 8"],
     not_match = ["rtk echo yes"],
-)
-
-rtk_prefix_rule(
-    pattern = ["rtk", ["run", "proxy", "err", "test", "smart", "summary"]],
-    decision = "forbidden",
-    justification = "RTK command-execution wrappers can hide nested commands from prefix policy and are blocked; use the canonical RTK tool form instead.",
-    match = ["rtk run 'rm -rf path'", "rtk proxy rm -rf path", "rtk err command", "rtk test command", "rtk smart command", "rtk summary command"],
-    not_match = ["rtk git status", "rtk codex execpolicy check --rules default.rules -- git status"],
 )
 
 prefix_rule(
