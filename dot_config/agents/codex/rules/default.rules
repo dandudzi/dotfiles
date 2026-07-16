@@ -186,6 +186,38 @@ prefix_rule(
     not_match = ["rtk pwd"],
 )
 
+# Chezmoi uses `add` both to update existing managed targets and to begin
+# managing new targets. Before invoking this command, verify every exact target
+# with `rtk chezmoi source-path <target>`. Managed targets may be re-added.
+# If any target is not managed, stop and obtain explicit human authorization.
+prefix_rule(
+    pattern = ["chezmoi", "add"],
+    decision = "prompt",
+    justification = "Chezmoi add may auto-commit and auto-push. Approve a managed re-add after every exact target has been verified with chezmoi source-path. Reject new or unmanaged targets unless the user explicitly authorized those exact paths.",
+    match = [
+        "chezmoi add /Users/daniel/.config/agents/codex/rules/default.rules",
+    ],
+    not_match = [
+        "chezmoi status /Users/daniel/.config/agents/codex/rules/default.rules",
+        "chezmoi diff /Users/daniel/.config/agents/codex/rules/default.rules",
+        "chezmoi apply /Users/daniel/.config/agents/codex/rules/default.rules",
+    ],
+)
+
+prefix_rule(
+    pattern = ["rtk", "chezmoi", "add"],
+    decision = "prompt",
+    justification = "Chezmoi add may auto-commit and auto-push. Approve a managed re-add after every exact target has been verified with chezmoi source-path. Reject new or unmanaged targets unless the user explicitly authorized those exact paths.",
+    match = [
+        "rtk chezmoi add /Users/daniel/.config/agents/codex/rules/default.rules",
+    ],
+    not_match = [
+        "rtk chezmoi status /Users/daniel/.config/agents/codex/rules/default.rules",
+        "rtk chezmoi diff /Users/daniel/.config/agents/codex/rules/default.rules",
+        "rtk chezmoi apply /Users/daniel/.config/agents/codex/rules/default.rules",
+    ],
+)
+
 prefix_rule(
     pattern = ["git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
     decision = "prompt",
