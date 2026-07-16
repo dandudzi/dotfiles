@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Linear Issue"
+  short_description: "Create a scoped Linear issue through delegation"
+  default_prompt: "Use $linear-create-issue to create a scoped Linear issue for this repository task."
