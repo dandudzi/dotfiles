@@ -1,14 +1,13 @@
 # Codex execution policy — active user policy.
 #
-# Audited against Codex CLI 0.144.1 on 2026-07-11. The live
+# Audited against Codex CLI 0.144.5 on 2026-07-16. The live
 # ~/.codex/rules/default.rules path is intentionally a symlink to this shared
 # file so Codex, Claude Code, and OpenCode policy work can retain one reviewed
 # source of intent where their native rule formats permit it.
 #
-# Official documentation still describes the preview `codex execpolicy check`
-# tester. The packaged 0.144.1 CLI does not expose that subcommand, so the
-# policy's inline `match`/`not_match` tests and a clean fresh-session load are
-# the available validation gates until the preview tester ships in the binary.
+# The installed CLI exposes the official `codex execpolicy check` tester, so
+# every policy change must pass both inline `match`/`not_match` validation and
+# explicit direct, RTK, modifier, wrapper, and nearby non-match checks.
 # Codex uses the strictest decision across all matching prefixes:
 # forbidden > prompt > allow.
 #
@@ -65,6 +64,31 @@ RTK_COMMAND_WRAPPERS = [
 RTK_WRAPPER_MODIFIERS = [
     "--skip-env",
     "--ultra-compact",
+]
+
+# Maven Wrapper is project-owned code, so only installed-Maven metadata is
+# unconditionally allowed. These shared token sets keep direct and RTK rules
+# aligned without broad executable-wide decisions.
+MAVEN_EXECUTABLES = ["mvn", "mvnw", "./mvnw"]
+MAVEN_PRECEDING_PHASES = [
+    "clean",
+    "validate",
+    "compile",
+    "test",
+    "package",
+    "verify",
+    "install",
+]
+MAVEN_FORBIDDEN_GOALS = [
+    "deploy",
+    "site-deploy",
+    "deploy:deploy",
+    "deploy:deploy-file",
+    "release:prepare",
+    "release:prepare-with-pom",
+    "release:perform",
+    "release:stage",
+    "release:rollback",
 ]
 
 def _rtk_single_modifier_examples(examples):
@@ -249,6 +273,22 @@ rtk_prefix_rule(
     not_match = ["rtk codex exec task"],
 )
 
+prefix_rule(
+    pattern = ["mvn", ["-v", "--version", "-h", "--help"]],
+    decision = "allow",
+    justification = "Inspect the installed Maven CLI without running a project build or Maven Wrapper bootstrap.",
+    match = ["mvn --version", "mvn --help"],
+    not_match = ["mvn -V deploy", "mvn test", "./mvnw --version"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", "mvn", ["-v", "--version", "-h", "--help"]],
+    decision = "allow",
+    justification = "Inspect the installed Maven CLI through RTK without running a project build or Maven Wrapper bootstrap.",
+    match = ["rtk mvn --version", "rtk mvn --help"],
+    not_match = ["rtk mvn -V deploy", "rtk mvn test", "rtk ./mvnw --version"],
+)
+
 # -----------------------------------------------------------------------------
 # PROMPT — potentially modifying, networked, executable, sensitive, or external
 # operations. Approval should be granted for the exact invocation only.
@@ -426,19 +466,99 @@ rtk_prefix_rule(
 )
 
 prefix_rule(
-    pattern = [["mvn", "mvnw", "./mvnw"], "install"],
+    pattern = [MAVEN_EXECUTABLES, ["install", "install:install", "install:install-file"]],
     decision = "prompt",
-    justification = "Maven install writes build artifacts and dependencies to the local package repository.",
-    match = ["mvn install", "mvnw install", "./mvnw install"],
+    justification = "Maven installation goals write project or external artifacts to the local package repository.",
+    match = ["mvn install", "mvnw install", "./mvnw install", "mvn install:install-file -Dfile=library.jar"],
     not_match = ["mvn test", "./mvnw package"],
 )
 
 rtk_prefix_rule(
-    pattern = ["rtk", ["mvn", "mvnw", "./mvnw"], "install"],
+    pattern = ["rtk", MAVEN_EXECUTABLES, ["install", "install:install", "install:install-file"]],
     decision = "prompt",
-    justification = "Maven install through RTK writes build artifacts and dependencies to the local package repository.",
-    match = ["rtk mvn install", "rtk mvnw install", "rtk ./mvnw install"],
+    justification = "Maven installation goals through RTK write project or external artifacts to the local package repository.",
+    match = ["rtk mvn install", "rtk mvnw install", "rtk ./mvnw install", "rtk mvn install:install-file -Dfile=library.jar"],
     not_match = ["rtk mvn test", "rtk ./mvnw package"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, "clean", "install"],
+    decision = "prompt",
+    justification = "Maven clean install deletes project output and writes the rebuilt artifacts to the local package repository.",
+    match = ["mvn clean install", "mvnw clean install", "./mvnw clean install"],
+    not_match = ["mvn clean verify", "mvn install"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, "clean", "install"],
+    decision = "prompt",
+    justification = "Maven clean install through RTK deletes project output and writes rebuilt artifacts to the local package repository.",
+    match = ["rtk mvn clean install", "rtk mvnw clean install", "rtk ./mvnw clean install"],
+    not_match = ["rtk mvn clean verify", "rtk mvn install"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["dependency:purge-local-repository", "dependency:get", "dependency:go-offline"]],
+    decision = "prompt",
+    justification = "Explicit Maven dependency-cache operations can download, install, or delete artifacts in the local repository.",
+    match = ["mvn dependency:purge-local-repository", "mvn dependency:get -Dartifact=g:a:1", "mvn dependency:go-offline"],
+    not_match = ["mvn dependency:resolve", "mvn dependency:tree"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, ["dependency:purge-local-repository", "dependency:get", "dependency:go-offline"]],
+    decision = "prompt",
+    justification = "Explicit Maven dependency-cache operations through RTK can download, install, or delete artifacts in the local repository.",
+    match = ["rtk mvn dependency:purge-local-repository", "rtk mvn dependency:get -Dartifact=g:a:1", "rtk mvn dependency:go-offline"],
+    not_match = ["rtk mvn dependency:resolve", "rtk mvn dependency:tree"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["archetype:generate", "wrapper:wrapper", "versions:set", "dependency:add", "dependency:remove"]],
+    decision = "prompt",
+    justification = "These Maven goals generate projects or modify wrapper and POM files; approve the exact project mutation.",
+    match = ["mvn archetype:generate", "mvn wrapper:wrapper", "mvn versions:set -DnewVersion=2", "mvn dependency:add -Dartifact=g:a:1", "mvn dependency:remove -Dartifact=g:a"],
+    not_match = ["mvn help:effective-pom", "mvn dependency:analyze"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, ["archetype:generate", "wrapper:wrapper", "versions:set", "dependency:add", "dependency:remove"]],
+    decision = "prompt",
+    justification = "These Maven goals through RTK generate projects or modify wrapper and POM files; approve the exact project mutation.",
+    match = ["rtk mvn archetype:generate", "rtk mvn wrapper:wrapper", "rtk mvn versions:set -DnewVersion=2", "rtk mvn dependency:add -Dartifact=g:a:1", "rtk mvn dependency:remove -Dartifact=g:a"],
+    not_match = ["rtk mvn help:effective-pom", "rtk mvn dependency:analyze"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["spring-boot:run", "quarkus:dev", "exec:java"]],
+    decision = "prompt",
+    justification = "Maven application-run goals execute project code and may start long-lived local services.",
+    match = ["mvn spring-boot:run", "mvn quarkus:dev", "mvn exec:java"],
+    not_match = ["mvn test", "mvn package"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, ["spring-boot:run", "quarkus:dev", "exec:java"]],
+    decision = "prompt",
+    justification = "Maven application-run goals through RTK execute project code and may start long-lived local services.",
+    match = ["rtk mvn spring-boot:run", "rtk mvn quarkus:dev", "rtk mvn exec:java"],
+    not_match = ["rtk mvn test", "rtk mvn package"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["-ep", "--encrypt-password", "-emp", "--encrypt-master-password"]],
+    decision = "prompt",
+    justification = "Maven credential encryption handles sensitive password material and requires exact approval.",
+    match = ["mvn --encrypt-password secret", "mvn -emp secret"],
+    not_match = ["mvn --version", "mvn test"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, ["-ep", "--encrypt-password", "-emp", "--encrypt-master-password"]],
+    decision = "prompt",
+    justification = "Maven credential encryption through RTK handles sensitive password material and requires exact approval.",
+    match = ["rtk mvn --encrypt-password secret", "rtk mvn -emp secret"],
+    not_match = ["rtk mvn --version", "rtk mvn test"],
 )
 
 prefix_rule(
@@ -1476,19 +1596,51 @@ rtk_prefix_rule(
 )
 
 prefix_rule(
-    pattern = [["mvn", "gradle"], ["deploy", "publish", "publishPlugins"]],
+    pattern = [MAVEN_EXECUTABLES, MAVEN_FORBIDDEN_GOALS],
     decision = "forbidden",
-    justification = "Deploying or publishing build artifacts is blocked for agents.",
-    match = ["mvn deploy", "gradle publish", "gradle publishPlugins"],
-    not_match = ["mvn test", "gradle test"],
+    justification = "Maven deployment, publication, and release automation is blocked for agents.",
+    match = ["mvn deploy", "mvnw site-deploy", "./mvnw deploy:deploy-file", "mvn release:prepare", "mvn release:perform"],
+    not_match = ["mvn test", "mvn release:clean", "gradle publish"],
 )
 
 rtk_prefix_rule(
-    pattern = ["rtk", ["mvn", "gradle"], ["deploy", "publish", "publishPlugins"]],
+    pattern = ["rtk", MAVEN_EXECUTABLES, MAVEN_FORBIDDEN_GOALS],
     decision = "forbidden",
-    justification = "Deploying or publishing build artifacts through RTK is blocked.",
-    match = ["rtk mvn deploy", "rtk gradle publish", "rtk gradle publishPlugins"],
-    not_match = ["rtk mvn test", "rtk gradle test"],
+    justification = "Maven deployment, publication, and release automation through RTK is blocked.",
+    match = ["rtk mvn deploy", "rtk mvnw site-deploy", "rtk ./mvnw deploy:deploy-file", "rtk mvn release:prepare", "rtk mvn release:perform"],
+    not_match = ["rtk mvn test", "rtk mvn release:clean", "rtk gradle publish"],
+)
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, MAVEN_PRECEDING_PHASES, MAVEN_FORBIDDEN_GOALS],
+    decision = "forbidden",
+    justification = "A Maven deployment or release goal remains blocked when it follows one common lifecycle phase.",
+    match = ["mvn clean deploy", "mvn test deploy", "mvn install deploy", "./mvnw verify release:perform"],
+    not_match = ["mvn clean verify", "mvn install"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", MAVEN_EXECUTABLES, MAVEN_PRECEDING_PHASES, MAVEN_FORBIDDEN_GOALS],
+    decision = "forbidden",
+    justification = "A Maven deployment or release goal through RTK remains blocked when it follows one common lifecycle phase.",
+    match = ["rtk mvn clean deploy", "rtk mvn test deploy", "rtk mvn install deploy", "rtk ./mvnw verify release:perform"],
+    not_match = ["rtk mvn clean verify", "rtk mvn install"],
+)
+
+prefix_rule(
+    pattern = ["gradle", ["deploy", "publish", "publishPlugins"]],
+    decision = "forbidden",
+    justification = "Deploying or publishing Gradle artifacts is blocked for agents.",
+    match = ["gradle deploy", "gradle publish", "gradle publishPlugins"],
+    not_match = ["gradle test", "mvn test"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", "gradle", ["deploy", "publish", "publishPlugins"]],
+    decision = "forbidden",
+    justification = "Deploying or publishing Gradle artifacts through RTK is blocked.",
+    match = ["rtk gradle deploy", "rtk gradle publish", "rtk gradle publishPlugins"],
+    not_match = ["rtk gradle test", "rtk mvn test"],
 )
 
 prefix_rule(
