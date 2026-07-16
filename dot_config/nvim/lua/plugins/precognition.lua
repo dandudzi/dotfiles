@@ -1,5 +1,6 @@
 return {
     "tris203/precognition.nvim",
+    enabled = false, -- Disable on-screen motion hints during normal editing.
     --event = "VeryLazy",
     opts = {
         -- startVisible = true,

@@ -1,5 +1,6 @@
 return {
     "m4xshen/hardtime.nvim",
+    enabled = false, -- Keep disabled unless deliberately practicing movement habits.
     dependencies = {
         "MunifTanjim/nui.nvim",
         "nvim-lua/plenary.nvim",

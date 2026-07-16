@@ -12,12 +12,13 @@ description: Persist configuration changes through chezmoi. Use whenever creatin
 
 Before changing a managed file, inspect its source with `rtk chezmoi source-path <target>` and `rtk chezmoi diff <target>`.
 
-- Edit the chezmoi source directly when its mapping is clear.
-- Edit template sources directly; do not replace them by adding rendered files.
+- Interact with source state only through `rtk chezmoi ...`; never access or modify the source directory directly.
+- Never change or override chezmoi configuration without explicit permission.
+- For templates, use `rtk chezmoi edit <exact-target>`; never replace a template by adding its rendered file.
 - After an approved live-file change or new file, run `rtk chezmoi add <exact-target>`.
 - Review `rtk chezmoi diff <exact-target>` before running `rtk chezmoi apply <exact-target>`.
 - Never run unscoped `add` or `apply`.
-- Treat `chezmoi add` as potentially committing and pushing automatically.
+- Before `add`, run `rtk chezmoi git -- status --short`; auto-commit stages the whole source tree and may push unrelated changes.
 - Do not use `forget` or `destroy` without explicit approval.
 
-Verify with `rtk chezmoi status <exact-target>`, `rtk chezmoi diff <exact-target>`, and source-repository `rtk git status --short`. Report whether chezmoi committed or pushed the change.
+Verify with `rtk chezmoi status <exact-target>`, `rtk chezmoi diff <exact-target>`, and `rtk chezmoi git -- status --short`. Report whether chezmoi committed or pushed the change.

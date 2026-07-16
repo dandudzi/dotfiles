@@ -17,7 +17,7 @@ Use this skill to maintain one shared source for portable AI-agent behavior whil
 4. Preserve the one-shared-folder model. Do not create separate per-tool shared folders unless the user explicitly requests that split.
 5. For shared Markdown agents, keep frontmatter compatible with Claude Code and OpenCode unless the user accepts tool-specific divergence.
 6. For Codex custom agents, use a separate TOML adapter only when requested; do not pretend the Claude/OpenCode Markdown agent file is directly compatible.
-7. Capture rendered-dotfile changes with `chezmoi add` and verify symlink targets by reading them back.
+7. Capture only exact rendered targets with `rtk chezmoi add <path>` and verify symlink targets by reading them back.
 
 ## Canonical Locations
 
@@ -30,6 +30,7 @@ Use this skill to maintain one shared source for portable AI-agent behavior whil
 ## Guardrails
 
 - Do not overwrite existing live files without inspecting them.
+- Use only `rtk chezmoi ...` for chezmoi source state; never access the source directory directly or change or override chezmoi configuration without explicit permission.
 - Do not move credentials, OAuth files, caches, histories, logs, sessions, model defaults, or permission settings into the shared folder.
 - Do not link OpenCode skills to an extra path if it would cause duplicate skill discovery; prefer the existing shared `~/.agents/skills` path unless tested.
 - Keep user-facing instructions concise and durable. Put operational details for future agents in `AGENTS.md`, not in every prompt file.

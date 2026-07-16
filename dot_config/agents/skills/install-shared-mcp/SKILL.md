@@ -16,12 +16,13 @@ Use this skill to add MCP servers safely across the three agent environments on 
 3. Identify the MCP transport, command or URL, required environment variables, and which values are secrets.
 4. Record only non-secret shared intent in `~/.config/agents/mcp.md`.
 5. Update the requested active tool configs in native format, preserving existing config and comments where possible.
-6. Capture changed files with `chezmoi add` when editing rendered dotfiles.
+6. Capture only exact rendered targets with `rtk chezmoi add <path>`.
 7. Verify by reading back the changed files. If a tool has a safe MCP listing command available, run it only when it does not require credentials or destructive side effects.
 
 ## Guardrails
 
 - Do not symlink one active MCP config file across Codex, Claude Code, and OpenCode. Their schemas differ.
+- Use only `rtk chezmoi ...` for chezmoi source state; never access the source directory directly or change or override chezmoi configuration without explicit permission.
 - Do not copy tokens, OAuth state, secret headers, or local credential paths into `agents/mcp.md`.
 - Do not treat Claude `~/.claude.json` as shareable; it may contain user/local state.
 - If a target active config exists, merge deliberately. If the requested change would replace unknown existing config, stop and ask.

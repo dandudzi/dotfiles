@@ -18,11 +18,12 @@ Use this skill to keep hook logic in one shared script while configuring each ag
 5. Preserve existing hooks and plugin behavior. Merge instead of replacing.
 6. Keep secrets and machine-local paths out of shared hook scripts unless the user explicitly accepts local-only behavior.
 7. Validate syntax for edited config files and run the hook script directly with safe sample input when possible.
-8. Capture rendered-dotfile changes with `chezmoi add`.
+8. Capture only exact rendered targets with `rtk chezmoi add <path>`.
 
 ## Guardrails
 
 - Do not symlink one universal hook config across all tools. Hook config formats differ.
+- Use only `rtk chezmoi ...` for chezmoi source state; never access the source directory directly or change or override chezmoi configuration without explicit permission.
 - Do not overwrite existing `settings.json`, `config.toml`, `hooks.json`, `opencode.json`, or plugin files without inspecting them.
 - Make shared hook scripts executable only when required, and preserve file mode through chezmoi if needed.
 - Prefer deterministic scripts with clear stdin/stdout behavior. Avoid interactive prompts inside hooks.
