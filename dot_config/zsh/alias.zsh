@@ -84,10 +84,10 @@ alias git-list-untracked='git fetch --prune && git branch -r | awk "{print \$1}"
 alias git-remove-untracked='git fetch --prune && git branch -r | awk "{print \$1}" | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk "{print \$1}" | xargs git branch -D'
 
 #🌳 Replace interactive ls output with eza; `command ls` retains the system behavior.
-eza_params='--git --group --header --group-directories-first --icons'
+eza_params='--git --group --header --group-directories-first --icons=auto'
 alias lt='eza -l --sort=modified'      # Sort by modification time
 alias l="eza -l --icons $eza_params"                # Simple long list with icons
-alias ls="eza -al --icons $eza_params"
+alias ls="eza -al $eza_params"
 alias lg="eza --git-ignore $eza_params"
 alias ll="eza --all --header --long $eza_params"
 alias llm="eza --all --header --long --sort=modified $eza_params"
