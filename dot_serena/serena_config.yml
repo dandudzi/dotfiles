@@ -160,4 +160,5 @@ symbol_info_budget: 10
 project_serena_folder_location: "$projectDir/.serena"
 
 # the list of registered project paths (updated automatically).
-projects: []
+projects:
+- /Users/daniel/Repos/practice-neovim/Vim-Katas
