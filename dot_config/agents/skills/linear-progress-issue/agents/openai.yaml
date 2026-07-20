@@ -1,4 +1,4 @@
 interface:
   display_name: "Progress Linear Issue"
-  short_description: "Advance a linked issue through its workflow"
-  default_prompt: "Use $linear-progress-issue after $linear-link-work to have one medium-effort subagent advance the verified issue."
+  short_description: "Advance a linked issue with a Terra medium subagent"
+  default_prompt: "Use $linear-progress-issue after $linear-link-work with one gpt-5.6-terra subagent at medium reasoning effort."

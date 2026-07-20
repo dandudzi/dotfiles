@@ -1,4 +1,4 @@
 interface:
   display_name: "Create Linear Issue"
-  short_description: "Create a labeled, prioritized backlog issue for the project lead"
-  default_prompt: "Use $linear-create-issue to create a classified Backlog issue with explicit priority and the project lead assigned."
+  short_description: "Create a Linear issue through a Terra medium subagent"
+  default_prompt: "Use $linear-create-issue with one gpt-5.6-terra subagent at medium reasoning effort."

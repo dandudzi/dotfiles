@@ -1,6 +1,6 @@
 ---
 name: linear-create-issue
-description: Create one scoped Linear backlog issue or subissue with a Bug, Improvement, or Feature label, an explicit priority, and the project lead assigned, through a delegated subagent. Use when `linear-link-work` finds no matching issue or when the user explicitly requests a new issue for repository work.
+description: Create one scoped Linear backlog issue or subissue with a Bug, Improvement, or Feature label, an explicit priority, and the project lead assigned, through one delegated `gpt-5.6-terra` subagent at medium reasoning effort. Use when `linear-link-work` finds no matching issue or when the user explicitly requests a new issue for repository work.
 ---
 
 # Linear Create Issue
@@ -11,7 +11,7 @@ Delegate the Linear write. The primary agent must not create the issue itself.
 
 1. Read `## Linear scope` from the applicable `AGENTS.md`; require the allowed team and stable project ID/slug.
 2. Treat invocation by the user or by `linear-link-work` after no match as authorization for exactly one create operation.
-3. Delegate to one subagent with the request, repository path, and exact Linear scope. Stop if delegation is unavailable.
+3. Delegate to exactly one `gpt-5.6-terra` subagent with medium reasoning effort. Give it the request, repository path, and exact Linear scope. Stop if delegation with that model and effort is unavailable.
 4. Require the subagent to:
    - inspect only the allowed Linear project for project context, its current lead, and a current duplicate;
    - stop if the project has no lead;
@@ -27,5 +27,6 @@ Delegate the Linear write. The primary agent must not create the issue itself.
 ## Rules
 
 - Never read or write outside the allowed team and project.
+- Use only one subagent for this workflow, with model `gpt-5.6-terra` and reasoning effort `medium`.
 - Stop on missing scope, a project without a lead, an unavailable classification label, mismatched verification, or a result without a project.
 - Permit no other Linear writes; comments, updates, and status changes need separate authorization.
