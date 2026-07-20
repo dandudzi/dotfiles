@@ -1,0 +1,4 @@
+interface:
+  display_name: "Initialize Linear Scope"
+  short_description: "Add verified Linear scope to AGENTS.md"
+  default_prompt: "Use $linear-initialize-scope to connect this repository to a verified Linear project in its root AGENTS.md."
