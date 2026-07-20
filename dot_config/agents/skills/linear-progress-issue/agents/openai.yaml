@@ -1,4 +1,4 @@
 interface:
   display_name: "Progress Linear Issue"
-  short_description: "Move a Linear issue safely through its workflow"
-  default_prompt: "Use $linear-progress-issue to advance this issue to the next valid workflow state."
+  short_description: "Delegate Linear workflow transitions to one subagent"
+  default_prompt: "Use $linear-progress-issue to have one medium-effort subagent advance this issue to its next valid workflow state."
