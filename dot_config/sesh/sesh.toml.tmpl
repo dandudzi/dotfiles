@@ -3,16 +3,49 @@
 preview_command = "eza --all --git --icons --color=always {}"
 
 
+# Keep both Config panes focused on resuming Codex work.
 [[session]]
 name = "Config"
-startup_command = 'econfig'
+path = "~/.config"
+startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD" "codex resume"; tmux select-pane -t "$TMUX_PANE"; codex resume'
 
 
 {{ if not .work -}}
+# Restore the directory-specific LazyVim session when entering the katas.
 [[session]]
 name = "Vim Kata"
 path = "~/Repos/practice-neovim/Vim-Katas/exercises/"
-startup_command= "nvim"
+startup_command = "nvim -c \"lua require('persistence').load()\""
+
+# Keep interactive Codex work separate from the frontend development server.
+[[session]]
+name = "Zakupki"
+path = "~/Repos/zakupki"
+startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
+windows = ["zakupki-integration"]
+
+[[window]]
+name = "zakupki-integration"
+path = "~/Repos/zakupki"
+startup_script = "pnpm dev:integration"
+
+# Keep interactive Codex work separate from the backend development server.
+[[session]]
+name = "Zakupki Backend"
+path = "~/Repos/backend_zakupki"
+startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
+windows = ["backend-dev"]
+
+[[window]]
+name = "backend-dev"
+path = "~/Repos/backend_zakupki"
+startup_script = "./mvnw spring-boot:run -Dspring-boot.run.profiles=dev"
+
+# Resume the most relevant Codex session for the personal Obsidian workspace.
+[[session]]
+name = "Personal"
+path = "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/personal"
+startup_command = "codex resume"
 {{ end }}
 
 
@@ -20,4 +53,5 @@ startup_command= "nvim"
 [[session]]
 name = "Monolith"
 path = "{{ .chezmoi.homeDir }}/jira"
+
 {{ end }}
