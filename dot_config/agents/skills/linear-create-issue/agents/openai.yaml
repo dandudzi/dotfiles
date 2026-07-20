@@ -1,4 +1,4 @@
 interface:
   display_name: "Create Linear Issue"
-  short_description: "Create a Linear issue through a Terra medium subagent"
-  default_prompt: "Use $linear-create-issue with one gpt-5.6-terra subagent at medium reasoning effort."
+  short_description: "Create scoped issues, subissues, and relations"
+  default_prompt: "Use $linear-create-issue with one gpt-5.6-terra subagent at medium reasoning effort to create the authorized issue or approved subissue batch."
