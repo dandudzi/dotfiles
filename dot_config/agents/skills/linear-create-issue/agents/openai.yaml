@@ -1,4 +1,4 @@
 interface:
   display_name: "Create Linear Issue"
-  short_description: "Create a scoped Linear issue through delegation"
-  default_prompt: "Use $linear-create-issue to create a scoped Linear issue for this repository task."
+  short_description: "Create a prioritized backlog issue assigned to its project lead"
+  default_prompt: "Use $linear-create-issue to create a scoped Backlog issue with explicit priority and the project lead assigned."
