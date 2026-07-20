@@ -1,4 +1,4 @@
 interface:
   display_name: "Link Work to Linear"
-  short_description: "Link repository work to scoped Linear issues"
-  default_prompt: "Use $linear-link-work to bind this repository task to an allowed Linear issue."
+  short_description: "Resolve a scoped Linear issue and hand it off"
+  default_prompt: "Use $linear-link-work to verify the issue for this repository task and hand it to $linear-progress-issue before work begins."
