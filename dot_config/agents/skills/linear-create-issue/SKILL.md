@@ -1,6 +1,6 @@
 ---
 name: linear-create-issue
-description: Create one scoped Linear backlog issue or subissue with a Bug, Improvement, or Feature label, an explicit priority, and the project lead assigned, through one delegated `gpt-5.6-terra` subagent at medium reasoning effort. Use when `linear-link-work` finds no matching issue or when the user explicitly requests a new issue for repository work.
+description: Create one scoped Linear backlog issue or subissue with a Bug, Feature, Improvement, or Tech Debt label, an explicit priority, and the project lead assigned, through one delegated `gpt-5.6-terra` subagent at medium reasoning effort. Use when `linear-link-work` finds no matching issue or when the user explicitly requests a new issue for repository work.
 ---
 
 # Linear Create Issue
@@ -18,7 +18,7 @@ Delegate the Linear write. The primary agent must not create the issue itself.
    - inspect relevant code, docs, tests, and diff for repository context;
    - return an existing matching key if a duplicate appeared;
    - use a subissue only when a clear in-project parent exists; otherwise create a top-level issue;
-   - choose exactly one existing team label: Bug for broken or regressed behavior, Feature for a new capability, or Improvement for an enhancement to existing behavior; default to Improvement when no category clearly dominates, and stop rather than create a missing label;
+   - choose exactly one existing team label: Bug for broken or regressed behavior, Feature for a new capability, Improvement for an enhancement to existing behavior, or Tech Debt for internal remediation or structural maintenance that does not primarily change user-facing behavior; default to Improvement when no category clearly dominates, and stop rather than create a missing label;
    - choose and explicitly set the priority from evidence in the request and repository context: Urgent for active critical incidents, High for time-sensitive blockers, Medium for normal planned work, or Low for optional cleanup; default to Medium when no stronger signal exists;
    - create one issue in the allowed team and project, set the chosen label and priority, set its state to `Backlog`, assign the project lead as its issue assignee, and use a concise title plus a description covering context, intended outcome, and relevant paths or acceptance notes;
    - retrieve the result, verify its key, team, project, label, `Backlog` state, priority, and assignee, and return them to the primary agent.
