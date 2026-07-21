@@ -416,6 +416,115 @@ class ImportLedgerFeatureTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("quarantine content hash changed", payload["error"])
 
+    def test_amend_review_clears_erroneous_loss_with_append_only_history(self) -> None:
+        fixture = self.add_reviewed_run("run-amend-review")
+        erroneous = "No source loss; detached sketch relationship is ambiguous."
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE run_items SET loss_details=? WHERE run_id=?",
+                (erroneous, fixture["run_id"]),
+            )
+
+        amended = self.run_cli(
+            "amend-review",
+            "--db",
+            self.db,
+            "--run-id",
+            fixture["run_id"],
+            "--relative-path",
+            fixture["relative_path"],
+            "--vault-root",
+            self.vault,
+            "--expected-loss-details",
+            erroneous,
+            "--clear-loss-details",
+            "--reason",
+            "review caveat was recorded as source loss",
+        )
+        payload = self.json_result(amended)
+        self.assertEqual(amended.returncode, 0, payload)
+        self.assertIsNone(payload["loss_details"])
+
+        with self.connect() as connection:
+            item = connection.execute(
+                "SELECT loss_details, loss_acknowledged FROM run_items WHERE run_id=?",
+                (fixture["run_id"],),
+            ).fetchone()
+            self.assertEqual(tuple(item), (None, 0))
+            history = connection.execute(
+                """
+                SELECT previous_loss_details, new_loss_details, reason
+                FROM review_history WHERE run_id=?
+                """,
+                (fixture["run_id"],),
+            ).fetchone()
+            self.assertEqual(history["previous_loss_details"], erroneous)
+            self.assertIsNone(history["new_loss_details"])
+            self.assertEqual(
+                history["reason"], "review caveat was recorded as source loss"
+            )
+
+        destination = self.vault / "Notes" / "run-amend-review.md"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text("approved output\n", encoding="utf-8")
+        integrated = self.run_cli(
+            "integrate",
+            "--db",
+            self.db,
+            "--run-id",
+            fixture["run_id"],
+            "--relative-path",
+            fixture["relative_path"],
+            "--vault-root",
+            self.vault,
+            "--decision",
+            "integrate",
+            "--destination",
+            "Notes/run-amend-review.md",
+        )
+        self.assertEqual(integrated.returncode, 0, self.json_result(integrated))
+
+    def test_amend_review_refuses_stale_expected_loss_and_preserves_history(self) -> None:
+        fixture = self.add_reviewed_run("run-amend-review-stale")
+        current = "Known conversion loss."
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE run_items SET loss_details=? WHERE run_id=?",
+                (current, fixture["run_id"]),
+            )
+
+        refused = self.run_cli(
+            "amend-review",
+            "--db",
+            self.db,
+            "--run-id",
+            fixture["run_id"],
+            "--relative-path",
+            fixture["relative_path"],
+            "--vault-root",
+            self.vault,
+            "--expected-loss-details",
+            "stale value",
+            "--clear-loss-details",
+            "--reason",
+            "incorrect review metadata",
+        )
+        payload = self.json_result(refused)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("expected loss details", payload["error"].lower())
+        with self.connect() as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT loss_details FROM run_items WHERE run_id=?",
+                    (fixture["run_id"],),
+                ).fetchone()[0],
+                current,
+            )
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM review_history").fetchone()[0],
+                0,
+            )
+
     def test_terminal_decision_must_be_reopened_with_append_only_history(self) -> None:
         fixture = self.add_reviewed_run("run-reopen")
         skipped = self.run_cli(
@@ -864,7 +973,7 @@ class ImportLedgerFeatureTests(unittest.TestCase):
         self.assertFalse(payload["cleanup_eligible"])
         self.assertFalse(payload["ok"])
 
-    def test_init_migrates_valid_v3_to_v4_without_losing_rows_and_is_idempotent(self) -> None:
+    def test_init_migrates_valid_v3_to_v5_without_losing_rows_and_is_idempotent(self) -> None:
         db, expected = self.create_v3_database()
 
         first = self.run_cli("init", "--db", db)
@@ -877,7 +986,7 @@ class ImportLedgerFeatureTests(unittest.TestCase):
                 connection.execute(
                     "SELECT value FROM schema_meta WHERE key='schema_version'"
                 ).fetchone()[0],
-                "4",
+                "5",
             )
             run = connection.execute(
                 "SELECT run_id, source_key, resolution_status FROM runs"
@@ -918,6 +1027,10 @@ class ImportLedgerFeatureTests(unittest.TestCase):
                 connection.execute("SELECT count(*) FROM run_artifacts").fetchone()[0],
                 0,
             )
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM review_history").fetchone()[0],
+                0,
+            )
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
             self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
 
@@ -929,7 +1042,7 @@ class ImportLedgerFeatureTests(unittest.TestCase):
                 connection.execute(
                     "SELECT value FROM schema_meta WHERE key='schema_version'"
                 ).fetchone()[0],
-                "4",
+                "5",
             )
             self.assertEqual(connection.execute("SELECT count(*) FROM runs").fetchone()[0], 1)
             self.assertEqual(connection.execute("SELECT count(*) FROM run_items").fetchone()[0], 1)
@@ -943,6 +1056,10 @@ class ImportLedgerFeatureTests(unittest.TestCase):
             )
             self.assertEqual(
                 connection.execute("SELECT count(*) FROM run_artifacts").fetchone()[0],
+                0,
+            )
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM review_history").fetchone()[0],
                 0,
             )
             self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")

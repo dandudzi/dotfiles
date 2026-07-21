@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 TERMINAL_STATES = {"integrated", "skipped", "discarded"}
 GENERATED_KEYS = {"import_run", "imported_at", "destination"}
 
@@ -141,6 +141,32 @@ CREATE TRIGGER IF NOT EXISTS decision_history_no_delete
 BEFORE DELETE ON decision_history
 BEGIN
     SELECT RAISE(ABORT, 'decision history is append-only');
+END;
+
+CREATE TABLE IF NOT EXISTS review_history (
+    history_id INTEGER PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    version_id INTEGER NOT NULL,
+    previous_loss_details TEXT,
+    new_loss_details TEXT,
+    reason TEXT NOT NULL CHECK (length(trim(reason)) > 0),
+    recorded_at TEXT NOT NULL,
+    FOREIGN KEY (run_id, version_id) REFERENCES run_items(run_id, version_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_history_item
+    ON review_history(run_id, version_id, history_id);
+
+CREATE TRIGGER IF NOT EXISTS review_history_no_update
+BEFORE UPDATE ON review_history
+BEGIN
+    SELECT RAISE(ABORT, 'review history is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS review_history_no_delete
+BEFORE DELETE ON review_history
+BEGIN
+    SELECT RAISE(ABORT, 'review history is append-only');
 END;
 
 CREATE TABLE IF NOT EXISTS run_artifacts (
@@ -551,7 +577,7 @@ def init_command(args: argparse.Namespace) -> dict[str, Any]:
                 if existing is None:
                     raise LedgerError("existing ledger has no schema version")
                 version = int(existing["value"])
-                if version not in {1, 2, 3, SCHEMA_VERSION}:
+                if version not in {1, 2, 3, 4, SCHEMA_VERSION}:
                     raise LedgerError("existing ledger has an unsupported schema version")
                 foreign_keys = list(connection.execute("PRAGMA foreign_key_check"))
                 if foreign_keys:
@@ -969,6 +995,66 @@ def review_command(args: argparse.Namespace) -> dict[str, Any]:
             "run_id": args.run_id,
             "state": state,
             "run_status": run_status,
+        }
+    finally:
+        connection.close()
+
+
+def amend_review_command(args: argparse.Namespace) -> dict[str, Any]:
+    connection = connect(Path(args.db).expanduser().resolve())
+    vault_root = Path(args.vault_root).expanduser().resolve()
+    reason = args.reason.strip()
+    if not reason:
+        raise LedgerError("--reason must not be empty")
+    new_loss_details = None if args.clear_loss_details else args.loss_details
+    if new_loss_details is not None and not new_loss_details.strip():
+        raise LedgerError("--loss-details must not be empty; use --clear-loss-details")
+    try:
+        ensure_schema(connection)
+        with transaction(connection):
+            item = run_item(connection, args.run_id, args.relative_path)
+            if item["state"] != "reviewed" or item["decision"] is not None:
+                raise LedgerError(
+                    "review amendments require an undecided item in reviewed state"
+                )
+            if item["loss_acknowledged"]:
+                raise LedgerError("cannot amend loss details after loss acknowledgment")
+            verified_quarantine(vault_root, item)
+            if item["loss_details"] != args.expected_loss_details:
+                raise LedgerError("expected loss details do not match current review metadata")
+            if item["loss_details"] == new_loss_details:
+                raise LedgerError("review amendment would not change loss details")
+            recorded_at = now()
+            cursor = connection.execute(
+                """
+                INSERT INTO review_history(
+                    run_id, version_id, previous_loss_details,
+                    new_loss_details, reason, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    args.run_id,
+                    item["version_id"],
+                    item["loss_details"],
+                    new_loss_details,
+                    reason,
+                    recorded_at,
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE run_items SET loss_details=?
+                WHERE run_id=? AND version_id=?
+                """,
+                (new_loss_details, args.run_id, item["version_id"]),
+            )
+        return {
+            "ok": True,
+            "run_id": args.run_id,
+            "version_id": item["version_id"],
+            "history_id": cursor.lastrowid,
+            "loss_details": new_loss_details,
+            "loss_acknowledged": False,
         }
     finally:
         connection.close()
@@ -1863,6 +1949,21 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--review-group")
     review.add_argument("--loss-details")
     review.set_defaults(handler=review_command)
+
+    amend_review = subparsers.add_parser(
+        "amend-review",
+        help="Correct reviewed loss metadata with append-only history",
+    )
+    add_db(amend_review)
+    amend_review.add_argument("--run-id", required=True)
+    amend_review.add_argument("--relative-path", required=True)
+    amend_review.add_argument("--vault-root", required=True)
+    amend_review.add_argument("--expected-loss-details", required=True)
+    replacement = amend_review.add_mutually_exclusive_group(required=True)
+    replacement.add_argument("--loss-details")
+    replacement.add_argument("--clear-loss-details", action="store_true")
+    amend_review.add_argument("--reason", required=True)
+    amend_review.set_defaults(handler=amend_review_command)
 
     integrate = subparsers.add_parser("integrate", help="Record an owner-approved decision")
     add_db(integrate)

@@ -62,6 +62,8 @@ The coordinator starts a reviewer without the importer's conclusions. The review
 
 Write `_Imports/Reviews/<run-id>.md`, record every classification and review group, and register the report with `record-artifact`. Separate source facts from inference and proposed design. Redact credentials, codes, phone numbers, addresses, and account identifiers from owner-facing text. Return missing or altered quarantine to the importer. Do not integrate.
 
+Before an owner decision, correct erroneous review loss metadata only with `amend-review`. Discover its arguments with `.../import_ledger.py amend-review --help`, supply the exact current loss text as the expected value, and give a nonempty reason. It re-verifies quarantine and records the change in append-only history. Never clear review metadata with direct SQL.
+
 ### 3. Owner decisions
 
 Present one file or coherent topic per decision card: source identity, content, value, privacy or staleness, known loss, recommendation, and proposed destination or transformation. Use only **keep/import**, **garbage/do not import**, or **defer** as owner-facing dispositions; do not say bare **skip**.
