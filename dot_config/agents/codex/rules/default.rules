@@ -1,6 +1,6 @@
 # Codex execution policy — active user policy.
 #
-# Audited against Codex CLI 0.144.5 on 2026-07-16. The live
+# Audited against Codex CLI 0.144.6 on 2026-07-21. The live
 # ~/.codex/rules/default.rules path is intentionally a symlink to this shared
 # file so Codex, Claude Code, and OpenCode policy work can retain one reviewed
 # source of intent where their native rule formats permit it.
@@ -38,6 +38,7 @@ host_executable(name = "false", paths = ["/usr/bin/false"])
 host_executable(name = "basename", paths = ["/usr/bin/basename"])
 host_executable(name = "dirname", paths = ["/usr/bin/dirname"])
 host_executable(name = "codex", paths = ["/opt/homebrew/bin/codex"])
+host_executable(name = "obsidian", paths = ["/opt/homebrew/bin/obsidian"])
 
 # RTK accepts documented global modifiers and transparent command wrappers.
 # Mirror every RTK rule across those spellings so the underlying command keeps
@@ -159,8 +160,10 @@ def rtk_prefix_rule(pattern, decision, justification, match = [], not_match = []
     )
 
 # -----------------------------------------------------------------------------
-# ALLOW — narrow, read-only commands whose remaining arguments cannot perform
-# writes, network calls, child execution, or privilege changes.
+# ALLOW — commands explicitly authorized to run outside the sandbox without a
+# prompt. Most are narrow and read-only. Obsidian is application-scoped and has
+# stricter prompt overrides below for destructive, executable, plugin, theme,
+# recovery, and administrative operations.
 # -----------------------------------------------------------------------------
 
 prefix_rule(
@@ -287,6 +290,33 @@ rtk_prefix_rule(
     justification = "Inspect the installed Maven CLI through RTK without running a project build or Maven Wrapper bootstrap.",
     match = ["rtk mvn --version", "rtk mvn --help"],
     not_match = ["rtk mvn -V deploy", "rtk mvn test", "rtk ./mvnw --version"],
+)
+
+# The Obsidian desktop CLI requires access to the app process and its IPC socket,
+# which live outside the workspace sandbox. The user explicitly authorizes the
+# complete CLI surface; safety-sensitive subcommands retain prompt overrides.
+prefix_rule(
+    pattern = ["obsidian"],
+    decision = "allow",
+    justification = "Run the explicitly authorized Obsidian desktop CLI outside the workspace sandbox.",
+    match = [
+        "obsidian read path=Notes/Example.md",
+        "obsidian create path=Inbox/Example.md content=Example",
+        "obsidian move path=Inbox/Example.md to=Notes/Example.md",
+    ],
+    not_match = ["obsidian-export vault"],
+)
+
+rtk_prefix_rule(
+    pattern = ["rtk", "obsidian"],
+    decision = "allow",
+    justification = "Run the explicitly authorized Obsidian desktop CLI through RTK outside the workspace sandbox.",
+    match = [
+        "rtk obsidian read path=Notes/Example.md",
+        "rtk obsidian create path=Inbox/Example.md content=Example",
+        "rtk obsidian move path=Inbox/Example.md to=Notes/Example.md",
+    ],
+    not_match = ["rtk obsidian-export vault"],
 )
 
 # -----------------------------------------------------------------------------
@@ -850,21 +880,106 @@ rtk_prefix_rule(
     not_match = ["rtk du -sh ."],
 )
 
-# Obsidian plugin installation changes vault configuration and can download code.
+# Obsidian safety-sensitive operations remain available but require exact
+# approval. Prompting all delete invocations also covers the positional
+# `permanent` flag, which native prefix rules cannot match reliably.
 prefix_rule(
-    pattern = ["obsidian", "plugin:install"],
+    pattern = [
+        "obsidian",
+        [
+            "command",
+            "delete",
+            "dev:cdp",
+            "dev:debug",
+            "dev:mobile",
+            "dev:screenshot",
+            "devtools",
+            "eval",
+            "history:restore",
+            "plugin:disable",
+            "plugin:enable",
+            "plugin:install",
+            "plugin:reload",
+            "plugin:uninstall",
+            "plugins:restrict",
+            "reload",
+            "restart",
+            "snippet:disable",
+            "snippet:enable",
+            "theme:install",
+            "theme:set",
+            "theme:uninstall",
+        ],
+    ],
     decision = "prompt",
-    justification = "Installing an Obsidian plugin mutates vault state and may download executable code.",
-    match = ["obsidian plugin:install example-plugin"],
-    not_match = ["obsidian plugin:list", "obsidian plugin:enable example-plugin"],
+    justification = "Destructive, executable, recovery, plugin, theme, or administrative Obsidian operations require exact approval.",
+    match = [
+        "obsidian delete path=Notes/Example.md",
+        "obsidian history:restore path=Notes/Example.md version=1",
+        "obsidian plugin:install id=example-plugin",
+        "obsidian eval code=app.vault.getName()",
+        "obsidian restart",
+    ],
+    not_match = [
+        "obsidian read path=Notes/Example.md",
+        "obsidian search query=example",
+        "obsidian create path=Inbox/Example.md",
+        "obsidian move path=Inbox/Example.md to=Notes/Example.md",
+        "obsidian property:set name=status value=active path=Notes/Example.md",
+        "obsidian task path=Notes/Example.md line=1 done",
+        "obsidian plugin id=dataview",
+        "obsidian plugins",
+    ],
 )
 
 rtk_prefix_rule(
-    pattern = ["rtk", "obsidian", "plugin:install"],
+    pattern = [
+        "rtk",
+        "obsidian",
+        [
+            "command",
+            "delete",
+            "dev:cdp",
+            "dev:debug",
+            "dev:mobile",
+            "dev:screenshot",
+            "devtools",
+            "eval",
+            "history:restore",
+            "plugin:disable",
+            "plugin:enable",
+            "plugin:install",
+            "plugin:reload",
+            "plugin:uninstall",
+            "plugins:restrict",
+            "reload",
+            "restart",
+            "snippet:disable",
+            "snippet:enable",
+            "theme:install",
+            "theme:set",
+            "theme:uninstall",
+        ],
+    ],
     decision = "prompt",
-    justification = "Installing an Obsidian plugin through RTK mutates vault state and may download executable code.",
-    match = ["rtk obsidian plugin:install example-plugin"],
-    not_match = ["rtk obsidian plugin:list", "rtk obsidian plugin:enable example-plugin"],
+    justification = "Destructive, executable, recovery, plugin, theme, or administrative Obsidian operations through RTK require exact approval.",
+    match = [
+        "rtk obsidian delete path=Notes/Example.md",
+        "rtk obsidian history:restore path=Notes/Example.md version=1",
+        "rtk obsidian plugin:install id=example-plugin",
+        "rtk obsidian eval code=app.vault.getName()",
+        "rtk obsidian restart",
+    ],
+    not_match = [
+        "rtk obsidian read path=Notes/Example.md",
+        "rtk obsidian search query=example",
+        "rtk obsidian create path=Inbox/Example.md",
+        "rtk obsidian move path=Inbox/Example.md to=Notes/Example.md",
+        "rtk obsidian property:set name=status value=active path=Notes/Example.md",
+        "rtk obsidian task path=Notes/Example.md line=1 done",
+        "rtk obsidian plugin id=dataview",
+        "rtk obsidian plugins",
+    ],
 )
 
 # -----------------------------------------------------------------------------
