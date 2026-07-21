@@ -7,7 +7,7 @@ preview_command = "eza --all --git --icons --color=always {}"
 [[session]]
 name = "Config"
 path = "~/.config"
-startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD" "codex resume"; tmux select-pane -t "$TMUX_PANE"; codex resume'
+startup_command = 'tmux rename-window codex; tmux split-window -h -c "$PWD" "codex resume"; tmux select-pane -t "$TMUX_PANE"; codex resume'
 
 
 {{ if not .work -}}
@@ -21,7 +21,7 @@ startup_command = "nvim -c \"lua require('persistence').load()\""
 [[session]]
 name = "Zakupki"
 path = "~/Repos/zakupki"
-startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
+startup_command = 'tmux rename-window codex; tmux split-window -h -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
 windows = ["zakupki-integration"]
 
 [[window]]
@@ -33,7 +33,7 @@ startup_script = "pnpm dev:integration"
 [[session]]
 name = "Zakupki Backend"
 path = "~/Repos/backend_zakupki"
-startup_command = 'tmux rename-window codex; tmux split-window -v -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
+startup_command = 'tmux rename-window codex; tmux split-window -h -c "$PWD"; tmux select-pane -t "$TMUX_PANE"; codex resume'
 windows = ["backend-dev"]
 
 [[window]]
