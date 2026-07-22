@@ -18,7 +18,7 @@ Keep Linear state and relations aligned with actual work. The primary agent deci
 ## State Progression
 
 - Move `Backlog` to `Todo` when work is accepted, sufficiently understood, and ready to start. After an approved split is verified, move the parent to `Todo`.
-- Move `Todo` to `In Progress` immediately before substantive work begins. When any required child starts, also move a nonterminal parent to `In Progress`, one valid transition at a time.
+- Move `Todo` to `In Progress` immediately before substantive work begins. When any required child starts, also move a nonterminal parent to `In Progress`, one valid transition at a time. After the starting state is verified, use `coding-workflow` for every code change.
 - Keep an actively blocked issue in `Todo` before implementation or `In Progress` if implementation already began.
 - Move `In Progress` to `Done` only after the completion contract below is proven.
 - Move a nonterminal issue to `Canceled` only when the user explicitly requests cancellation of that exact issue.

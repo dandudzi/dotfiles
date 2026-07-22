@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coding Workflow"
+  short_description: "Apply a test-first implementation workflow"
+  default_prompt: "Use $coding-workflow to implement this change test-first and verify the resulting behavior."

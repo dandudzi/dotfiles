@@ -18,7 +18,7 @@ Before substantive work, bind it to a verified issue or subissue in the locally 
 7. Detect a large issue when it contains multiple outcomes that can be implemented or verified independently. Before creating anything, propose the smallest useful decomposition. For every proposed subissue include its title, outcome, acceptance criteria, one existing classification label, explicit priority, dependency order, and expected Git deliverable.
 8. Wait for approval of the complete decomposition. After approval, invoke `linear-create-issue` once for the approved batch. Require a new proposal and approval before any deeper nesting.
 9. Re-fetch the parent and every child after creation and after state transitions to detect parent/subissue automation. Assign all implementation to children; if implementation remains at parent level, propose another child rather than implementing it on the parent.
-10. State the active issue or subissue key and hand the verified key, parent/child snapshot, relation snapshot, repository path, and exact Linear scope to `linear-progress-issue`. Do not begin substantive work until that skill confirms the allowed starting state.
+10. State the active issue or subissue key and hand the verified key, parent/child snapshot, relation snapshot, repository path, and exact Linear scope to `linear-progress-issue`. Do not begin substantive work until that skill confirms the allowed starting state; after confirmation, use `coding-workflow` for every code change.
 
 ## Rules
 
