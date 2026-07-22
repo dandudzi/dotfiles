@@ -19,7 +19,6 @@
 - Use Playwright or browser controls for rendered or interactive behavior, not documentation search.
 - Use Serena for semantic code navigation and Linear for issue or project context.
 - Use Linear only when the user explicitly requests it, identifies an issue, or asks for repository work whose applicable instructions require Linear tracking. Do not query Linear for unrelated requests.
-- Delegate Linear issue searches to a subagent. Keep raw search results in the subagent context and return only the selected issue key, a concise rationale, and the relevant relation summary to the primary agent.
 - When the user asks to start work on an issue from an issue tracker such as Linear or Jira, first prepare an implementation plan and ask for approval; do not begin implementation until the user approves the plan.
 - If a required tool is unavailable, say so and use the best available source.
 - Keep Serena, Linear, and Playwright read-only unless the user authorizes an exact mutation.
