@@ -1,4 +1,4 @@
 interface:
   display_name: "Progress Linear Issue"
   short_description: "Progress relations and prove remote completion"
-  default_prompt: "Use $linear-progress-issue after $linear-link-work to manage scoped relations and prove the linked work landed on origin/master before completion."
+  default_prompt: "Use $linear-progress-issue with the named linear-operator custom agent after $linear-link-work to manage scoped relations and prove remote completion."

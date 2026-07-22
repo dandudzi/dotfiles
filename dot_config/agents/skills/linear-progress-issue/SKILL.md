@@ -1,17 +1,17 @@
 ---
 name: linear-progress-issue
-description: Coordinate one `gpt-5.6-terra` subagent at medium reasoning effort to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on `origin/master`. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
+description: Coordinate the named `linear-operator` custom agent to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on `origin/master`. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
 ---
 
 # Linear Progress Issue
 
-Keep Linear state and relations aligned with actual work. The primary agent decides when an event has occurred and delegates Linear writes to one `gpt-5.6-terra` subagent at medium reasoning effort.
+Keep Linear state and relations aligned with actual work. The primary agent decides when an event has occurred and delegates Linear writes to the named `linear-operator` custom agent, whose Codex adapter pins `gpt-5.6-terra` with medium reasoning effort.
 
 ## Setup
 
 1. Read `## Linear scope` from the applicable `AGENTS.md`; require the allowed team and stable project ID/slug.
 2. Accept one verified key plus the parent/child and relation snapshots from `linear-link-work`. If the user supplies an unverified key, run `linear-link-work` first; never discover, select, or create an issue here.
-3. Delegate state and relation management to exactly one `gpt-5.6-terra` subagent with medium reasoning effort. Give it the key, repository path, exact scope, snapshots, intended writes, evidence, and the IDs of relations the agent created during this active work. Reuse that subagent for later writes during the same active work when possible.
+3. Delegate state and relation management to exactly one custom agent named `linear-operator`. Give it the key, repository path, exact scope, snapshots, intended writes, evidence, and the IDs of relations the agent created during this active work. Reuse that agent thread for later writes during the same active work when possible. Stop if the named agent is unavailable or cannot be selected.
 4. Require the subagent to verify the issue, parent, children, and every relation target against the allowed team and project before reading further or writing. Stop and request an exact scope override for an external target.
 5. Retrieve the team's workflow states and require exact `Backlog`, `Todo`, `In Progress`, `Done`, and `Canceled` names or IDs. Re-fetch affected issues and relations after every write to detect automation.
 
@@ -57,7 +57,7 @@ Require the subagent to retrieve and verify the current issue and relevant relat
 ## Rules
 
 - The primary agent must not perform Linear writes itself; stop if the required delegation is unavailable.
-- Use only one subagent for this workflow, with model `gpt-5.6-terra` and reasoning effort `medium`.
+- Use only the named `linear-operator` custom agent for this workflow; do not attempt to configure an anonymous subagent at spawn time.
 - Treat work on a verified issue as authorization only for forward transitions whose lifecycle events actually occur and for evidenced in-scope blocking or related relations.
 - Make no state change for planning text, proposed work, failed landing or verification, or an issue already in the correct state.
 - Require the active issue or child key in every commit message. For a squash merge, require the resulting commit or linked merged PR to identify the key unambiguously.
