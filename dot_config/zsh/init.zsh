@@ -164,7 +164,10 @@ source $CONFIG_HOME/scripts/setUpCITools.sh
 
 # Skip updates until every required setup phase has created the success sentinel.
 if [[ -f "$HOME/.isCISetUpRun" ]]; then
-    source $CONFIG_HOME/scripts/update_packages.sh
+    # Run maintenance in a child process so failures cannot abort or pollute zsh startup.
+    if ! "$CONFIG_HOME/scripts/update_packages.sh"; then
+        print -u2 "Package update check failed; continuing zsh startup."
+    fi
 fi
 
 #🎖️ Command used in command line
