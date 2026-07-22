@@ -62,6 +62,11 @@ fi
 if [ "${HANG_COMMAND:-}" = "$(basename "$0")" ]; then
   sleep 10
 fi
+if [ "${PROMPT_COMMAND:-}" = "$(basename "$0")" ]; then
+  printf 'fake command needs input: '
+  IFS= read -r prompt_answer || exit 24
+  [ "$prompt_answer" = "continue" ] || exit 25
+fi
 exit 0
 EOF
   chmod +x "$BIN/fake-command"
@@ -71,6 +76,28 @@ EOF
   done
   ln -s "$BIN/fake-command" "$HOME/.oh-my-zsh/tools/upgrade.sh"
   ln -s "$BIN/fake-command" "$HOME/.config/tmux/plugins/tpm/bin/update_plugins"
+}
+
+run_interactive_update() {
+  TEST_COMMAND_LOG="$LOG" \
+    HOME="$HOME" \
+    ZSH="$HOME/.oh-my-zsh" \
+    PATH="$BIN:/opt/homebrew/bin:/usr/bin:/bin" \
+    UPDATE_TIMEOUT=0.5s \
+    UPDATE_SCRIPT_PATH="$UPDATE_SCRIPT" \
+    PROMPT_COMMAND=chezmoi \
+    expect -c '
+      set timeout 3
+      set update_script $env(UPDATE_SCRIPT_PATH)
+      spawn -noecho $update_script
+      expect "Run them now?"
+      send "y\r"
+      expect "fake command needs input:"
+      send "continue\r"
+      expect eof
+      set result [wait]
+      exit [lindex $result 3]
+    ' >"$OUTPUT" 2>&1
 }
 
 run_update() {
@@ -148,6 +175,15 @@ else
 fi
 assert_eq 0 "$(cat "$HOME/.last_update")" "failed updates leave the timer unchanged"
 unset FAIL_COMMAND
+
+new_fixture interactive-child
+echo 0 >"$HOME/.last_update"
+if run_interactive_update; then
+  pass "interactive update commands can read from the terminal"
+else
+  fail "interactive update commands can read from the terminal"
+  sed 's/^/# interactive output: /' "$OUTPUT" >&2
+fi
 
 new_fixture timeout
 echo 0 >"$HOME/.last_update"

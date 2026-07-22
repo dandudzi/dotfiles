@@ -51,8 +51,8 @@ perform_updates() {
   fi
 }
 
-# Keep the interactive decision outside timeout so the worker can run in its own
-# process group and timeout can stop its child processes as well as the script.
+# Keep the interactive decision outside timeout, then preserve terminal access
+# for update commands such as chezmoi that may ask their own questions.
 if [ "${1:-}" = "--perform-update" ]; then
   perform_updates
   exit $?
@@ -89,7 +89,7 @@ case "$answer" in
     ;;
 esac
 
-if timeout --kill-after=5s "$UPDATE_TIMEOUT" "$0" --perform-update; then
+if timeout --foreground --kill-after=5s "$UPDATE_TIMEOUT" "$0" --perform-update; then
   if ! date +%s >"$UPDATE_FILE"; then
     echo "Updates completed, but $UPDATE_FILE could not be refreshed." >&2
     exit 1
