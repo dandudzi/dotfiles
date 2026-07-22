@@ -1,6 +1,6 @@
 ---
 name: coding-workflow
-description: Orchestrate repository code changes through an adaptive, test-first workflow. Use when implementing features, fixing bugs, refactoring, or otherwise changing executable behavior; scale from a compact single-agent loop for small changes to an isolated, plan-approved multi-agent workflow for substantive, risky, cross-cutting, long-running, or explicitly delegated work. Do not use for read-only explanation, diagnosis, research, or review.
+description: Orchestrate repository code changes through an adaptive, test-first workflow from implementation through a merged pull request and ticket closure. Use when implementing features, fixing bugs, refactoring, or otherwise changing executable behavior; scale from a compact single-agent loop for small changes to an isolated, plan-approved multi-agent workflow for substantive, risky, cross-cutting, long-running, or explicitly delegated work. Do not use for read-only explanation, diagnosis, research, or review.
 ---
 
 # Coding Workflow
@@ -64,4 +64,15 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
    - Remove the transient plan unless repository policy requires it to remain.
    - Commit only the completed task files on the dedicated branch.
    - Present the commit, diff summary, acceptance evidence, test results, reviewer findings, and remaining risks.
-   - Never merge or push unless explicitly requested.
+
+## Deliver and Complete
+
+After the compact or orchestrated path produces a verified commit:
+
+1. Recheck the branch, commit, and clean status, then push the task branch to `origin`.
+2. Create a pull request against the repository's intended target branch. Include the verified scope and test evidence, and link the tracked ticket when one is in scope.
+3. Monitor required CI checks until they pass. If a check fails, inspect its evidence, fix only an in-scope product or test defect through the same test-first workflow, commit and push the fix, and monitor the new run. Report unrelated infrastructure failures separately rather than weakening validation.
+4. After CI passes, wait for the pull request to be merged. Do not merge it unless the user or repository instructions authorize agent-managed merging.
+5. Confirm the merge landed on the remote target branch. Only then close the linked ticket using its configured issue-tracking workflow. Do not close it for a local merge, an open pull request, or green CI alone; if no ticket is linked, skip ticket closure.
+
+Use the environment's recurring monitoring or wait mechanism for CI and merge state. If pushing, pull-request creation, monitoring, or ticket mutation is unavailable or requires new authority, report the exact blocker and leave the workflow at the last verified state.
