@@ -1,4 +1,4 @@
 interface:
   display_name: "Coding Workflow"
-  short_description: "Apply a test-first implementation workflow"
-  default_prompt: "Use $coding-workflow to implement this change test-first and verify the resulting behavior."
+  short_description: "Orchestrate adaptive test-first coding work"
+  default_prompt: "Use $coding-workflow to implement this change with the smallest appropriate test-first workflow, delegating only when complexity or risk justifies it."
