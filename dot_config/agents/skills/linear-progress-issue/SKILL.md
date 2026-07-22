@@ -60,6 +60,6 @@ Require the subagent to retrieve and verify the current issue and relevant relat
 - Use only the named `linear-operator` custom agent for this workflow; do not attempt to configure an anonymous subagent at spawn time.
 - Treat work on a verified issue as authorization only for forward transitions whose lifecycle events actually occur and for evidenced in-scope blocking or related relations.
 - Make no state change for planning text, proposed work, failed landing or verification, or an issue already in the correct state.
-- Require the active issue or child key in every commit message. For a squash merge, require the resulting commit or linked merged PR to identify the key unambiguously.
+- Require every commit message to link the active issue or child with one of these exact phrases: `Fixes <KEY>`, `Closes <KEY>`, `Resolves <KEY>`, `Completes <KEY>`, or `Implements <KEY>` (for example, `Fixes TEL-16`). A bare issue key does not satisfy this contract. For a squash merge, preserve one of these phrases in the resulting commit or linked merged PR.
 - Stop on missing scope, an unverified or mismatched issue, missing workflow states, or a state outside this workflow.
 - Defer issue discovery and creation to `linear-link-work` and `linear-create-issue`. Create no comments and change no unrelated fields.
