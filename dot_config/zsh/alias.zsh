@@ -52,7 +52,7 @@ alias glg="git log --graph --abbrev-commit --decorate --format=format:'%C(bold b
 alias gsh="git show --pretty=short --show-signature"
 alias gshort="git shortlog"
 
-alias gpf="git push --force-with-lease"
+alias gpf="git push --force-with-lease --force-if-includes"
 alias gcon="git mergetool --no-prompt" #resolve conflict with git
 alias gr="git rebase"           #this is like cherry-pick but for manny commits
 alias gcp="git cherry-pick"
