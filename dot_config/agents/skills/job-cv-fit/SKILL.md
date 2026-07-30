@@ -23,6 +23,8 @@ Before any mutation, validate the application target. Accept only an exact direc
 4. Offer only 3–6 high-impact bullet rewrites. Quote the original CV bullet and state a concrete replacement that is truthful and tailored to the posting.
 5. Include no invented red flags or interview questions. Write `*None identified.*` where the evidence supports none.
 
+Apply the workflow's shared safe Markdown renderer to every external or untrusted posting string before inserting or quoting it in Markdown. Render multiline values in a collision-safe fenced code block longer than any backtick run; render single-line values only after flattening line breaks, removing control characters, and escaping Markdown metacharacters so they remain inert. Only agent-authored analysis structure may remain active Markdown.
+
 ## Update and verify
 
 1. Inspect the note immediately before writing and locate exactly one owning marker. If `## CV fit` exists, replace only its body up to the next H2 or H1, retaining that H2.
