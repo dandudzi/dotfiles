@@ -1,4 +1,4 @@
 interface:
   display_name: "Coding Workflow"
-  short_description: "Deliver test-first changes through merge"
-  default_prompt: "Use $coding-workflow to implement, verify, and deliver this change through a merged pull request and linked-ticket closure, delegating only when complexity or risk justifies it."
+  short_description: "Deliver changes through a user-approved merge"
+  default_prompt: "Use $coding-workflow to implement, verify, and deliver this change through a user-approved pull request merge and linked-ticket closure, delegating only when complexity or risk justifies it."

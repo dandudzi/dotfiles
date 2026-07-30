@@ -1,6 +1,6 @@
 ---
 name: coding-workflow
-description: Orchestrate repository code changes through an adaptive, test-first workflow from implementation through a merged pull request and ticket closure. Use when implementing features, fixing bugs, refactoring, or otherwise changing executable behavior; scale from a compact single-agent loop for small changes to an isolated, plan-approved multi-agent workflow for substantive, risky, cross-cutting, long-running, or explicitly delegated work. Do not use for read-only explanation, diagnosis, research, or review.
+description: Orchestrate repository code changes through an adaptive, test-first workflow from implementation through an explicitly user-approved pull request merge and ticket closure. Use when implementing features, fixing bugs, refactoring, or otherwise changing executable behavior; scale from a compact single-agent loop for small changes to an isolated, plan-approved multi-agent workflow for substantive, risky, cross-cutting, long-running, or explicitly delegated work. Do not use for read-only explanation, diagnosis, research, or review.
 ---
 
 # Coding Workflow
