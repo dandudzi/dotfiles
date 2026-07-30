@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Job Application"
+  short_description: "Safely create or update Obsidian job applications"
+  default_prompt: "Use $job-application-upsert to safely add or update this parsed job in my Obsidian tracker."

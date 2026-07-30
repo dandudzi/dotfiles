@@ -1,0 +1,4 @@
+interface:
+  display_name: "Save Job Search"
+  short_description: "Run the complete Obsidian job-search workflow"
+  default_prompt: "Use $job-search-save to save this job posting to my Obsidian job-search workflow."

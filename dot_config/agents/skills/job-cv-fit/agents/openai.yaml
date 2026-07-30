@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job CV Fit"
+  short_description: "Compare a CV against a job posting"
+  default_prompt: "Use $job-cv-fit to analyse my CV fit for this application and update its CV fit section."

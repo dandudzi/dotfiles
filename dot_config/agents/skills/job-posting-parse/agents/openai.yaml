@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parse Job Posting"
+  short_description: "Extract a portable, complete job-posting packet"
+  default_prompt: "Use $job-posting-parse to extract a complete structured packet from this job posting."

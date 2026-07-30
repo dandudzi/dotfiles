@@ -1,0 +1,4 @@
+interface:
+  display_name: "Recommend Related Jobs"
+  short_description: "Present deduplicated related job opportunities"
+  default_prompt: "Use $job-recommendations to review these related jobs without adding any automatically."

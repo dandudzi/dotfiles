@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Company Research"
+  short_description: "Research a company and its role"
+  default_prompt: "Use $job-company-research to research this application and update its company research section."

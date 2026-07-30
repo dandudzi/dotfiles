@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Interview Research"
+  short_description: "Find sourced interview questions by stage"
+  default_prompt: "Use $job-interview-research to find sourced candidate-reported questions for this application interview stage."
