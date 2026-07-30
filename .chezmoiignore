@@ -1,6 +1,7 @@
 README.md
 .claude/skills/**/.keep
 .config/raycast
+.config/gh
 .config/context7/credentials.json
 **/.DS_Store
 .config/sketchybar/helpers/**/bin/**
