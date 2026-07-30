@@ -28,6 +28,7 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
 - Minimize mocks; test real behavior and integration boundaries whenever practical.
 - Never weaken, delete, or bypass a test merely to make an implementation pass unless the requested behavior intentionally supersedes it.
 - If meaningful automated coverage is genuinely impractical, stop before implementation, explain the limitation and proposed substitute, and obtain the user's explicit waiver.
+- Treat merging as a separate user-controlled action. Never merge a pull request until the user explicitly approves merging that specific PR after receiving its final scope, review findings, and CI results.
 
 ## Compact Path
 
@@ -72,7 +73,9 @@ After the compact or orchestrated path produces a verified commit:
 1. Recheck the branch, commit, and clean status, then push the task branch to `origin`.
 2. Create a pull request against the repository's intended target branch. Include the verified scope and test evidence, and link the tracked ticket when one is in scope.
 3. Monitor required CI checks until they pass. If a check fails, inspect its evidence, fix only an in-scope product or test defect through the same test-first workflow, commit and push the fix, and monitor the new run. Report unrelated infrastructure failures separately rather than weakening validation.
-4. After CI passes, wait for the pull request to be merged. Do not merge it unless the user or repository instructions authorize agent-managed merging.
-5. Confirm the merge landed on the remote target branch. Only then close the linked ticket using its configured issue-tracking workflow. Do not close it for a local merge, an open pull request, or green CI alone; if no ticket is linked, skip ticket closure.
+4. After CI passes, present the pull request URL, final scope, review findings, CI results, and remaining risks, then explicitly ask the user whether to merge that PR.
+5. Wait for the user's explicit approval to merge the specific pull request. Plan or implementation approval, permission to push or open a PR, an earlier request such as "push master," general instructions to finish or deliver, repository conventions, and silence do not authorize merging. Do not infer or reuse merge approval from an earlier workflow stage.
+6. After the user approves the merge, merge using the authorized repository method and confirm the result landed on the remote target branch.
+7. Only after the remote merge is confirmed, close the linked ticket using its configured issue-tracking workflow. Do not close it for a local merge, an open pull request, or green CI alone; if no ticket is linked, skip ticket closure.
 
 Use the environment's recurring monitoring or wait mechanism for CI and merge state. If pushing, pull-request creation, monitoring, or ticket mutation is unavailable or requires new authority, report the exact blocker and leave the workflow at the last verified state.
