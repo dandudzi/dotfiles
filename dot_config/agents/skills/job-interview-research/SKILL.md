@@ -9,7 +9,7 @@ description: Find sourced, candidate-reported interview questions for a company,
 
 Require an exact application-note path, company, job title, seniority when known, and one stage: `screening`, `technical`, `system-design`, `behavioural`, `take-home`, `final`, or `general`. Ask for the stage when it is absent; use `general` only when the user explicitly wants cross-stage research.
 
-Read the application note and identify `## Company interview questions`. Distinguish this section from `## Questions to ask the interviewer`: this skill records questions companies ask candidates, reported by candidates, and must not alter the user's interviewer-question bank.
+Read the application note and identify `## Company interview questions`. Distinguish this section from `## Questions to ask the interviewer`: this skill records questions companies ask candidates, reported by candidates, and must not alter the user's interviewer-question bank. Never repurpose `## Question bank` or questions to ask the interviewer.
 
 Use the template at `Personal/Job Search/Templates/Interview Question.md` to create or update one prep note under `Personal/Job Search/Interview Questions/`, named `Company — Role — Stage.md` with filesystem-safe title components. Preserve its frontmatter and template structure. Do not edit unrelated application-note sections.
 
@@ -30,21 +30,23 @@ Discard evidence for another stage rather than padding the results. Search adjac
 
 ## Write the prep note
 
-Populate the template with the company, role, stage, date, candidate-reported questions, and a source audit. Include:
+Populate the template frontmatter with the company, role, stage, seniority, researched-at date, and sources. Replace only the generated range from `## Generated research` through the heading immediately before `## Notes and patterns`; do not replace the `## Notes and patterns` section because it is owner-owned. The generated range contains these H3 subsections:
 
 - **What to expect** — only sourced format, duration, or round information; state when evidence is thin.
-- **Recent questions** and **older or undated questions** — preserve source attribution beside every question.
+- **Recent questions** and **Older or undated questions** — preserve source attribution beside every question.
 - **Adjacent-level evidence** — separate one level below and above when available.
 - **Source audit** — every source class searched, its result (including no usable result), URLs used, and recency limits.
-- **Gaps** — say `No candidate-reported questions found for this stage` when appropriate.
+- **Evidence gaps** — say `No candidate-reported questions found for this stage` when appropriate.
 
 Do not add questions to ask the interviewer, generic study plans, fabricated GitHub resources, or unsourced company-process claims.
 
 ## Link and verify
 
-1. Inspect the application note and any existing prep note before writing. Create the prep note with Obsidian CLI from the interview-question template when absent; otherwise make a focused update to its generated research content.
-2. Replace only the body of `## Company interview questions` with an embed or link to the prep note, for example `![[Personal/Job Search/Interview Questions/Company — Role — Stage]]`. Do not modify `## Questions to ask the interviewer`.
-3. Read both exact paths through Obsidian CLI. Confirm the prep note preserves template metadata, every included question has a direct source, the source audit and recency labels are present, and the application note points to the expected prep note.
-4. Treat CLI output containing `Error:` as failure and report it without claiming completion.
+1. Inspect the application note and any existing prep note before writing. If `## Company interview questions` is missing, make a focused insertion immediately before the exact legacy or current `## Interview Notes` heading. If that heading is absent, ambiguous, or duplicated, stop safely. Never use `## Question bank` as an insertion target.
+2. When the prep note is absent, read the interview-question template, render its `{{company}}`, `{{job-title}}`, `{{stage}}`, and `{{date:YYYY-MM-DD}}` placeholders from the validated inputs, then create the exact note with Obsidian CLI. Verify no unresolved `{{...}}` placeholder remains. When the note exists, refresh only the generated research boundary. Preserve the template frontmatter and all owner-owned notes.
+3. Replace only the body of `## Company interview questions` with an embed or link to the prep note, for example `![[Personal/Job Search/Interview Questions/Company — Role — Stage]]`. Do not modify `## Questions to ask the interviewer`.
+4. Inspect `Personal/Job Search/Interview Questions/Interview Questions.md`. Under `## Company-specific preparation`, perform an idempotent focused update so the exact prep-note wikilink `[[Personal/Job Search/Interview Questions/Company — Role — Stage]]` occurs exactly once: leave one existing exact link unchanged, insert one list item when absent, or replace duplicate exact-link list items with one. Do not alter entries outside that heading's body.
+5. Read the application note, prep note, and index through Obsidian CLI. Confirm the prep note preserves template metadata; the generated boundary, source audit, and recency labels are present; every included question has a direct source; the application note points to the expected prep note; and the index has exactly one expected wikilink under `## Company-specific preparation`.
+6. Treat CLI output containing `Error:` as failure and report it without claiming completion.
 
 Report the application note, prep-note path, stage, source count, recency limits, and evidence gaps.

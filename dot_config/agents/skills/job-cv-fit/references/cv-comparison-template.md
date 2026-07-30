@@ -1,8 +1,6 @@
-# CV fit — {{COMPANY}} · {{ROLE_TITLE}}
+### Match overview
 
-> **Analysed:** {{DATE}} | **Seniority target:** {{SENIORITY_LEVEL}} | **Location fit:** {{LOCATION_FIT}}
-
-## 1. Match overview
+> **Analysed:** {{DATE}} | **Company:** {{COMPANY}} | **Role:** {{ROLE_TITLE}} | **Seniority target:** {{SENIORITY_LEVEL}} | **Location fit:** {{LOCATION_FIT}}
 
 | Dimension | Score | Evidence |
 | --- | --- | --- |
@@ -15,54 +13,54 @@
 
 **Summary:** {{OVERALL_FIT_SUMMARY}}
 
-## 2. Strengths — lead with these
+### Strengths — lead with these
 
 - **{{STRENGTH}}** — {{WHY_IT_MATTERS}}
 
-## 3. Gap analysis
+### Gap analysis
 
-### Hard gaps
+#### Hard gaps
 
 | Gap | Severity | Bridgeable? |
 | --- | --- | --- |
 | {{HARD_GAP}} | High / Medium / Low | Yes / No / Partially |
 
-### Presentation gaps
+#### Presentation gaps
 
 | Gap | Exact CV evidence | Truthful fix |
 | --- | --- | --- |
 | {{PRESENTATION_GAP}} | {{WHERE_IN_CV}} | {{CHANGE}} |
 
-## 4. Tailoring recommendations
+### Tailoring recommendations
 
-### Bullet rewrites
+#### Bullet rewrites
 
 **{{ROLE_OR_PROJECT}} @ {{EMPLOYER}}**
 
 - **Before:** "{{EXACT_CV_BULLET}}"
 - **After:** "{{TRUTHFUL_REWRITE}}"
 
-### Keywords to incorporate
+#### Keywords to incorporate
 
 | Keyword or phrase | Exact placement |
 | --- | --- |
 | `{{KEYWORD}}` | {{LOCATION_IN_CV}} |
 
-### Structural / priority changes
+#### Structural / priority changes
 
 - {{CHANGE_AND_RATIONALE}}
 
-### Summary / headline rewrite
+#### Summary / headline rewrite
 
 - **Current:** "{{CURRENT_SUMMARY_OR_HEADLINE}}"
 - **Suggested:** "{{REWRITE}}"
 
-## 5. Red flags
+### Red flags
 
 | Flag | Concern | Recommended action |
 | --- | --- | --- |
 | {{FLAG}} | {{CONCERN}} | {{ACTION}} |
 
-## 6. Interview prep hints
+### Interview prep hints
 
 - **"{{LIKELY_QUESTION}}"** — Why it will come up: {{GAP_OR_REQUIREMENT}}

@@ -20,6 +20,8 @@ For pasted content, preserve the supplied text verbatim and label facts that are
 Return structured data to the caller; do not create a vault note. Use this shape, with `null`, `[]`, or `unknown` for missing data:
 
 ```yaml
+completeness: complete | incomplete
+incomplete-reasons: []
 source:
   kind: linkedin | company | pasted
   url: ""
@@ -58,4 +60,6 @@ evidence:
 gaps: []
 ```
 
-Normalize the canonical job URL by removing tracking parameters only when doing so preserves the job identity. Capture a source job ID from a URL or page only when explicit. Deduplicate related opportunities by canonical URL or source job ID, and retain each opportunity's company, title, location, URL, and source.
+Keep the exact packet pointer `source.canonical-job-url`; do not flatten or rename it. Normalize that URL by removing tracking parameters only when doing so preserves the job identity. Capture a source job ID from a URL or page only when explicit. Deduplicate related opportunities by canonical URL or source job ID, and retain each opportunity's company, title, location, URL, and source.
+
+Set `completeness: complete` only when the company, job title, and complete captured description are available from the source. Otherwise set `completeness: incomplete` and record the concrete missing or blocked facts in `incomplete-reasons` (for example, `description truncated`, `login wall`, or `company missing`).

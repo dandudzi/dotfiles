@@ -23,9 +23,12 @@ Patch only `## CV fit` in the application note. Do not change frontmatter, the p
 
 ## Update and verify
 
-1. Inspect the note immediately before writing. Replace only the content after `## CV fit` up to the next heading at the same or higher level, retaining that heading.
-2. Apply a focused Markdown patch. Do not rewrite the full note.
-3. Read the note through Obsidian CLI, for example `rtk obsidian read path="Personal/Job Search/Applications/<note>.md"`.
-4. Confirm the CV-fit section follows the output template, has no unresolved placeholders, and leaves adjacent sections unchanged. Treat CLI output containing `Error:` as a failed verification.
+1. Inspect the note immediately before writing and locate exactly one owning marker. If `## CV fit` exists, replace only its body up to the next H2 or H1, retaining that H2.
+2. If `## CV fit` is absent but the legacy `### CV vs job description` exists, perform a focused migration-on-write: replace that legacy marker and only its body up to the next H2 or H1 with `## CV fit` and the rendered analysis. Preserve the adjacent content and headings.
+3. If neither marker exists, inspect the exact `## Interview Notes` marker. Insert `## CV fit` and the rendered analysis immediately before it. If that marker is absent, ambiguous, or duplicated, stop safely and report the structural mismatch rather than guessing a location.
+4. If both current and legacy markers exist, stop safely rather than merge or discard existing analysis without direction.
+5. Apply a focused Markdown patch. Do not rewrite the full note.
+6. Read the note through Obsidian CLI, for example `rtk obsidian read path="Personal/Job Search/Applications/<note>.md"`.
+7. Confirm the CV-fit section follows the output template, has no unresolved placeholders, contains no H1 or H2 below `## CV fit`, and leaves adjacent sections unchanged. Treat CLI output containing `Error:` as a failed verification.
 
 Report the score, meaningful hard gaps, presentation gaps, and updated note path.
