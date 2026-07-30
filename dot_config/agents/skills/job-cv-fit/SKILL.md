@@ -13,6 +13,8 @@ Read [the scoring methodology](references/cv-comparison-instructions.md) and [th
 
 Patch only `## CV fit` in the application note. Do not change frontmatter, the posting, company research, interview research, notes, or question bank.
 
+Before any mutation, validate the application target. Accept only an exact direct child `.md` application path in the form `Personal/Job Search/Applications/<filename>.md`: require a non-empty `.md` filename, reject `..`, `/`, `\\`, separators, and control characters in the filename, and reject any path whose normalized result is not that exact one-file location. Resolve and read the accepted path through Obsidian CLI, then verify frontmatter contains `type: job-application`. Stop safely on any failure; never fall back to a raw filesystem path or a similarly named note.
+
 ## Analyse
 
 1. Catalogue the posting's required and preferred qualifications, responsibilities, technologies, seniority, domain, and implicit expectations.
