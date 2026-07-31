@@ -15,3 +15,8 @@ Inspect repository context and verification evidence when required. Do not edit 
 
 Re-fetch every mutated issue and relation, verify the resulting state and scope, and return keys, relation IDs, exact writes, evidence, and unresolved blockers to the primary agent.
 """
+
+# Attribute this operator's Linear actions to the app identity without storing its token here.
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+bearer_token_env_var = "LINEAR_OPERATOR_ACCESS_TOKEN"
