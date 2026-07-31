@@ -134,6 +134,28 @@ alias uClaude="brew upgrade claude-code@latest claude"
 function cc() {
   CLAUDE_CODE_TASK_LIST_ID="$1" claude --model opusplan "${@:2}"
 }
+
+# Give Codex the Linear app token without keeping the credential in dotfiles.
+function codex() {
+  local linear_operator_token
+
+  if ! linear_operator_token="$(command security find-generic-password \
+    -a linear-operator \
+    -s codex-linear-operator-token \
+    -w)"; then
+    print -u2 "codex: Linear operator token not found in macOS Keychain."
+    return 1
+  fi
+
+  if [[ -z "$linear_operator_token" ]]; then
+    print -u2 "codex: Linear operator token in macOS Keychain is empty."
+    return 1
+  fi
+
+  local -x LINEAR_OPERATOR_ACCESS_TOKEN="$linear_operator_token"
+  command codex "$@"
+}
+
 alias gNewWhoWrote="git shortlog -sn --no-merges"
 alias gNewWhoWroteLast6Months="git shortlog -sn --no-merges --since=\"6 months ago\""
 alias gNewWhereBugsCluster="git log -i -E --grep=\"fix|bug|broken\" --name-only --format='' | sort | uniq -c | sort -nr | head -20"
