@@ -1,6 +1,6 @@
 ---
 name: linear-progress-issue
-description: Coordinate the named `linear-operator` custom agent to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on `origin/master`. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
+description: Coordinate the named `linear-operator` custom agent to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on the repository's authoritative integration branch. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
 ---
 
 # Linear Progress Issue
@@ -28,16 +28,16 @@ Keep Linear state and relations aligned with actual work. The primary agent deci
 
 Before requesting `Done`, require the primary agent and delegate to verify all of the following:
 
-1. Refresh the literal authoritative branch with `rtk git fetch origin master`. Stop if `origin/master` is unavailable or cannot be refreshed; keep the issue `In Progress`.
+1. Use the authoritative integration branch recorded by `coding-workflow`; if none was recorded, determine it from applicable repository instructions or configuration, otherwise from `origin`'s advertised default branch. Do not assume `main` or `master`, and stop for clarification if the evidence conflicts or remains ambiguous. Refresh it with `rtk git fetch origin <authoritative-branch>`. Stop if `origin/<authoritative-branch>` is unavailable or cannot be refreshed; keep the issue `In Progress`.
 2. Identify every commit belonging to the active issue from its required Linear key and recorded work context. Account for direct commits, merge commits, and squash results; do not rely on message search alone when the recorded branch, PR, or worktree shows additional commits.
-3. Prove every required commit, merge commit, or squash result is reachable from the refreshed `origin/master`, using ancestry checks against the exact landed identities. For a squash, require the landed commit or linked merged PR to identify the key unambiguously.
+3. Prove every required commit, merge commit, or squash result is reachable from the refreshed `origin/<authoritative-branch>`, using ancestry checks against the exact landed identities. For a squash, require the landed commit or linked merged PR to identify the key unambiguously.
 4. Confirm no issue-related changes remain uncommitted in a recorded worktree, reachable only from an unmerged local or remote branch, or attached to an open PR. Work present only locally, on a feature branch, or in an open PR is not Done.
-5. Verify the landed code satisfies every acceptance criterion. Run the relevant tests, builds, linters, or checks against the landed revision, preferably in a clean checkout or isolated worktree pinned to refreshed `origin/master`; record the commands and results.
+5. Verify the landed code satisfies every acceptance criterion. Run the relevant tests, builds, linters, or checks against the landed revision, preferably in a clean checkout or isolated worktree pinned to refreshed `origin/<authoritative-branch>`; record the commands and results.
 6. Re-fetch relations and confirm there is no active `blockedBy` target. An active blocker prevents `Done` even if the code landed.
 
 If any commit identity, landing, clean-work state, acceptance criterion, landed-revision check, PR state, or blocker status cannot be proven, make no transition and keep the issue `In Progress`.
 
-For a parent issue, additionally require every implementation outcome to belong to a child, every non-canceled required child to be `Done`, every canceled child to have explicit cancellation approval, and every child's associated commits to satisfy the same `origin/master` contract. Run the parent's aggregate acceptance criteria against the landed revision. Only then move the parent to `Done`.
+For a parent issue, additionally require every implementation outcome to belong to a child, every non-canceled required child to be `Done`, every canceled child to have explicit cancellation approval, and every child's associated commits to satisfy the same authoritative-branch contract. Run the parent's aggregate acceptance criteria against the landed revision. Only then move the parent to `Done`.
 
 ## Relation Management
 
