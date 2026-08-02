@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Company Verification"
+  short_description: "Assess job legitimacy and personal-data risk"
+  default_prompt: "Use $job-company-verification to verify this company, recruiter, and job posting before I share personal information."

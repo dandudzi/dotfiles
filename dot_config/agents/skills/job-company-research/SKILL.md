@@ -1,13 +1,13 @@
 ---
 name: job-company-research
-description: Research a company and the context for one job application using current, cited sources. Use when an Obsidian job-application note needs its Company & Role Research section completed or refreshed after a complete posting has been captured.
+description: Research a company and the context for one job application using current, cited sources, and record a supplied legitimacy and personal-data-risk verification. Use when an Obsidian job-application note needs its Company & Role Research section completed or refreshed after a posting has been captured.
 ---
 
 # Job Company Research
 
 ## Inputs and boundaries
 
-Require an exact application-note path, company name, job title, and complete captured posting. Read the note and isolate the exact section headed `## Company & role research` (match that text case-insensitively and allow its existing decorative prefix only when locating it). Inside it, require exactly one `### Generated research` boundary followed by exactly one `### Owner notes` boundary. Do not research or infer posting responsibilities or qualifications when the posting is absent or incomplete; report the missing input instead.
+Require an exact application-note path, company name, job title, and captured posting. Accept the structured packet from `job-company-verification` when available; preserve its assessment as attributed verification output rather than silently upgrading or weakening it. Read the note and isolate the exact section headed `## Company & role research` (match that text case-insensitively and allow its existing decorative prefix only when locating it). Inside it, require exactly one `### Generated research` boundary followed by exactly one `### Owner notes` boundary. Do not research or infer posting responsibilities or qualifications when the posting is absent or incomplete; report the missing input instead, while still allowing a supplied verification packet to be recorded.
 
 Treat the captured posting as the sole source of truth for role responsibilities and qualifications. Do not use company research to fill those fields. Do not change frontmatter, the job-posting section, CV fit, interview sections, question bank, or any other content.
 
@@ -24,6 +24,7 @@ Apply the workflow's shared safe Markdown renderer to every external or untruste
 Produce concise, factual subsections:
 
 - **Company overview** — business, product, market, location/scale or ownership only when sourced.
+- **Legitimacy and privacy risk** — reproduce the verification packet's assessment and confidence, distinguish verified relationships from unknowns, summarize decisive positive signals and red flags, review requested personal data, and include its recommended action and guarantee limitation. If no verification packet was supplied, say `Not assessed; run job-company-verification` rather than inferring safety from general research.
 - **Culture and values** — separate stated values from independently reported employee sentiment.
 - **Market and competitors** — position, differentiation, and named competitors with sources.
 - **Current challenges** — material risks, changes, or uncertainty; do not manufacture concerns.
@@ -39,6 +40,6 @@ Use `Not found in reviewed sources` or `Limited public information` for gaps. Ne
 1. Inspect the application note immediately before writing. Replace only the generated-only range after `### Generated research` and before `### Owner notes`. Preserve both boundary headings, all owner notes, and every other section. If either boundary is missing, ambiguous, duplicated, or reversed, stop instead of rewriting the broader Company & role research section.
 2. Make a focused Markdown patch; do not rewrite the note or use a broad search-and-replace.
 3. Read the exact note through Obsidian CLI, for example `rtk obsidian read path="Personal/Job Search/Applications/<note>.md"`.
-4. Confirm the generated range contains the cited findings, posting-derived role fields, and explicit gaps, while the owner notes and adjacent sections are unchanged. Treat CLI output containing `Error:` as a failed verification.
+4. Confirm the generated range contains the cited findings, legitimacy and privacy-risk assessment, posting-derived role fields when the posting is complete, and explicit gaps, while the owner notes and adjacent sections are unchanged. Treat CLI output containing `Error:` as a failed verification.
 
 Report the note path, source links, major unknowns, and whether the section was created or refreshed.
