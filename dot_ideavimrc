@@ -4,3 +4,21 @@ set which-key
 Plug 'justinmk/vim-sneak'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
+
+" Problems and quick fixes
+nmap ]d <Action>(GotoNextError)
+nmap [d <Action>(GotoPreviousError)
+nmap <leader>a <Action>(ShowIntentionActions)
+nmap <leader>p <Action>(ActivateProblemsViewToolWindow)
+
+" Debugger
+nmap <leader>db <Action>(ToggleLineBreakpoint)
+nmap <leader>dd <Action>(Debug)
+nmap <leader>dc <Action>(Resume)
+nmap <leader>dn <Action>(StepOver)
+nmap <leader>di <Action>(StepInto)
+nmap <leader>do <Action>(StepOut)
+nmap <leader>dr <Action>(RunToCursor)
+nmap <leader>de <Action>(EvaluateExpression)
+nmap <leader>dv <Action>(ViewBreakpoints)
+nmap <leader>ds <Action>(Stop)
