@@ -1,0 +1,6 @@
+" Enable IdeaVim extensions for key discovery, fast two-character jumps,
+" commenting, and paired surroundings.
+set which-key
+Plug 'justinmk/vim-sneak'
+Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-surround'
