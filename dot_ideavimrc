@@ -1,5 +1,8 @@
 " Enable IdeaVim extensions for key discovery, fast two-character jumps,
 " commenting, and paired surroundings.
+" Use Space as the prefix for custom IDE action mappings.
+let mapleader = " "
+
 set which-key
 Plug 'justinmk/vim-sneak'
 Plug 'tpope/vim-commentary'
