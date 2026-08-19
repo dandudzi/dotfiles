@@ -1,6 +1,7 @@
 [tools]
 java = "latest"
-node = "24"
+# Track the requested Node major while allowing Mise to select its latest patch.
+node = "26"
 bun = "latest"
 lua = "5.1"
 pnpm = "latest"
