@@ -51,7 +51,7 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
    - Follow the repository's planning convention when present; otherwise use `.agents/plans/<task-slug>.md`.
    - Record scope, decisions, assignments, non-overlapping file ownership, dependency order, testing strategy, verification commands, progress, discoveries, and unresolved findings.
    - Keep the main agent as the plan's sole writer.
-   - Present the plan for explicit human approval. Before approval, allow only workspace setup, exploration, and plan updates.
+   - When requesting explicit human approval, show the complete, self-contained plan in the approval message. A persisted plan path may be included for reference only; it must never replace the plan the human is asked to review. Before approval, allow only workspace setup, exploration, and plan updates.
 4. **Test first.** Spawn `test-writer` with ownership of the planned acceptance tests. Have it write them and prove they fail for the expected behavioral reason. Reject setup failures or tests that encode the wrong contract. For behavior-preserving refactors, require characterization coverage and a recorded passing baseline.
 5. **Implement.** Spawn one or more `implementer` agents only for approved, bounded assignments.
    - Parallelize only independent files or components; sequence overlapping work.
