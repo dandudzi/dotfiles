@@ -19,6 +19,39 @@ is_codex_pane() {
   esac
 }
 
+focus_waiting_pane() {
+  target="$1"
+  session="$(tmux display-message -p -t "$target" '#{session_name}')"
+  window="$(tmux display-message -p -t "$target" '#{session_name}:#{window_index}')"
+
+  tmux switch-client -t "$session"
+  tmux select-window -t "$window"
+  tmux select-pane -t "$target"
+  tmux set-option -pqu -t "$target" @codex_waiting
+  update_count
+}
+
+choose_waiting_pane() {
+  target="$(
+    tmux list-panes -a -f '#{==:#{@codex_waiting},1}' \
+      -F '#{session_name}:#{window_index}.#{pane_index}\t#{pane_id}' |
+      gum filter --limit 1 --no-show-help \
+        --header 'Codex panes needing attention' \
+        --placeholder 'Filter panes' \
+        --prompt '⚡ '
+  )" || return 0
+
+  # The pane id is kept after a tab so the menu remains readable and searchable.
+  target="$(printf '%s\n' "$target" | awk -F '\t' 'NF >= 2 { print $NF; exit }')"
+
+  if [ -z "$target" ]; then
+    tmux display-message "No Codex pane needs attention"
+    return 0
+  fi
+
+  focus_waiting_pane "$target"
+}
+
 # Print or refresh the number used by the tmux session status module.
 if [ "${1:-}" = "--count" ]; then
   count_waiting
@@ -50,6 +83,11 @@ if [ "${1:-}" = "--clear-pane" ]; then
   exit 0
 fi
 
+if [ "${1:-}" = "--choose" ]; then
+  choose_waiting_pane
+  exit 0
+fi
+
 # Pick the first Codex pane with a pending notification across every session.
 # Selecting it clears the flag, so pressing the binding repeatedly drains the
 # queue even when multiple Codex panes share a window.
@@ -63,10 +101,4 @@ if [ -z "$target" ]; then
   exit 0
 fi
 
-session="$(tmux display-message -p -t "$target" '#{session_name}')"
-window="$(tmux display-message -p -t "$target" '#{session_name}:#{window_index}')"
-tmux switch-client -t "$session"
-tmux select-window -t "$window"
-tmux select-pane -t "$target"
-tmux set-option -pqu -t "$target" @codex_waiting
-update_count
+focus_waiting_pane "$target"
