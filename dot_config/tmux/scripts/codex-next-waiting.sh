@@ -32,9 +32,10 @@ focus_waiting_pane() {
 }
 
 choose_waiting_pane() {
+  separator="$(printf '\t')"
   target="$(
     tmux list-panes -a -f '#{==:#{@codex_waiting},1}' \
-      -F '#{session_name}:#{window_index}.#{pane_index}\t#{pane_id}' |
+      -F "#{session_name}:#{window_index}.#{pane_index}${separator}#{pane_id}" |
       gum filter --limit 1 --no-show-help \
         --header 'Codex panes needing attention' \
         --placeholder 'Filter panes' \
