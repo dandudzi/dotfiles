@@ -4,7 +4,7 @@
 
 ## Global Rules
 
-- For a named custom agent, its explicitly configured model and reasoning effort are authoritative. Use Terra/high only as the fallback when the named role has no explicit pin; linear-operator is intentionally Terra/medium.
+- For a named custom agent, its explicitly configured model and reasoning effort are authoritative. Use the default subagent model and reasoning effort only when that role has no explicit pin.
 - Run all shell commands through `rtk`.
 - Make every rule as specific as possible: scope it to the exact intended operation and avoid broad tool-wide matches.
 - When adding or editing Codex execution-policy rules, include equivalent direct and `rtk`-prefixed forms and test both matches and nearby non-matches.
