@@ -1,4 +1,4 @@
-@{{ .chezmoi.homeDir }}/.codex/RTK.md
+@/Users/daniel/.codex/RTK.md
 
 @RTK.md
 
@@ -20,7 +20,7 @@
 - Use Playwright or browser controls for rendered or interactive behavior, not documentation search.
 - Use Serena for semantic code navigation and Linear for issue or project context.
 - Use Linear only when the user explicitly requests it, identifies an issue, or asks for repository work whose applicable instructions require Linear tracking. Do not query Linear for unrelated requests.
-- When the user asks to start work on an issue from an issue tracker such as Linear or Jira, first prepare an implementation plan and ask for approval; do not begin implementation until the user approves the plan.
+- When the user asks to start planning or work on a specific issue from an issue tracker such as Linear or Jira, claim it before planning: create or reuse its dedicated worktree, move and verify the issue in `In Progress`, then verify the agent's current directory is that worktree. Only after this claim gate may an agent create a plan, state file, test, source file, or other work artifact. Read-only issue and repository discovery may occur before the gate. Ask for approval of the implementation plan before implementation begins.
 - If a required tool is unavailable, say so and use the best available source.
 - Keep Serena, Linear, and Playwright read-only unless the user authorizes an exact mutation.
 - For multi-phase work likely to span sessions or handoffs, maintain a concise state file with the objective, constraints, decisions, progress, verification, and next action; never store secrets.
