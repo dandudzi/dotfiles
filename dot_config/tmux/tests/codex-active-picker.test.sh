@@ -9,24 +9,32 @@ trap 'rm -rf "$test_dir"' EXIT
 
 mkdir "$test_dir/bin"
 
-export TEST_GUM_INPUT="$test_dir/gum-input"
+export TEST_FZF_ARGS="$test_dir/fzf-args"
+export TEST_FZF_INPUT="$test_dir/fzf-input"
 export TEST_LOG="$test_dir/log"
 export PATH="$test_dir/bin:$PATH"
 
-: > "$TEST_GUM_INPUT"
+: > "$TEST_FZF_ARGS"
+: > "$TEST_FZF_INPUT"
 : > "$TEST_LOG"
 
 printf '%s\n' '#!/bin/sh' 'case "$1" in' '  list-panes) printf "%s\\t%s\\t%s\\n" "zsh" "main:1.1" "%1" "codex" "main:2.1" "%2" "codex-resume" "remote:3.2" "%3" ;;' '  display-message) case "$5" in "#{session_name}") printf "%s\\n" "remote" ;; "#{session_name}:#{window_index}") printf "%s\\n" "remote:3" ;; esac ;;' '  switch-client|select-window|select-pane|set-option) printf "tmux:%s:%s\\n" "$1" "$3" >> "$TEST_LOG" ;;' 'esac' > "$test_dir/bin/tmux"
-printf '%s\n' '#!/bin/sh' 'sed -n "1,2p" > "$TEST_GUM_INPUT"' 'printf "%s\\t%s\\n" "remote:3.2" "%3"' > "$test_dir/bin/gum"
-chmod +x "$test_dir/bin/tmux" "$test_dir/bin/gum"
+printf '%s\n' '#!/bin/sh' 'printf "%s\\n" "$@" > "$TEST_FZF_ARGS"' 'sed -n "1,2p" > "$TEST_FZF_INPUT"' 'printf "%s\\t%s\\n" "remote:3.2" "%3"' > "$test_dir/bin/fzf"
+printf '%s\n' '#!/bin/sh' 'printf "%s\\t%s\\n" "remote:3.2" "%3"' > "$test_dir/bin/gum"
+chmod +x "$test_dir/bin/tmux" "$test_dir/bin/fzf" "$test_dir/bin/gum"
 
 sh "$script" --choose-active
 
 expected_choices="$(printf '%s\t%s\n' 'main:2.1' '%2'; printf '%s\t%s\n' 'remote:3.2' '%3')"
 expected_focus="$(printf '%s\n' 'tmux:switch-client:remote' 'tmux:select-window:remote:3' 'tmux:select-pane:%3')"
 
-if [ "$(sed -n '1,2p' "$TEST_GUM_INPUT")" != "$expected_choices" ]; then
-  printf '%s\n' 'expected Gum to receive only active Codex panes' >&2
+if [ "$(sed -n '1,2p' "$TEST_FZF_INPUT")" != "$expected_choices" ]; then
+  printf '%s\n' 'expected fzf to receive only active Codex panes' >&2
+  exit 1
+fi
+
+if ! rg -qx 'left-click:accept' "$TEST_FZF_ARGS"; then
+  printf '%s\n' 'expected fzf to accept a left-clicked active Codex pane' >&2
   exit 1
 fi
 
