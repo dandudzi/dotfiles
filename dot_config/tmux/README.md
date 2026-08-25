@@ -14,7 +14,8 @@ brew install tmux gum
 
 - `tmux` receives Codex's terminal bell, stores the waiting state, renders the
   status pill, and changes client/session/window/pane focus.
-- `gum` renders the searchable picker opened by `Ctrl+Shift+K`.
+- `gum` renders the searchable pickers opened by `Ctrl+Shift+K` and
+  `Ctrl+Shift+S`.
 
 The Codex CLI is the notification source: this feature recognizes panes whose
 current command is `codex` or `codex-*`. Its installation is separate from the
@@ -38,6 +39,7 @@ two Homebrew dependencies above.
 | Click the Codex pill | Jump to the first waiting Codex pane. Other status clicks keep their normal behavior. | `tmux.conf` `MouseDown1Status` binding |
 | `Ctrl+Shift+N` | Jump to the next waiting pane, clearing it from the queue. | `tmux.conf` and `codex-next-waiting.sh` |
 | `Ctrl+Shift+K` | Open a 60% × 40% Gum popup listing `session:window.pane`; filter, select with `Enter`, and jump directly to that pane. Use arrow keys to move in the picker. | `tmux.conf` and `codex-next-waiting.sh --choose` |
+| `Ctrl+Shift+S` | Open a 60% × 40% Gum popup listing every active `codex` or `codex-*` pane across all tmux sessions; filter, select with `Enter`, and switch to that session, window, and pane. | `kitty.conf`, `tmux.conf`, and `codex-next-waiting.sh --choose-active` |
 
 ## Implementation map
 
@@ -57,4 +59,5 @@ change, persist that exact file with `rtk chezmoi add <live-path>`.
 - Reload tmux after changing `tmux.conf` with `Prefix`, then `R`.
 - The helper is executed from its live path on each action, so script-only
   changes take effect on the next action without a tmux reload.
-- If no waiting pane exists, the helper shows `No Codex pane needs attention`.
+- If no waiting pane exists, its picker remains open with an inert `No Codex pane needs attention` row.
+- If no active Codex pane exists, the active-picker dialog remains open with an inert `No active Codex pane` row.
