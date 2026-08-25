@@ -14,8 +14,9 @@ brew install tmux gum
 
 - `tmux` receives Codex's terminal bell, stores the waiting state, renders the
   status pill, and changes client/session/window/pane focus.
-- `gum` renders the searchable pickers opened by `Ctrl+Shift+K` and
-  `Ctrl+Shift+S`.
+- `gum` renders the searchable waiting-pane picker opened by `Ctrl+Shift+K`.
+- `fzf` renders the active-pane picker opened by `Ctrl+Shift+S`, including
+  mouse selection.
 
 The Codex CLI is the notification source: this feature recognizes panes whose
 current command is `codex` or `codex-*`. Its installation is separate from the
@@ -39,7 +40,7 @@ two Homebrew dependencies above.
 | Click the Codex pill | Jump to the first waiting Codex pane. Other status clicks keep their normal behavior. | `tmux.conf` `MouseDown1Status` binding |
 | `Ctrl+Shift+N` | Jump to the next waiting pane, clearing it from the queue. | `tmux.conf` and `codex-next-waiting.sh` |
 | `Ctrl+Shift+K` | Open a 60% × 40% Gum popup listing `session:window.pane`; filter, select with `Enter`, and jump directly to that pane. Use arrow keys to move in the picker. | `tmux.conf` and `codex-next-waiting.sh --choose` |
-| `Ctrl+Shift+S` | Open a 60% × 40% Gum popup listing every active `codex` or `codex-*` pane across all tmux sessions; filter, select with `Enter`, and switch to that session, window, and pane. | `kitty.conf`, `tmux.conf`, and `codex-next-waiting.sh --choose-active` |
+| `Ctrl+Shift+S` | Open a 60% × 40% fzf popup listing every active `codex` or `codex-*` pane across all tmux sessions; filter, select with `Enter` or a left-click, and switch to that session, window, and pane. | `kitty.conf`, `tmux.conf`, and `codex-next-waiting.sh --choose-active` |
 
 ## Implementation map
 
