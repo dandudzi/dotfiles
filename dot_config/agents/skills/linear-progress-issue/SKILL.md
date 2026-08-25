@@ -42,7 +42,7 @@ For a parent issue, additionally require every implementation outcome to belong 
 ## Relation Management
 
 - Treat a blocker as active until its target is re-fetched in `Done` or explicitly `Canceled`.
-- Automatically add an evidenced `blockedBy`, `blocks`, or `relatedTo` relation when both endpoints are in the allowed team and project. Create the correct blocking direction and re-fetch both endpoints to verify it.
+- Add an evidenced `blockedBy`, `blocks`, or `relatedTo` relation only after the user explicitly approves its exact endpoints and direction. Re-fetch both endpoints to verify the approved write.
 - Treat `relatedTo` as context only; it never blocks starting or completing work.
 - Prevent `Done` while an active `blockedBy` relation remains.
 - When a blocking issue lands and reaches `Done`, re-fetch affected relations and report downstream issues that are now unblocked. Do not start or transition them automatically.
@@ -58,8 +58,8 @@ Require the subagent to retrieve and verify the current issue and relevant relat
 
 - The primary agent must not perform Linear writes itself; stop if the required delegation is unavailable.
 - Use only the named `linear-operator` custom agent for this workflow; do not attempt to configure an anonymous subagent at spawn time.
-- Treat work on a verified issue as authorization only for forward transitions whose lifecycle events actually occur and for evidenced in-scope blocking or related relations.
-- Do not move an issue for proposed work alone. Once the user asks to plan or start a verified issue and its dedicated worktree exists, move it to `In Progress` before any planning text or work artifact is created; make no further state change merely because planning text, proposed work, failed landing or verification, or an already-correct state exists.
+- Treat a request to plan or start a verified issue as authorization only for its evidenced forward lifecycle transitions; issue creation and relation writes require explicit approval.
+- Do not move an issue for proposed work alone. Read-only issue selection and an unpersisted decomposition proposal are permitted before the claim gate. Once the user asks to plan or start a verified issue and its dedicated worktree exists, move it to `In Progress` before any implementation plan or work artifact is created; make no further state change merely because proposed work, failed landing or verification, or an already-correct state exists.
 - Require every commit message to link the active issue or child with one of these exact phrases: `Fixes <KEY>`, `Closes <KEY>`, `Resolves <KEY>`, `Completes <KEY>`, or `Implements <KEY>` (for example, `Fixes TEL-16`). A bare issue key does not satisfy this contract. For a squash merge, preserve one of these phrases in the resulting commit or linked merged PR.
 - Stop on missing scope, an unverified or mismatched issue, missing workflow states, or a state outside this workflow.
 - Defer issue discovery and creation to `linear-link-work` and `linear-create-issue`. Create no comments and change no unrelated fields.

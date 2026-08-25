@@ -18,10 +18,11 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
 - On Codex, use `gpt-5.6-terra` for every subagent. Use medium effort for `explorer`, `verifier`, `linear-operator`, and unnamed fallback work; use high effort for test design, implementation, and judgment-heavy review.
 - Use `explorer` for read-only discovery, `test-writer` for acceptance tests, one or more `implementer` agents for disjoint production assignments, and `verifier` for read-only checks.
 - Always use `correctness-reviewer` on the integrated orchestrated change. Add `security-reviewer` for trust boundaries, authorization, validation, secrets, data exposure, or dependency risk; add `performance-reviewer` for hot paths, queries, I/O, concurrency, memory, or resource use; add `architecture-reviewer` for public APIs, module boundaries, schemas, dependencies, migrations, or compatibility.
-- Use the named agent when available. Otherwise spawn a general subagent with the same contract, Terra model, and role-appropriate effort.
+- Use the named agent when available. Otherwise spawn a general subagent with the same contract, Terra model, and role-appropriate effort. This fallback never applies to `linear-operator`; tracker skills must stop when that named agent is unavailable.
 
 ## Invariants
 
+- **Tracker routing.** Before choosing the compact or orchestrated path, when the applicable repository `AGENTS.md` contains `## Linear scope`, use `linear-link-work` to select and verify the active issue. Read-only selection and a decomposition proposal may happen before the tracked-work claim gate; obtain explicit approval before creating a new issue or relation.
 - **Tracked-work claim gate.** When a specific issue is in scope and the agent is asked to plan or start it, create or reuse the dedicated worktree first, have the configured issue workflow move and verify the issue in `In Progress`, and verify the agent is operating from that worktree. Do not create a plan, state file, test, source file, or other work artifact before all three conditions hold; read-only discovery is allowed beforehand.
 - Write tests before implementing any code change or new functionality, and ensure the tests cover the changed behavior.
 - Treat missing or inadequate automated coverage for the acceptance criteria as in-scope work: add or extend the highest-practical coverage without asking for separate approval.

@@ -11,7 +11,7 @@ Delegate the Linear writes. The primary agent must not create issues or relation
 
 1. Read `## Linear scope` and any explicit issue-assignee instruction from the applicable repository `AGENTS.md`; require the allowed team and stable project ID/slug.
 2. Choose one authorized mode:
-   - create one issue when invoked by the user or by `linear-link-work` after no match;
+   - create one issue when the user explicitly requests it or explicitly approves the single-issue proposal returned by `linear-link-work` after no match;
    - create a parent/subissue batch only after the user approves the complete decomposition proposal from `linear-link-work`.
 3. For a decomposition, require the approved proposal to list every child's title, outcome, acceptance criteria, one existing classification label, explicit priority, dependency order, and expected Git deliverable. Include a new parent only if the approved proposal explicitly contains it. Require another proposal and approval before creating grandchildren.
 4. Delegate the entire authorized create operation to exactly one custom agent named `linear-operator`. Its Codex adapter pins `gpt-5.6-terra` with medium reasoning effort. Give it the request, repository path, exact Linear scope, approval record, and proposed structure and relations. Stop if that named agent is unavailable or cannot be selected.
