@@ -40,7 +40,7 @@ three Homebrew dependencies above.
 | Click the Codex pill | Jump to the first waiting Codex pane. Other status clicks keep their normal behavior. | `tmux.conf` `MouseDown1Status` binding |
 | `Ctrl+Shift+N` | Jump to the next waiting pane, clearing it from the queue. | `tmux.conf` and `codex-next-waiting.sh` |
 | `Ctrl+Shift+K` | Open a 60% × 40% Gum popup listing `session:window.pane`; filter, select with `Enter`, and jump directly to that pane. Use arrow keys to move in the picker. | `tmux.conf` and `codex-next-waiting.sh --choose` |
-| `Ctrl+Shift+S` | Open a 60% × 40% fzf popup listing every active `codex` or `codex-*` pane across all tmux sessions; filter, select with `Enter` or a left-click, and switch to that session, window, and pane. | `kitty.conf`, `tmux.conf`, and `codex-next-waiting.sh --choose-active` |
+| `Ctrl+Shift+S` | Open a 60% × 40% fzf popup listing every active `codex` or `codex-*` pane across all tmux sessions. A working pane retains Codex's live spinner prefix; filter, select with `Enter` or a left-click, and switch to that session, window, and pane. | `kitty.conf`, `tmux.conf`, and `codex-next-waiting.sh --choose-active` |
 
 ## Implementation map
 
