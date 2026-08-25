@@ -6,10 +6,10 @@ order or from a searchable dialog. It works across every tmux session.
 
 ## Homebrew dependencies
 
-Install the two executables used by this configuration with Homebrew:
+Install the three executables used by this configuration with Homebrew:
 
 ```sh
-brew install tmux gum
+brew install tmux gum fzf
 ```
 
 - `tmux` receives Codex's terminal bell, stores the waiting state, renders the
@@ -20,7 +20,7 @@ brew install tmux gum
 
 The Codex CLI is the notification source: this feature recognizes panes whose
 current command is `codex` or `codex-*`. Its installation is separate from the
-two Homebrew dependencies above.
+three Homebrew dependencies above.
 
 ## Flow
 
@@ -46,9 +46,11 @@ two Homebrew dependencies above.
 
 | Live path | Responsibility |
 | --- | --- |
+| `~/.config/kitty/kitty.conf` | Removes Kitty's conflicting `Ctrl+Shift+S` binding so the active-picker shortcut reaches tmux. |
 | `~/.config/tmux/tmux.conf` | Hooks, keyboard and mouse bindings, status placement, and initial count refresh. |
-| `~/.config/tmux/scripts/codex-next-waiting.sh` | Counts, marks, clears, chooses, and focuses waiting Codex panes. |
+| `~/.config/tmux/scripts/codex-next-waiting.sh` | Counts, marks, clears, lists, chooses, and focuses waiting or active Codex panes. |
 | `~/.config/tmux/status/codex_waiting.conf` | Catppuccin pill icon, colors, count text, and rounded-presentation settings. |
+| `~/.config/tmux/tests/codex-active-picker.test.sh` | Regression coverage for the active-pane list, cross-session focus, shortcut wiring, Kitty pass-through, and left-click selection. |
 | `~/.config/tmux/README.md` | This operational overview. |
 
 These live files are persisted in chezmoi. Their managed source paths can be
