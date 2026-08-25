@@ -24,11 +24,12 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
 
 - **Tracked-work claim gate.** When a specific issue is in scope and the agent is asked to plan or start it, create or reuse the dedicated worktree first, have the configured issue workflow move and verify the issue in `In Progress`, and verify the agent is operating from that worktree. Do not create a plan, state file, test, source file, or other work artifact before all three conditions hold; read-only discovery is allowed beforehand.
 - Write tests before implementing any code change or new functionality, and ensure the tests cover the changed behavior.
+- Treat missing or inadequate automated coverage for the acceptance criteria as in-scope work: add or extend the highest-practical coverage without asking for separate approval.
 - Prioritize functional and end-to-end tests over unit tests.
 - Use unit tests primarily for edge cases that are impractical to cover at a higher level.
 - Minimize mocks; test real behavior and integration boundaries whenever practical.
 - Never weaken, delete, or bypass a test merely to make an implementation pass unless the requested behavior intentionally supersedes it.
-- If meaningful automated coverage is genuinely impractical, stop before implementation, explain the limitation and proposed substitute, and obtain the user's explicit waiver.
+- Seek an explicit waiver only when meaningful automated coverage remains genuinely impractical after reasonable effort. Missing coverage, the effort required to add it, or test inconvenience are not grounds to skip it.
 - Treat merging as a separate user-controlled action. Never merge a pull request until the user explicitly approves merging that specific PR after receiving its final scope, review findings, and CI results.
 
 ## Compact Path
