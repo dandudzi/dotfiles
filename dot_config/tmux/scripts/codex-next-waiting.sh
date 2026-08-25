@@ -19,7 +19,7 @@ is_codex_pane() {
   esac
 }
 
-focus_waiting_pane() {
+focus_pane() {
   target="$1"
   session="$(tmux display-message -p -t "$target" '#{session_name}')"
   window="$(tmux display-message -p -t "$target" '#{session_name}:#{window_index}')"
@@ -27,6 +27,12 @@ focus_waiting_pane() {
   tmux switch-client -t "$session"
   tmux select-window -t "$window"
   tmux select-pane -t "$target"
+}
+
+focus_waiting_pane() {
+  target="$1"
+
+  focus_pane "$target"
   tmux set-option -pqu -t "$target" @codex_waiting
   update_count
 }
@@ -63,6 +69,43 @@ choose_waiting_pane() {
   focus_waiting_pane "$target"
 }
 
+active_codex_choices() {
+  separator="$(printf '\t')"
+
+  tmux list-panes -a \
+    -F "#{pane_current_command}${separator}#{session_name}:#{window_index}.#{pane_index}${separator}#{pane_id}" |
+    awk -F "$separator" '$1 == "codex" || $1 ~ /^codex-/ { print $2 FS $3 }'
+}
+
+choose_active_codex_pane() {
+  separator="$(printf '\t')"
+  choices="$(active_codex_choices)"
+
+  # Gum treats an empty input stream as a request to list files. Keep the
+  # dialog open with a non-pane empty-state row instead.
+  if [ -z "$choices" ]; then
+    choices='No active Codex pane'
+  fi
+
+  target="$(
+    printf '%s\n' "$choices" |
+      gum filter --limit 1 --no-show-help \
+        --header 'Active Codex panes' \
+        --placeholder 'Filter active Codex panes' \
+        --prompt '⚡ '
+  )" || return 0
+
+  # The pane id is kept after a tab so the menu remains readable and searchable.
+  target="$(printf '%s\n' "$target" | awk -F '\t' 'NF >= 2 { print $NF; exit }')"
+
+  if [ -z "$target" ]; then
+    tmux display-message "No active Codex pane"
+    return 0
+  fi
+
+  focus_pane "$target"
+}
+
 # Print or refresh the number used by the tmux session status module.
 if [ "${1:-}" = "--count" ]; then
   count_waiting
@@ -96,6 +139,11 @@ fi
 
 if [ "${1:-}" = "--choose" ]; then
   choose_waiting_pane
+  exit 0
+fi
+
+if [ "${1:-}" = "--choose-active" ]; then
+  choose_active_codex_pane
   exit 0
 fi
 
