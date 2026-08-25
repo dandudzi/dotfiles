@@ -38,11 +38,10 @@ choose_waiting_pane() {
       -F "#{session_name}:#{window_index}.#{pane_index}${separator}#{pane_id}"
   )"
 
-  # Gum treats an empty input stream as a request to list files, so avoid
-  # opening the picker until at least one Codex pane needs attention.
+  # Gum treats an empty input stream as a request to list files. Keep the
+  # dialog open with a non-pane empty-state row instead.
   if [ -z "$choices" ]; then
-    tmux display-message "No Codex pane needs attention"
-    return 0
+    choices='No Codex pane needs attention'
   fi
 
   target="$(
