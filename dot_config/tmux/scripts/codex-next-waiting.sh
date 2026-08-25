@@ -73,8 +73,19 @@ active_codex_choices() {
   separator="$(printf '\t')"
 
   tmux list-panes -a \
-    -F "#{pane_current_command}${separator}#{session_name}:#{window_index}.#{pane_index}${separator}#{pane_id}" |
-    awk -F "$separator" '$1 == "codex" || $1 ~ /^codex-/ { print $2 FS $3 }'
+    -F "#{pane_current_command}${separator}#{pane_title}${separator}#{session_name}:#{window_index}.#{pane_index}${separator}#{pane_id}" |
+    awk -F "$separator" '
+      $1 == "codex" || $1 ~ /^codex-/ {
+        # Codex prefixes its pane title with a rotating Braille spinner while
+        # a turn is running. Keep that live marker in front of the picker row.
+        marker = ""
+        if ($2 ~ /^(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)[[:space:]]/) {
+          split($2, title, " ")
+          marker = title[1] " "
+        }
+        print marker $3 FS $4
+      }
+    '
 }
 
 choose_active_codex_pane() {
