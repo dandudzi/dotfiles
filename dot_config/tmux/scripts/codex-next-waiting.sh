@@ -89,10 +89,11 @@ choose_active_codex_pane() {
 
   target="$(
     printf '%s\n' "$choices" |
-      gum filter --limit 1 --no-show-help \
+      fzf --height=100% --layout=reverse --no-info \
         --header 'Active Codex panes' \
-        --placeholder 'Filter active Codex panes' \
-        --prompt '⚡ '
+        --ghost 'Filter active Codex panes' \
+        --prompt '⚡ ' \
+        --bind 'left-click:accept'
   )" || return 0
 
   # The pane id is kept after a tab so the menu remains readable and searchable.
