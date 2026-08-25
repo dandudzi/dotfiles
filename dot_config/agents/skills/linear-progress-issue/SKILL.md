@@ -18,7 +18,7 @@ Keep Linear state and relations aligned with actual work. The primary agent deci
 ## State Progression
 
 - Move `Backlog` to `Todo` when work is accepted, sufficiently understood, and ready to start. After an approved split is verified, move the parent to `Todo`.
-- Move `Todo` to `In Progress` immediately before substantive work begins. When any required child starts, also move a nonterminal parent to `In Progress`, one valid transition at a time. After the starting state is verified, use `coding-workflow` for every code change.
+- Move `Todo` to `In Progress` before planning or substantive work begins. The main agent must first create or reuse the dedicated worktree, then, after the starting state is verified, enter and verify that worktree before creating a plan, state file, test, source file, or other work artifact. When any required child starts, also move a nonterminal parent to `In Progress`, one valid transition at a time. After the gate is satisfied, use `coding-workflow` for every code change.
 - Keep an actively blocked issue in `Todo` before implementation or `In Progress` if implementation already began.
 - Move `In Progress` to `Done` only after the completion contract below is proven.
 - Move a nonterminal issue to `Canceled` only when the user explicitly requests cancellation of that exact issue.
@@ -59,7 +59,7 @@ Require the subagent to retrieve and verify the current issue and relevant relat
 - The primary agent must not perform Linear writes itself; stop if the required delegation is unavailable.
 - Use only the named `linear-operator` custom agent for this workflow; do not attempt to configure an anonymous subagent at spawn time.
 - Treat work on a verified issue as authorization only for forward transitions whose lifecycle events actually occur and for evidenced in-scope blocking or related relations.
-- Make no state change for planning text, proposed work, failed landing or verification, or an issue already in the correct state.
+- Do not move an issue for proposed work alone. Once the user asks to plan or start a verified issue and its dedicated worktree exists, move it to `In Progress` before any planning text or work artifact is created; make no further state change merely because planning text, proposed work, failed landing or verification, or an already-correct state exists.
 - Require every commit message to link the active issue or child with one of these exact phrases: `Fixes <KEY>`, `Closes <KEY>`, `Resolves <KEY>`, `Completes <KEY>`, or `Implements <KEY>` (for example, `Fixes TEL-16`). A bare issue key does not satisfy this contract. For a squash merge, preserve one of these phrases in the resulting commit or linked merged PR.
 - Stop on missing scope, an unverified or mismatched issue, missing workflow states, or a state outside this workflow.
 - Defer issue discovery and creation to `linear-link-work` and `linear-create-issue`. Create no comments and change no unrelated fields.

@@ -22,6 +22,7 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
 
 ## Invariants
 
+- **Tracked-work claim gate.** When a specific issue is in scope and the agent is asked to plan or start it, create or reuse the dedicated worktree first, have the configured issue workflow move and verify the issue in `In Progress`, and verify the agent is operating from that worktree. Do not create a plan, state file, test, source file, or other work artifact before all three conditions hold; read-only discovery is allowed beforehand.
 - Write tests before implementing any code change or new functionality, and ensure the tests cover the changed behavior.
 - Prioritize functional and end-to-end tests over unit tests.
 - Use unit tests primarily for edge cases that are impractical to cover at a higher level.
@@ -41,7 +42,7 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
 
 ## Orchestrated Path
 
-1. **Isolate.** Inspect repository status, base branch, and existing worktrees. Create or reuse one dedicated branch and worktree for the entire task before spawning subagents. Record its path, branch, HEAD, and initial status.
+1. **Isolate and claim.** Inspect repository status, base branch, and existing worktrees. Create or reuse one dedicated branch and worktree for the entire task before spawning subagents. For tracked work, then use the configured issue workflow to move and verify the active issue in `In Progress`, enter the dedicated worktree, and verify the current directory before creating the plan or any other work artifact. Record its path, branch, HEAD, and initial status.
    - Give every subagent the same worktree root.
    - Keep branch switching, worktree management, staging, committing, stashing, resetting, and cleanup under main-agent ownership.
    - Recheck branch, HEAD, and status at phase boundaries. Stop on unexpected drift rather than overwriting it.
