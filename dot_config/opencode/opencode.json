@@ -10,6 +10,13 @@
       "type": "local",
       "command": ["npx", "-y", "@upstash/context7-mcp"],
       "enabled": true
+    },
+    "gitnexus": {
+      "type": "local",
+      "command": [
+        "/Users/daniel/.local/share/mise/installs/node/26/bin/gitnexus",
+        "mcp"
+      ]
     }
   }
 }
