@@ -8,14 +8,14 @@ description: Manage Markdown tasks with the Obsidian Tasks community plugin. Use
 Confirm the plugin is enabled:
 
 ```bash
-rtk obsidian plugin id=obsidian-tasks-plugin
+obsidian plugin id=obsidian-tasks-plugin
 ```
 
 ## Work with tasks
 
 - Inspect the exact source line and nearby context before changing it.
-- Use `rtk obsidian tasks path="Note.md" todo format=json` to list incomplete checkboxes in one note with stable, structured output.
-- Use `rtk obsidian task ref="Note.md:12" done` only for a plain checkbox when no recurrence, Done date, dependency, custom status, or `onCompletion` behavior applies.
+- Use `obsidian tasks path="Note.md" todo format=json` to list incomplete checkboxes in one note with stable, structured output.
+- Use `obsidian task ref="Note.md:12" done` only for a plain checkbox when no recurrence, Done date, dependency, custom status, or `onCompletion` behavior applies.
 - For plugin-managed completion, use the Tasks UI with the correct editor context or a reviewed integration with `apiV1.executeToggleTaskDoneCommand()`. The returned Markdown may include the next recurrence and must be applied atomically.
 
 Author Tasks queries as fenced `tasks` blocks:
@@ -32,4 +32,4 @@ Preserve the vault's existing task format and metadata order. Verify the source 
 
 ## Discover more
 
-Run `rtk obsidian help tasks` and `rtk obsidian help task` for current CLI options. Run `rtk obsidian commands filter=obsidian-tasks-plugin` to discover commands exposed by the installed plugin; editor commands may still require an active cursor.
+Run `obsidian help tasks` and `obsidian help task` for current CLI options. Run `obsidian commands filter=obsidian-tasks-plugin` to discover commands exposed by the installed plugin; editor commands may still require an active cursor.

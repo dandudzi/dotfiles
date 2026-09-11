@@ -92,8 +92,6 @@ brew "pstree"
 brew "resvg"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
-# CLI proxy to minimize LLM token consumption
-brew "rtk"
 # 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
 # Smart tmux session manager

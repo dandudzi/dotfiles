@@ -6,8 +6,8 @@
 # source of intent where their native rule formats permit it.
 #
 # The installed CLI exposes the official `codex execpolicy check` tester, so
-# every policy change must pass both inline `match`/`not_match` validation and
-# explicit direct, RTK, modifier, wrapper, and nearby non-match checks.
+# every policy change must pass inline `match`/`not_match` validation and
+# explicit direct and nearby non-match checks.
 # Codex uses the strictest decision across all matching prefixes:
 # forbidden > prompt > allow.
 #
@@ -15,18 +15,9 @@
 # canonicalized paths. Commands that require path-aware or flag-order-aware
 # checks remain prompt/forbidden instead of receiving broad allow rules.
 #
-# These native rules intentionally accept some spelling gaps, including stacked
-# RTK modifiers, reordered flags, and combined option/value tokens. They are a
-# strong escalation policy, not an unconditional security boundary for every
-# possible command spelling.
-#
-# The duplicate `rtk` forms are required by the global AGENTS.md instruction
-# that all shell commands run through RTK.
-
 # Restrict basename fallback for unconditionally allowed executables. Without
 # these declarations, an arbitrary absolute executable such as /tmp/ls could
 # inherit the `ls` allow rule when host-executable resolution is enabled.
-host_executable(name = "rtk", paths = ["/opt/homebrew/bin/rtk"])
 host_executable(name = "ls", paths = ["/bin/ls"])
 host_executable(name = "pwd", paths = ["/bin/pwd"])
 host_executable(name = "id", paths = ["/usr/bin/id"])
@@ -40,36 +31,8 @@ host_executable(name = "dirname", paths = ["/usr/bin/dirname"])
 host_executable(name = "codex", paths = ["/opt/homebrew/bin/codex"])
 host_executable(name = "obsidian", paths = ["/opt/homebrew/bin/obsidian"])
 
-# RTK accepts documented global modifiers and transparent command wrappers.
-# Mirror every RTK rule across those spellings so the underlying command keeps
-# the canonical rule's decision instead of the wrapper receiving a blanket
-# decision. Stacked modifiers, `run -c`, and reordered combinations remain
-# outside this native prefix coverage.
-RTK_SINGLE_MODIFIERS = [
-    "--skip-env",
-    "--ultra-compact",
-    "--verbose",
-    "-v",
-    "-vv",
-    "-vvv",
-]
-
-RTK_COMMAND_WRAPPERS = [
-    "run",
-    "proxy",
-    "err",
-    "test",
-    "summary",
-]
-
-RTK_WRAPPER_MODIFIERS = [
-    "--skip-env",
-    "--ultra-compact",
-]
-
 # Maven Wrapper is project-owned code, so only installed-Maven metadata is
-# unconditionally allowed. These shared token sets keep direct and RTK rules
-# aligned without broad executable-wide decisions.
+# unconditionally allowed.
 MAVEN_EXECUTABLES = ["mvn", "mvnw", "./mvnw"]
 MAVEN_PRECEDING_PHASES = [
     "clean",
@@ -92,73 +55,6 @@ MAVEN_FORBIDDEN_GOALS = [
     "release:rollback",
 ]
 
-def _rtk_single_modifier_examples(examples):
-    expanded = []
-    for example in examples:
-        for modifier in RTK_SINGLE_MODIFIERS:
-            expanded.append("rtk " + modifier + example[3:])
-    return expanded
-
-def _rtk_wrapper_examples(examples):
-    expanded = []
-    for example in examples:
-        for wrapper in RTK_COMMAND_WRAPPERS:
-            expanded.append("rtk " + wrapper + example[3:])
-    return expanded
-
-def _rtk_modifier_wrapper_examples(examples):
-    expanded = []
-    for example in examples:
-        for modifier in RTK_SINGLE_MODIFIERS:
-            for wrapper in RTK_COMMAND_WRAPPERS:
-                expanded.append("rtk " + modifier + " " + wrapper + example[3:])
-    return expanded
-
-def _rtk_wrapper_modifier_examples(examples):
-    expanded = []
-    for example in examples:
-        for wrapper in RTK_COMMAND_WRAPPERS:
-            for modifier in RTK_WRAPPER_MODIFIERS:
-                expanded.append("rtk " + wrapper + " " + modifier + example[3:])
-    return expanded
-
-def rtk_prefix_rule(pattern, decision, justification, match = [], not_match = []):
-    prefix_rule(
-        pattern = pattern,
-        decision = decision,
-        justification = justification,
-        match = match,
-        not_match = not_match,
-    )
-    prefix_rule(
-        pattern = ["rtk", RTK_SINGLE_MODIFIERS] + pattern[1:],
-        decision = decision,
-        justification = justification,
-        match = _rtk_single_modifier_examples(match),
-        not_match = _rtk_single_modifier_examples(not_match),
-    )
-    prefix_rule(
-        pattern = ["rtk", RTK_COMMAND_WRAPPERS] + pattern[1:],
-        decision = decision,
-        justification = justification,
-        match = _rtk_wrapper_examples(match),
-        not_match = _rtk_wrapper_examples(not_match),
-    )
-    prefix_rule(
-        pattern = ["rtk", RTK_SINGLE_MODIFIERS, RTK_COMMAND_WRAPPERS] + pattern[1:],
-        decision = decision,
-        justification = justification,
-        match = _rtk_modifier_wrapper_examples(match),
-        not_match = _rtk_modifier_wrapper_examples(not_match),
-    )
-    prefix_rule(
-        pattern = ["rtk", RTK_COMMAND_WRAPPERS, RTK_WRAPPER_MODIFIERS] + pattern[1:],
-        decision = decision,
-        justification = justification,
-        match = _rtk_wrapper_modifier_examples(match),
-        not_match = _rtk_wrapper_modifier_examples(not_match),
-    )
-
 # -----------------------------------------------------------------------------
 # ALLOW — commands explicitly authorized to run outside the sandbox without a
 # prompt. Most are narrow and read-only. Obsidian is application-scoped and has
@@ -173,12 +69,6 @@ prefix_rule(
     match = ["pwd", "pwd -L"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "pwd"],
-    decision = "allow",
-    justification = "Print the current working directory through RTK.",
-    match = ["rtk pwd", "rtk pwd -L"],
-)
 
 prefix_rule(
     pattern = ["ls"],
@@ -188,13 +78,6 @@ prefix_rule(
     not_match = ["lsof"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "ls"],
-    decision = "allow",
-    justification = "List directory entries through RTK without modifying them.",
-    match = ["rtk ls", "rtk ls -la"],
-    not_match = ["rtk lsof"],
-)
 
 prefix_rule(
     pattern = [["id", "whoami", "uname", "which"]],
@@ -204,13 +87,6 @@ prefix_rule(
     not_match = ["who"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["id", "whoami", "uname", "which"]],
-    decision = "allow",
-    justification = "Inspect local identity, platform, or executable resolution through RTK.",
-    match = ["rtk id", "rtk whoami", "rtk uname -a", "rtk which git"],
-    not_match = ["rtk who"],
-)
 
 prefix_rule(
     pattern = [["true", "false", "basename", "dirname"]],
@@ -220,13 +96,6 @@ prefix_rule(
     not_match = ["date", "arch"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["true", "false", "basename", "dirname"]],
-    decision = "allow",
-    justification = "Run an inert result command or lexical path formatting through RTK.",
-    match = ["rtk true", "rtk false", "rtk basename path/file", "rtk dirname path/file"],
-    not_match = ["rtk date", "rtk arch"],
-)
 
 prefix_rule(
     pattern = ["codex", ["--version", "-V", "--help", "-h"]],
@@ -252,29 +121,8 @@ prefix_rule(
     not_match = ["codex exec task"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", ["--version", "-V", "--help", "-h"]],
-    decision = "allow",
-    justification = "Inspect the installed Codex CLI through RTK without starting an agent.",
-    match = ["rtk codex --version", "rtk codex --help"],
-    not_match = ["rtk codex exec task", "rtk codex resume"],
-)
 
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", "help"],
-    decision = "allow",
-    justification = "Inspect Codex CLI help through RTK without starting an agent.",
-    match = ["rtk codex help", "rtk codex help execpolicy"],
-    not_match = ["rtk codex exec task"],
-)
 
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", "execpolicy", "check"],
-    decision = "allow",
-    justification = "Run the official preview execution-policy tester through RTK when the installed Codex binary provides it.",
-    match = ["rtk codex execpolicy check --rules default.rules -- git status"],
-    not_match = ["rtk codex exec task"],
-)
 
 prefix_rule(
     pattern = ["mvn", ["-v", "--version", "-h", "--help"]],
@@ -284,13 +132,6 @@ prefix_rule(
     not_match = ["mvn -V deploy", "mvn test", "./mvnw --version"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "mvn", ["-v", "--version", "-h", "--help"]],
-    decision = "allow",
-    justification = "Inspect the installed Maven CLI through RTK without running a project build or Maven Wrapper bootstrap.",
-    match = ["rtk mvn --version", "rtk mvn --help"],
-    not_match = ["rtk mvn -V deploy", "rtk mvn test", "rtk ./mvnw --version"],
-)
 
 # The Obsidian desktop CLI requires access to the app process and its IPC socket,
 # which live outside the workspace sandbox. The user explicitly authorizes the
@@ -307,17 +148,6 @@ prefix_rule(
     not_match = ["obsidian-export vault"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "obsidian"],
-    decision = "allow",
-    justification = "Run the explicitly authorized Obsidian desktop CLI through RTK outside the workspace sandbox.",
-    match = [
-        "rtk obsidian read path=Notes/Example.md",
-        "rtk obsidian create path=Inbox/Example.md content=Example",
-        "rtk obsidian move path=Inbox/Example.md to=Notes/Example.md",
-    ],
-    not_match = ["rtk obsidian-export vault"],
-)
 
 # -----------------------------------------------------------------------------
 # PROMPT — potentially modifying, networked, executable, sensitive, or external
@@ -337,17 +167,9 @@ prefix_rule(
     not_match = ["pwd"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["mkdir", "touch", "cp", "mv", "ln", "rm", "rmdir", "truncate", "install", "chmod", "chown", "chgrp", "tee", "patch"]],
-    decision = "prompt",
-    justification = "Filesystem mutation through RTK requires approval for the exact paths.",
-    match = ["rtk mkdir build", "rtk cp source target", "rtk rm file.txt", "rtk chmod 600 file"],
-    not_match = ["rtk pwd"],
-)
 
 # Chezmoi uses `add` both to update existing managed targets and to begin
 # managing new targets. Before invoking this command, verify every exact target
-# with `rtk chezmoi source-path <target>`. Managed targets may be re-added.
 # If any target is not managed, stop and obtain explicit human authorization.
 prefix_rule(
     pattern = ["chezmoi", "add"],
@@ -363,19 +185,6 @@ prefix_rule(
     ],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "chezmoi", "add"],
-    decision = "prompt",
-    justification = "Chezmoi add may auto-commit and auto-push. Approve a managed re-add after every exact target has been verified with chezmoi source-path. Reject new or unmanaged targets unless the user explicitly authorized those exact paths.",
-    match = [
-        "rtk chezmoi add /Users/daniel/.config/agents/codex/rules/default.rules",
-    ],
-    not_match = [
-        "rtk chezmoi status /Users/daniel/.config/agents/codex/rules/default.rules",
-        "rtk chezmoi diff /Users/daniel/.config/agents/codex/rules/default.rules",
-        "rtk chezmoi apply /Users/daniel/.config/agents/codex/rules/default.rules",
-    ],
-)
 
 prefix_rule(
     pattern = ["git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
@@ -385,13 +194,6 @@ prefix_rule(
     not_match = ["git diff"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
-    decision = "prompt",
-    justification = "Git mutations, network operations, configurable helpers, and content inspection through RTK require approval.",
-    match = ["rtk git status", "rtk git add file", "rtk git commit -m change", "rtk git push origin main", "rtk git reset HEAD file", "rtk git clean -n"],
-    not_match = ["rtk git diff"],
-)
 
 prefix_rule(
     pattern = [["bash", "sh", "zsh", "python", "python3", "node", "ruby", "perl", "osascript", "pwsh", "powershell", "tclsh", "lua", "php", "java", "jshell", "R", "Rscript", "deno", "swift"]],
@@ -401,13 +203,6 @@ prefix_rule(
     not_match = ["uname -a"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["bash", "sh", "zsh", "python", "python3", "node", "ruby", "perl", "osascript", "pwsh", "powershell", "tclsh", "lua", "php", "java", "jshell", "R", "Rscript", "deno", "swift"]],
-    decision = "prompt",
-    justification = "Shells and interpreters executed through RTK can run arbitrary code.",
-    match = ["rtk bash -c 'echo ok'", "rtk python3 script.py", "rtk node -e 'console.log(1)'", "rtk deno run script.ts", "rtk java Main"],
-    not_match = ["rtk uname -a"],
-)
 
 prefix_rule(
     pattern = [["env", "command", "xargs", "parallel", "timeout", "nohup", "nice", "watch", "script", "expect"]],
@@ -417,13 +212,6 @@ prefix_rule(
     not_match = ["pwd"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["env", "command", "xargs", "parallel", "timeout", "nohup", "nice", "watch", "script", "expect", "read"]],
-    decision = "prompt",
-    justification = "Execution wrappers and RTK content readers require exact approval.",
-    match = ["rtk env command", "rtk xargs rm", "rtk timeout 10 command", "rtk read README.md"],
-    not_match = ["rtk pwd"],
-)
 
 # Headless Neovim loads the full editor configuration and plugins unless the
 # approved invocation explicitly limits them, so review each run before launch.
@@ -435,13 +223,6 @@ prefix_rule(
     not_match = ["nvim file.lua", "nvim --clean", "nvim file.lua --headless"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "nvim", "--headless"],
-    decision = "prompt",
-    justification = "Headless Neovim through RTK can load plugins or leave runaway background processes; approve the exact invocation.",
-    match = ["rtk nvim --headless", "rtk nvim --headless -u NONE +qa"],
-    not_match = ["rtk nvim file.lua", "rtk nvim --clean", "rtk nvim file.lua --headless"],
-)
 
 prefix_rule(
     pattern = [["cmake", "ninja", "meson"]],
@@ -451,13 +232,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["cmake", "ninja", "meson"]],
-    decision = "prompt",
-    justification = "Build-system frontends through RTK can execute project or third-party code.",
-    match = ["rtk cmake --build build", "rtk ninja test", "rtk meson compile -C build"],
-    not_match = ["rtk git status"],
-)
 
 # Package and toolchain installation operations are explicit even when they
 # would otherwise fit inside the sandbox. Upgrade/update and routine list,
@@ -471,13 +245,6 @@ prefix_rule(
     not_match = ["brew upgrade", "brew list", "brew info ripgrep"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "brew", ["install", "reinstall", "bundle"]],
-    decision = "prompt",
-    justification = "Homebrew installation operations through RTK can download executable code and change machine-level state.",
-    match = ["rtk brew install ripgrep", "rtk brew reinstall python", "rtk brew bundle"],
-    not_match = ["rtk brew upgrade", "rtk brew list", "rtk brew info ripgrep"],
-)
 
 prefix_rule(
     pattern = ["mise", "install"],
@@ -487,13 +254,6 @@ prefix_rule(
     not_match = ["mise use --global python@3.14", "mise upgrade", "mise ls"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "mise", "install"],
-    decision = "prompt",
-    justification = "Mise installation through RTK can download executable toolchains.",
-    match = ["rtk mise install node@lts"],
-    not_match = ["rtk mise use --global python@3.14", "rtk mise upgrade", "rtk mise ls"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, ["install", "install:install", "install:install-file"]],
@@ -503,13 +263,6 @@ prefix_rule(
     not_match = ["mvn test", "./mvnw package"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, ["install", "install:install", "install:install-file"]],
-    decision = "prompt",
-    justification = "Maven installation goals through RTK write project or external artifacts to the local package repository.",
-    match = ["rtk mvn install", "rtk mvnw install", "rtk ./mvnw install", "rtk mvn install:install-file -Dfile=library.jar"],
-    not_match = ["rtk mvn test", "rtk ./mvnw package"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, "clean", "install"],
@@ -519,13 +272,6 @@ prefix_rule(
     not_match = ["mvn clean verify", "mvn install"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, "clean", "install"],
-    decision = "prompt",
-    justification = "Maven clean install through RTK deletes project output and writes rebuilt artifacts to the local package repository.",
-    match = ["rtk mvn clean install", "rtk mvnw clean install", "rtk ./mvnw clean install"],
-    not_match = ["rtk mvn clean verify", "rtk mvn install"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, ["dependency:purge-local-repository", "dependency:get", "dependency:go-offline"]],
@@ -535,13 +281,6 @@ prefix_rule(
     not_match = ["mvn dependency:resolve", "mvn dependency:tree"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, ["dependency:purge-local-repository", "dependency:get", "dependency:go-offline"]],
-    decision = "prompt",
-    justification = "Explicit Maven dependency-cache operations through RTK can download, install, or delete artifacts in the local repository.",
-    match = ["rtk mvn dependency:purge-local-repository", "rtk mvn dependency:get -Dartifact=g:a:1", "rtk mvn dependency:go-offline"],
-    not_match = ["rtk mvn dependency:resolve", "rtk mvn dependency:tree"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, ["archetype:generate", "wrapper:wrapper", "versions:set", "dependency:add", "dependency:remove"]],
@@ -551,13 +290,6 @@ prefix_rule(
     not_match = ["mvn help:effective-pom", "mvn dependency:analyze"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, ["archetype:generate", "wrapper:wrapper", "versions:set", "dependency:add", "dependency:remove"]],
-    decision = "prompt",
-    justification = "These Maven goals through RTK generate projects or modify wrapper and POM files; approve the exact project mutation.",
-    match = ["rtk mvn archetype:generate", "rtk mvn wrapper:wrapper", "rtk mvn versions:set -DnewVersion=2", "rtk mvn dependency:add -Dartifact=g:a:1", "rtk mvn dependency:remove -Dartifact=g:a"],
-    not_match = ["rtk mvn help:effective-pom", "rtk mvn dependency:analyze"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, ["spring-boot:run", "quarkus:dev", "exec:java"]],
@@ -567,13 +299,6 @@ prefix_rule(
     not_match = ["mvn test", "mvn package"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, ["spring-boot:run", "quarkus:dev", "exec:java"]],
-    decision = "prompt",
-    justification = "Maven application-run goals through RTK execute project code and may start long-lived local services.",
-    match = ["rtk mvn spring-boot:run", "rtk mvn quarkus:dev", "rtk mvn exec:java"],
-    not_match = ["rtk mvn test", "rtk mvn package"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, ["-ep", "--encrypt-password", "-emp", "--encrypt-master-password"]],
@@ -583,13 +308,6 @@ prefix_rule(
     not_match = ["mvn --version", "mvn test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, ["-ep", "--encrypt-password", "-emp", "--encrypt-master-password"]],
-    decision = "prompt",
-    justification = "Maven credential encryption through RTK handles sensitive password material and requires exact approval.",
-    match = ["rtk mvn --encrypt-password secret", "rtk mvn -emp secret"],
-    not_match = ["rtk mvn --version", "rtk mvn test"],
-)
 
 prefix_rule(
     pattern = [["gradle", "gradlew", "./gradlew"], ["install", "installDist"]],
@@ -599,13 +317,6 @@ prefix_rule(
     not_match = ["gradle test", "./gradlew build", "./gradlew publishToMavenLocal"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["gradle", "gradlew", "./gradlew"], ["install", "installDist"]],
-    decision = "prompt",
-    justification = "Gradle installation tasks through RTK can install distributions or artifacts outside the project build directory.",
-    match = ["rtk gradle install", "rtk gradlew installDist"],
-    not_match = ["rtk gradle test", "rtk ./gradlew build", "rtk ./gradlew publishToMavenLocal"],
-)
 
 prefix_rule(
     pattern = ["cargo", "install"],
@@ -615,13 +326,6 @@ prefix_rule(
     not_match = ["cargo add serde", "cargo update", "cargo test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "cargo", "install"],
-    decision = "prompt",
-    justification = "Cargo package installation through RTK can download and install executable code.",
-    match = ["rtk cargo install cargo-nextest"],
-    not_match = ["rtk cargo add serde", "rtk cargo update", "rtk cargo test"],
-)
 
 prefix_rule(
     pattern = ["rustup", "install"],
@@ -631,13 +335,6 @@ prefix_rule(
     not_match = ["rustup update", "rustup show", "rustup --version"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "rustup", "install"],
-    decision = "prompt",
-    justification = "Rustup installation through RTK changes installed Rust toolchains.",
-    match = ["rtk rustup install stable"],
-    not_match = ["rtk rustup update", "rtk rustup show", "rtk rustup --version"],
-)
 
 prefix_rule(
     pattern = [["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci"]],
@@ -647,13 +344,6 @@ prefix_rule(
     not_match = ["npm update", "pnpm up", "yarn upgrade", "bun test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci"]],
-    decision = "prompt",
-    justification = "JavaScript package installation operations through RTK can download and execute third-party code.",
-    match = ["rtk npm install", "rtk npm ci", "rtk pnpm add react", "rtk yarn install"],
-    not_match = ["rtk npm update", "rtk pnpm up", "rtk yarn upgrade", "rtk bun test"],
-)
 
 prefix_rule(
     pattern = ["corepack", "install"],
@@ -663,13 +353,6 @@ prefix_rule(
     not_match = ["corepack enable", "corepack use yarn@stable", "corepack up"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "corepack", "install"],
-    decision = "prompt",
-    justification = "Corepack package-manager installation through RTK can download executable tool versions.",
-    match = ["rtk corepack install --global pnpm"],
-    not_match = ["rtk corepack enable", "rtk corepack use yarn@stable", "rtk corepack up"],
-)
 
 prefix_rule(
     pattern = [["pip", "pip3"], "install"],
@@ -679,13 +362,6 @@ prefix_rule(
     not_match = ["pip show pyyaml", "pip3 list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["pip", "pip3"], "install"],
-    decision = "prompt",
-    justification = "Python package installation through RTK can download and install executable third-party code.",
-    match = ["rtk pip install pyyaml", "rtk pip3 install pytest"],
-    not_match = ["rtk pip show pyyaml", "rtk pip3 list"],
-)
 
 prefix_rule(
     pattern = [["python", "python3"], "-m", "pip", "install"],
@@ -695,13 +371,6 @@ prefix_rule(
     not_match = ["python -m pip show pyyaml", "python3 script.py"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["python", "python3"], "-m", "pip", "install"],
-    decision = "prompt",
-    justification = "Python module-based pip installation through RTK can download and install executable third-party code.",
-    match = ["rtk python -m pip install pyyaml", "rtk python3 -m pip install pytest"],
-    not_match = ["rtk python -m pip show pyyaml", "rtk python3 script.py"],
-)
 
 prefix_rule(
     pattern = ["uv", ["add", "sync"]],
@@ -711,13 +380,6 @@ prefix_rule(
     not_match = ["uv run pytest", "uv --version"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "uv", ["add", "sync"]],
-    decision = "prompt",
-    justification = "Uv dependency installation operations through RTK can download packages and modify project dependency state.",
-    match = ["rtk uv add pyyaml", "rtk uv sync"],
-    not_match = ["rtk uv run pytest", "rtk uv --version"],
-)
 
 prefix_rule(
     pattern = ["uv", ["pip", "tool", "python"], "install"],
@@ -727,13 +389,6 @@ prefix_rule(
     not_match = ["uv pip list", "uv tool list", "uv python list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "uv", ["pip", "tool", "python"], "install"],
-    decision = "prompt",
-    justification = "Uv package, tool, and Python installation operations through RTK can download executable code or runtimes.",
-    match = ["rtk uv pip install pyyaml", "rtk uv tool install ruff", "rtk uv python install 3.14"],
-    not_match = ["rtk uv pip list", "rtk uv tool list", "rtk uv python list"],
-)
 
 prefix_rule(
     pattern = ["uv", "run", "--with"],
@@ -743,13 +398,6 @@ prefix_rule(
     not_match = ["uv run pytest"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "uv", "run", "--with"],
-    decision = "prompt",
-    justification = "Uv run with temporary dependencies through RTK installs packages into its managed cache before execution.",
-    match = ["rtk uv run --with pyyaml python script.py"],
-    not_match = ["rtk uv run pytest"],
-)
 
 prefix_rule(
     pattern = ["poetry", ["install", "add"]],
@@ -759,13 +407,6 @@ prefix_rule(
     not_match = ["poetry update", "poetry show", "poetry build"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "poetry", ["install", "add"]],
-    decision = "prompt",
-    justification = "Poetry package installation operations through RTK can download and install third-party code.",
-    match = ["rtk poetry install", "rtk poetry add pyyaml"],
-    not_match = ["rtk poetry update", "rtk poetry show", "rtk poetry build"],
-)
 
 prefix_rule(
     pattern = ["pipx", ["install", "inject"]],
@@ -775,13 +416,6 @@ prefix_rule(
     not_match = ["pipx upgrade-all", "pipx list", "pipx --version"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "pipx", ["install", "inject"]],
-    decision = "prompt",
-    justification = "Pipx installation operations through RTK install executable Python tools outside the project.",
-    match = ["rtk pipx install ruff", "rtk pipx inject tool dependency"],
-    not_match = ["rtk pipx upgrade-all", "rtk pipx list", "rtk pipx --version"],
-)
 
 prefix_rule(
     pattern = [["printenv", "set", "export", "declare"]],
@@ -791,13 +425,6 @@ prefix_rule(
     not_match = ["env NO_COLOR=1 command"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["printenv", "set", "export", "declare"]],
-    decision = "prompt",
-    justification = "Environment inspection through RTK can expose credentials; approve only narrowly scoped access.",
-    match = ["rtk printenv PATH", "rtk printenv", "rtk set", "rtk export -p", "rtk declare -x"],
-    not_match = ["rtk env NO_COLOR=1 command"],
-)
 
 
 prefix_rule(
@@ -808,13 +435,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["curl", "wget", "ssh", "scp", "sftp", "rsync", "nc", "ncat", "socat", "gh", "glab"]],
-    decision = "prompt",
-    justification = "Network access, remote execution, and external state changes through RTK require approval.",
-    match = ["rtk curl https://example.com", "rtk ssh host", "rtk gh pr create"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = [["kill", "pkill", "killall", "systemctl", "service", "launchctl", "crontab", "at", "open", "xdg-open"]],
@@ -824,13 +444,6 @@ prefix_rule(
     not_match = ["ps aux"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["kill", "pkill", "killall", "systemctl", "service", "launchctl", "crontab", "at", "open", "xdg-open"]],
-    decision = "prompt",
-    justification = "Process, service, persistence, scheduling, and GUI changes through RTK require approval.",
-    match = ["rtk kill 123", "rtk systemctl restart app", "rtk crontab -e", "rtk open file.pdf"],
-    not_match = ["rtk ps aux"],
-)
 
 prefix_rule(
     pattern = [["docker", "podman", "colima", "limactl", "vagrant"]],
@@ -840,13 +453,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["docker", "podman", "colima", "limactl", "vagrant"]],
-    decision = "prompt",
-    justification = "Container and virtual-machine commands through RTK can execute code, mutate state, or access host resources.",
-    match = ["rtk docker build .", "rtk podman run image", "rtk colima start"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu", "pulumi", "kubectl", "helm", "ansible", "ansible-playbook", "packer", "aws", "gcloud", "az", "psql", "mysql", "sqlite3", "redis-cli", "mongosh"]],
@@ -856,13 +462,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu", "pulumi", "kubectl", "helm", "ansible", "ansible-playbook", "packer", "aws", "gcloud", "az", "psql", "mysql", "sqlite3", "redis-cli", "mongosh"]],
-    decision = "prompt",
-    justification = "Infrastructure, cloud, cluster, and database commands through RTK can affect external systems or sensitive data.",
-    match = ["rtk terraform plan", "rtk kubectl get pods", "rtk aws sts get-caller-identity", "rtk psql database"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = [["fdisk", "parted", "diskutil", "zpool", "zfs", "btrfs", "cryptsetup", "lvm", "lvs", "vgs", "pvs"]],
@@ -872,13 +471,6 @@ prefix_rule(
     not_match = ["du -sh ."],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["fdisk", "parted", "diskutil", "zpool", "zfs", "btrfs", "cryptsetup", "lvm", "lvs", "vgs", "pvs"]],
-    decision = "prompt",
-    justification = "Disk, pool, encryption, and volume tools through RTK require exact approval for diagnostic use.",
-    match = ["rtk diskutil list", "rtk zpool status", "rtk zfs list", "rtk cryptsetup status volume", "rtk lvs"],
-    not_match = ["rtk du -sh ."],
-)
 
 # Obsidian safety-sensitive operations remain available but require exact
 # approval. Prompting all delete invocations also covers the positional
@@ -932,55 +524,6 @@ prefix_rule(
     ],
 )
 
-rtk_prefix_rule(
-    pattern = [
-        "rtk",
-        "obsidian",
-        [
-            "command",
-            "delete",
-            "dev:cdp",
-            "dev:debug",
-            "dev:mobile",
-            "dev:screenshot",
-            "devtools",
-            "eval",
-            "history:restore",
-            "plugin:disable",
-            "plugin:enable",
-            "plugin:install",
-            "plugin:reload",
-            "plugin:uninstall",
-            "plugins:restrict",
-            "reload",
-            "restart",
-            "snippet:disable",
-            "snippet:enable",
-            "theme:install",
-            "theme:set",
-            "theme:uninstall",
-        ],
-    ],
-    decision = "prompt",
-    justification = "Destructive, executable, recovery, plugin, theme, or administrative Obsidian operations through RTK require exact approval.",
-    match = [
-        "rtk obsidian delete path=Notes/Example.md",
-        "rtk obsidian history:restore path=Notes/Example.md version=1",
-        "rtk obsidian plugin:install id=example-plugin",
-        "rtk obsidian eval code=app.vault.getName()",
-        "rtk obsidian restart",
-    ],
-    not_match = [
-        "rtk obsidian read path=Notes/Example.md",
-        "rtk obsidian search query=example",
-        "rtk obsidian create path=Inbox/Example.md",
-        "rtk obsidian move path=Inbox/Example.md to=Notes/Example.md",
-        "rtk obsidian property:set name=status value=active path=Notes/Example.md",
-        "rtk obsidian task path=Notes/Example.md line=1 done",
-        "rtk obsidian plugin id=dataview",
-        "rtk obsidian plugins",
-    ],
-)
 
 # -----------------------------------------------------------------------------
 # FORBIDDEN — agents must not execute these. A human may run them manually.
@@ -994,13 +537,6 @@ prefix_rule(
     not_match = ["whoami"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["sudo", "su", "doas", "pkexec", "visudo"]],
-    decision = "forbidden",
-    justification = "Privilege escalation through RTK is blocked; perform the operation manually with a reviewed command.",
-    match = ["rtk sudo rm file", "rtk su root", "rtk doas command", "rtk visudo"],
-    not_match = ["rtk whoami"],
-)
 
 prefix_rule(
     pattern = ["rm", ["-rf", "-fr", "-Rf", "-fR"]],
@@ -1010,13 +546,6 @@ prefix_rule(
     not_match = ["rm file.txt", "rm -r directory"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "rm", ["-rf", "-fr", "-Rf", "-fR"]],
-    decision = "forbidden",
-    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
-    match = ["rtk rm -rf path", "rtk rm -fr path", "rtk rm -Rf path", "rtk rm -fR path"],
-    not_match = ["rtk rm file.txt", "rtk rm -r directory"],
-)
 
 prefix_rule(
     pattern = ["rm", ["-r", "-R", "--recursive"], ["-f", "--force"]],
@@ -1026,13 +555,6 @@ prefix_rule(
     not_match = ["rm -r directory", "rm --force file.txt"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "rm", ["-r", "-R", "--recursive"], ["-f", "--force"]],
-    decision = "forbidden",
-    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
-    match = ["rtk rm -r -f path", "rtk rm -R --force path", "rtk rm --recursive --force path"],
-    not_match = ["rtk rm -r directory", "rtk rm --force file.txt"],
-)
 
 prefix_rule(
     pattern = ["rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
@@ -1042,13 +564,6 @@ prefix_rule(
     not_match = ["rm --force file.txt", "rm --recursive directory"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
-    decision = "forbidden",
-    justification = "Forced recursive deletion through RTK is blocked; remove reviewed paths individually or perform the operation manually.",
-    match = ["rtk rm -f -r path", "rtk rm --force -R path", "rtk rm --force --recursive path"],
-    not_match = ["rtk rm --force file.txt", "rtk rm --recursive directory"],
-)
 
 prefix_rule(
     pattern = ["chmod", ["777", "0777", "a+rwx"]],
@@ -1058,13 +573,6 @@ prefix_rule(
     not_match = ["chmod 600 file", "chmod 755 script"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "chmod", ["777", "0777", "a+rwx"]],
-    decision = "forbidden",
-    justification = "World-writable permissions through RTK are blocked; choose the minimum required permission bits.",
-    match = ["rtk chmod 777 file", "rtk chmod 0777 file", "rtk chmod a+rwx file"],
-    not_match = ["rtk chmod 600 file", "rtk chmod 755 script"],
-)
 
 prefix_rule(
     pattern = ["chmod", ["-R", "--recursive"], ["777", "0777", "a+rwx"]],
@@ -1074,13 +582,6 @@ prefix_rule(
     not_match = ["chmod -R 755 directory"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "chmod", ["-R", "--recursive"], ["777", "0777", "a+rwx"]],
-    decision = "forbidden",
-    justification = "Recursive world-writable permissions through RTK are blocked; choose scoped paths and minimum permission bits.",
-    match = ["rtk chmod -R 777 directory", "rtk chmod --recursive 0777 directory"],
-    not_match = ["rtk chmod -R 755 directory"],
-)
 
 prefix_rule(
     pattern = [["dd", "mkfs", "mkfs.ext2", "mkfs.ext3", "mkfs.ext4", "mkfs.xfs", "mkfs.btrfs", "wipefs", "blkdiscard", "sfdisk", "sgdisk", "newfs", "newfs_apfs", "newfs_hfs", "newfs_msdos", "newfs_exfat", "newfs_udf", "mdadm", "lvremove", "vgremove", "pvremove"]],
@@ -1090,13 +591,6 @@ prefix_rule(
     not_match = ["diskutil list", "zpool status", "du -sh ."],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["dd", "mkfs", "mkfs.ext2", "mkfs.ext3", "mkfs.ext4", "mkfs.xfs", "mkfs.btrfs", "wipefs", "blkdiscard", "sfdisk", "sgdisk", "newfs", "newfs_apfs", "newfs_hfs", "newfs_msdos", "newfs_exfat", "newfs_udf", "mdadm", "lvremove", "vgremove", "pvremove"]],
-    decision = "forbidden",
-    justification = "Raw disk, filesystem creation, block discard, RAID, and volume removal through RTK are blocked.",
-    match = ["rtk dd if=input of=output", "rtk mkfs.ext4 /dev/disk", "rtk blkdiscard /dev/disk", "rtk newfs_apfs /dev/disk", "rtk lvremove volume"],
-    not_match = ["rtk diskutil list", "rtk zpool status", "rtk du -sh ."],
-)
 
 prefix_rule(
     pattern = ["diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "secureErase", "deleteVolume"]],
@@ -1106,13 +600,6 @@ prefix_rule(
     not_match = ["diskutil list", "diskutil info disk0"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "secureErase", "deleteVolume"]],
-    decision = "forbidden",
-    justification = "Destructive diskutil operations through RTK are blocked; use diagnostics only.",
-    match = ["rtk diskutil eraseDisk APFS name disk0", "rtk diskutil eraseVolume APFS disk1s1"],
-    not_match = ["rtk diskutil list", "rtk diskutil info disk0"],
-)
 
 prefix_rule(
     pattern = ["diskutil", "apfs", ["deleteVolume", "deleteContainer", "eraseVolume", "resizeContainer"]],
@@ -1122,13 +609,6 @@ prefix_rule(
     not_match = ["diskutil apfs list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "diskutil", "apfs", ["deleteVolume", "deleteContainer", "eraseVolume", "resizeContainer"]],
-    decision = "forbidden",
-    justification = "Destructive APFS operations through RTK are blocked for agents.",
-    match = ["rtk diskutil apfs deleteVolume disk1s1", "rtk diskutil apfs deleteContainer disk1"],
-    not_match = ["rtk diskutil apfs list"],
-)
 
 prefix_rule(
     pattern = [["zpool", "zfs"], ["destroy", "remove"]],
@@ -1138,13 +618,6 @@ prefix_rule(
     not_match = ["zpool status", "zfs list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["zpool", "zfs"], ["destroy", "remove"]],
-    decision = "forbidden",
-    justification = "Pool and dataset destruction or removal through RTK is blocked.",
-    match = ["rtk zpool destroy pool", "rtk zfs destroy pool/dataset"],
-    not_match = ["rtk zpool status", "rtk zfs list"],
-)
 
 prefix_rule(
     pattern = ["zfs", "rollback"],
@@ -1154,13 +627,6 @@ prefix_rule(
     not_match = ["zfs list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "zfs", "rollback"],
-    decision = "forbidden",
-    justification = "Dataset rollback through RTK can discard changes and is blocked.",
-    match = ["rtk zfs rollback pool/dataset@snapshot"],
-    not_match = ["rtk zfs list"],
-)
 
 prefix_rule(
     pattern = ["cryptsetup", ["luksFormat", "erase", "luksErase", "reencrypt"]],
@@ -1170,13 +636,6 @@ prefix_rule(
     not_match = ["cryptsetup status volume"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "cryptsetup", ["luksFormat", "erase", "luksErase", "reencrypt"]],
-    decision = "forbidden",
-    justification = "Destructive encryption-container operations through RTK are blocked.",
-    match = ["rtk cryptsetup luksFormat /dev/disk", "rtk cryptsetup erase /dev/disk"],
-    not_match = ["rtk cryptsetup status volume"],
-)
 
 prefix_rule(
     pattern = ["parted", ["mklabel", "mkpart", "rm", "resizepart"]],
@@ -1186,13 +645,6 @@ prefix_rule(
     not_match = ["parted print"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "parted", ["mklabel", "mkpart", "rm", "resizepart"]],
-    decision = "forbidden",
-    justification = "Partition-table mutation through RTK is blocked.",
-    match = ["rtk parted mklabel gpt", "rtk parted rm 1"],
-    not_match = ["rtk parted print"],
-)
 
 prefix_rule(
     pattern = ["btrfs", "subvolume", "delete"],
@@ -1202,13 +654,6 @@ prefix_rule(
     not_match = ["btrfs subvolume list path"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "btrfs", "subvolume", "delete"],
-    decision = "forbidden",
-    justification = "Btrfs subvolume deletion through RTK is blocked for agents.",
-    match = ["rtk btrfs subvolume delete path"],
-    not_match = ["rtk btrfs subvolume list path"],
-)
 
 prefix_rule(
     pattern = ["git", ["prune", "filter-branch", "filter-repo"]],
@@ -1218,13 +663,6 @@ prefix_rule(
     not_match = ["git clean -n", "git reset HEAD file", "git gc"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", ["prune", "filter-branch", "filter-repo"]],
-    decision = "forbidden",
-    justification = "Irreversible Git pruning and history rewriting through RTK are blocked.",
-    match = ["rtk git prune", "rtk git filter-branch -- --all", "rtk git filter-repo --force"],
-    not_match = ["rtk git clean -n", "rtk git reset HEAD file", "rtk git gc"],
-)
 
 prefix_rule(
     pattern = ["git", "reset", "--hard"],
@@ -1234,13 +672,6 @@ prefix_rule(
     not_match = ["git reset HEAD file", "git reset --soft HEAD~1"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "reset", "--hard"],
-    decision = "forbidden",
-    justification = "Hard reset through RTK discards working-tree and index changes and is blocked.",
-    match = ["rtk git reset --hard", "rtk git reset --hard HEAD~1"],
-    not_match = ["rtk git reset HEAD file", "rtk git reset --soft HEAD~1"],
-)
 
 prefix_rule(
     pattern = ["git", "clean", ["-f", "--force", "-fd", "-df", "-fdx", "-fxd", "-dfx", "-xdf", "-xfd", "-dxf", "-fX", "-fdX"]],
@@ -1250,13 +681,6 @@ prefix_rule(
     not_match = ["git clean -n", "git clean -i"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "clean", ["-f", "--force", "-fd", "-df", "-fdx", "-fxd", "-dfx", "-xdf", "-xfd", "-dxf", "-fX", "-fdX"]],
-    decision = "forbidden",
-    justification = "Forced Git clean through RTK permanently deletes untracked files and is blocked.",
-    match = ["rtk git clean -f", "rtk git clean -fdx", "rtk git clean --force"],
-    not_match = ["rtk git clean -n", "rtk git clean -i"],
-)
 
 prefix_rule(
     pattern = ["git", "gc", "--prune=now"],
@@ -1266,13 +690,6 @@ prefix_rule(
     not_match = ["git gc", "git gc --auto"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "gc", "--prune=now"],
-    decision = "forbidden",
-    justification = "Immediate Git object pruning through RTK can remove recovery data and is blocked.",
-    match = ["rtk git gc --prune=now"],
-    not_match = ["rtk git gc", "rtk git gc --auto"],
-)
 
 prefix_rule(
     pattern = ["git", "stash", ["clear", "drop"]],
@@ -1282,13 +699,6 @@ prefix_rule(
     not_match = ["git stash list", "git stash push"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "stash", ["clear", "drop"]],
-    decision = "forbidden",
-    justification = "Deleting stashes through RTK removes recovery state and is blocked.",
-    match = ["rtk git stash clear", "rtk git stash drop stash@{0}"],
-    not_match = ["rtk git stash list", "rtk git stash push"],
-)
 
 prefix_rule(
     pattern = ["git", "branch", "-D"],
@@ -1298,13 +708,6 @@ prefix_rule(
     not_match = ["git branch -d feature", "git branch --list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "branch", "-D"],
-    decision = "forbidden",
-    justification = "Forced branch deletion through RTK is blocked.",
-    match = ["rtk git branch -D feature"],
-    not_match = ["rtk git branch -d feature", "rtk git branch --list"],
-)
 
 prefix_rule(
     pattern = ["git", "tag", "-d"],
@@ -1314,13 +717,6 @@ prefix_rule(
     not_match = ["git tag --list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "tag", "-d"],
-    decision = "forbidden",
-    justification = "Tag deletion through RTK is blocked for agents.",
-    match = ["rtk git tag -d release"],
-    not_match = ["rtk git tag --list"],
-)
 
 prefix_rule(
     pattern = ["git", "update-ref", "-d"],
@@ -1330,13 +726,6 @@ prefix_rule(
     not_match = ["git update-ref refs/heads/feature commit"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "update-ref", "-d"],
-    decision = "forbidden",
-    justification = "Direct reference deletion through RTK is blocked for agents.",
-    match = ["rtk git update-ref -d refs/heads/feature"],
-    not_match = ["rtk git update-ref refs/heads/feature commit"],
-)
 
 prefix_rule(
     pattern = ["git", "commit", ["--no-verify", "--no-gpg-sign"]],
@@ -1346,13 +735,6 @@ prefix_rule(
     not_match = ["git commit -m change"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "commit", ["--no-verify", "--no-gpg-sign"]],
-    decision = "forbidden",
-    justification = "Bypassing commit hooks or signature policy through RTK is blocked; use a normal reviewed commit.",
-    match = ["rtk git commit --no-verify -m change", "rtk git commit --no-gpg-sign -m change"],
-    not_match = ["rtk git commit -m change"],
-)
 
 prefix_rule(
     pattern = ["git", "reflog", ["drop", "expire", "delete"]],
@@ -1362,13 +744,6 @@ prefix_rule(
     not_match = ["git reflog show"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "reflog", ["drop", "expire", "delete"]],
-    decision = "forbidden",
-    justification = "Deleting recovery history through RTK is blocked for agents.",
-    match = ["rtk git reflog drop --all", "rtk git reflog expire --expire=all --all", "rtk git reflog delete HEAD@{1}"],
-    not_match = ["rtk git reflog show"],
-)
 
 prefix_rule(
     pattern = ["git", "push", ["--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror", "--delete", "--prune"]],
@@ -1382,13 +757,6 @@ prefix_rule(
 # position. Reordered push flags still match the general `git push` prompt rule.
 # A full-command hook is required if those forms must be unconditionally denied.
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", "push", ["--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror", "--delete", "--prune"]],
-    decision = "forbidden",
-    justification = "Direct forced, mirrored, or deleting pushes through RTK are blocked; use a normal reviewed push or perform it manually.",
-    match = ["rtk git push --force origin main", "rtk git push --force-with-lease origin main", "rtk git push --force-if-includes origin main", "rtk git push --mirror", "rtk git push --delete origin branch", "rtk git push --prune origin"],
-    not_match = ["rtk git push origin main"],
-)
 
 prefix_rule(
     pattern = [["bw", "bitwarden", "pass", "op", "vault", "security"]],
@@ -1398,13 +766,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["bw", "bitwarden", "pass", "op", "vault", "security"]],
-    decision = "forbidden",
-    justification = "Direct credential-store and keychain access through RTK is blocked for agents.",
-    match = ["rtk bw get item example", "rtk bitwarden get item example", "rtk pass show service", "rtk op read item", "rtk vault kv get secret", "rtk security find-generic-password -w"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = ["git", ["credential", "credential-store", "credential-cache"]],
@@ -1414,13 +775,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "git", ["credential", "credential-store", "credential-cache"]],
-    decision = "forbidden",
-    justification = "Direct Git credential-helper access through RTK is blocked.",
-    match = ["rtk git credential fill", "rtk git credential-store get", "rtk git credential-cache get"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = [["git-credential-osxkeychain", "git-credential-manager", "git-credential-manager-core", "git-credential-store", "git-credential-cache", "docker-credential-osxkeychain", "docker-credential-desktop", "docker-credential-pass", "docker-credential-secretservice", "docker-credential-wincred"]],
@@ -1430,13 +784,6 @@ prefix_rule(
     not_match = ["git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["git-credential-osxkeychain", "git-credential-manager", "git-credential-manager-core", "git-credential-store", "git-credential-cache", "docker-credential-osxkeychain", "docker-credential-desktop", "docker-credential-pass", "docker-credential-secretservice", "docker-credential-wincred"]],
-    decision = "forbidden",
-    justification = "Direct credential-helper execution through RTK is blocked for agents.",
-    match = ["rtk git-credential-osxkeychain get", "rtk git-credential-manager get", "rtk docker-credential-osxkeychain get"],
-    not_match = ["rtk git status"],
-)
 
 prefix_rule(
     pattern = ["gh", "auth", "token"],
@@ -1446,13 +793,6 @@ prefix_rule(
     not_match = ["gh auth status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "gh", "auth", "token"],
-    decision = "forbidden",
-    justification = "Printing a GitHub authentication token through RTK is blocked.",
-    match = ["rtk gh auth token"],
-    not_match = ["rtk gh auth status"],
-)
 
 prefix_rule(
     pattern = ["aws", "configure", "export-credentials"],
@@ -1462,13 +802,6 @@ prefix_rule(
     not_match = ["aws sts get-caller-identity"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "aws", "configure", "export-credentials"],
-    decision = "forbidden",
-    justification = "Exporting cloud credentials through RTK is blocked.",
-    match = ["rtk aws configure export-credentials"],
-    not_match = ["rtk aws sts get-caller-identity"],
-)
 
 prefix_rule(
     pattern = ["gcloud", "auth", ["print-access-token", "print-identity-token"]],
@@ -1478,13 +811,6 @@ prefix_rule(
     not_match = ["gcloud auth list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "gcloud", "auth", ["print-access-token", "print-identity-token"]],
-    decision = "forbidden",
-    justification = "Printing Google Cloud authentication tokens through RTK is blocked.",
-    match = ["rtk gcloud auth print-access-token", "rtk gcloud auth print-identity-token"],
-    not_match = ["rtk gcloud auth list"],
-)
 
 prefix_rule(
     pattern = ["az", "account", "get-access-token"],
@@ -1494,13 +820,6 @@ prefix_rule(
     not_match = ["az account show"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "az", "account", "get-access-token"],
-    decision = "forbidden",
-    justification = "Printing an Azure access token through RTK is blocked.",
-    match = ["rtk az account get-access-token"],
-    not_match = ["rtk az account show"],
-)
 
 prefix_rule(
     pattern = ["kubectl", "config", "view", "--raw"],
@@ -1510,13 +829,6 @@ prefix_rule(
     not_match = ["kubectl config current-context"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "kubectl", "config", "view", "--raw"],
-    decision = "forbidden",
-    justification = "Raw kubeconfig output through RTK can expose credentials and is blocked.",
-    match = ["rtk kubectl config view --raw"],
-    not_match = ["rtk kubectl config current-context"],
-)
 
 prefix_rule(
     pattern = ["aws", "secretsmanager", ["get-secret-value", "batch-get-secret-value"]],
@@ -1526,13 +838,6 @@ prefix_rule(
     not_match = ["aws secretsmanager list-secrets"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "aws", "secretsmanager", ["get-secret-value", "batch-get-secret-value"]],
-    decision = "forbidden",
-    justification = "Direct cloud secret retrieval through RTK is blocked.",
-    match = ["rtk aws secretsmanager get-secret-value --secret-id example"],
-    not_match = ["rtk aws secretsmanager list-secrets"],
-)
 
 prefix_rule(
     pattern = ["gcloud", "secrets", "versions", "access"],
@@ -1542,13 +847,6 @@ prefix_rule(
     not_match = ["gcloud secrets list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "gcloud", "secrets", "versions", "access"],
-    decision = "forbidden",
-    justification = "Direct Google Cloud secret retrieval through RTK is blocked.",
-    match = ["rtk gcloud secrets versions access latest --secret example"],
-    not_match = ["rtk gcloud secrets list"],
-)
 
 prefix_rule(
     pattern = ["az", "keyvault", "secret", ["show", "download"]],
@@ -1558,13 +856,6 @@ prefix_rule(
     not_match = ["az keyvault secret list --vault-name vault"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "az", "keyvault", "secret", ["show", "download"]],
-    decision = "forbidden",
-    justification = "Direct Azure Key Vault secret retrieval through RTK is blocked.",
-    match = ["rtk az keyvault secret show --vault-name vault --name secret"],
-    not_match = ["rtk az keyvault secret list --vault-name vault"],
-)
 
 prefix_rule(
     pattern = ["kubectl", "get", ["secret", "secrets"]],
@@ -1574,13 +865,6 @@ prefix_rule(
     not_match = ["kubectl get pods"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "kubectl", "get", ["secret", "secrets"]],
-    decision = "forbidden",
-    justification = "Direct Kubernetes Secret retrieval through RTK is blocked.",
-    match = ["rtk kubectl get secret app", "rtk kubectl get secrets"],
-    not_match = ["rtk kubectl get pods"],
-)
 
 prefix_rule(
     pattern = ["npm", ["publish", "unpublish"]],
@@ -1590,13 +874,6 @@ prefix_rule(
     not_match = ["npm pack", "npm test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "npm", ["publish", "unpublish"]],
-    decision = "forbidden",
-    justification = "Publishing or unpublishing packages through RTK is blocked; perform registry changes manually.",
-    match = ["rtk npm publish", "rtk npm publish --access public", "rtk npm unpublish package@version"],
-    not_match = ["rtk npm pack", "rtk npm test"],
-)
 
 prefix_rule(
     pattern = [["pnpm", "bun"], ["publish", "unpublish"]],
@@ -1606,13 +883,6 @@ prefix_rule(
     not_match = ["pnpm pack", "bun test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["pnpm", "bun"], ["publish", "unpublish"]],
-    decision = "forbidden",
-    justification = "Package registry publishing and removal through RTK are blocked.",
-    match = ["rtk pnpm publish", "rtk pnpm unpublish package", "rtk bun publish"],
-    not_match = ["rtk pnpm pack", "rtk bun test"],
-)
 
 prefix_rule(
     pattern = ["yarn", "npm", ["publish", "unpublish"]],
@@ -1622,13 +892,6 @@ prefix_rule(
     not_match = ["yarn npm info package"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "yarn", "npm", ["publish", "unpublish"]],
-    decision = "forbidden",
-    justification = "Yarn registry publishing and removal through RTK are blocked.",
-    match = ["rtk yarn npm publish", "rtk yarn npm unpublish package"],
-    not_match = ["rtk yarn npm info package"],
-)
 
 prefix_rule(
     pattern = ["cargo", ["publish", "yank"]],
@@ -1638,13 +901,6 @@ prefix_rule(
     not_match = ["cargo package", "cargo test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "cargo", ["publish", "yank"]],
-    decision = "forbidden",
-    justification = "Publishing or yanking Rust crates through RTK is blocked.",
-    match = ["rtk cargo publish", "rtk cargo yank crate@1.0.0"],
-    not_match = ["rtk cargo package", "rtk cargo test"],
-)
 
 prefix_rule(
     pattern = [["poetry", "uv"], "publish"],
@@ -1654,13 +910,6 @@ prefix_rule(
     not_match = ["poetry build", "uv build"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["poetry", "uv"], "publish"],
-    decision = "forbidden",
-    justification = "Publishing Python packages through RTK is blocked.",
-    match = ["rtk poetry publish", "rtk uv publish"],
-    not_match = ["rtk poetry build", "rtk uv build"],
-)
 
 prefix_rule(
     pattern = ["twine", "upload"],
@@ -1670,13 +919,6 @@ prefix_rule(
     not_match = ["twine check dist/*"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "twine", "upload"],
-    decision = "forbidden",
-    justification = "Uploading Python distributions through RTK is blocked.",
-    match = ["rtk twine upload dist/*"],
-    not_match = ["rtk twine check dist/*"],
-)
 
 prefix_rule(
     pattern = ["gem", "push"],
@@ -1686,13 +928,6 @@ prefix_rule(
     not_match = ["gem build package.gemspec"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "gem", "push"],
-    decision = "forbidden",
-    justification = "Publishing Ruby gems through RTK is blocked.",
-    match = ["rtk gem push package.gem"],
-    not_match = ["rtk gem build package.gemspec"],
-)
 
 prefix_rule(
     pattern = ["dotnet", "nuget", ["push", "delete"]],
@@ -1702,13 +937,6 @@ prefix_rule(
     not_match = ["dotnet test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "dotnet", "nuget", ["push", "delete"]],
-    decision = "forbidden",
-    justification = "Publishing or deleting NuGet packages through RTK is blocked.",
-    match = ["rtk dotnet nuget push package.nupkg", "rtk dotnet nuget delete package 1.0.0"],
-    not_match = ["rtk dotnet test"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, MAVEN_FORBIDDEN_GOALS],
@@ -1718,13 +946,6 @@ prefix_rule(
     not_match = ["mvn test", "mvn release:clean", "gradle publish"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, MAVEN_FORBIDDEN_GOALS],
-    decision = "forbidden",
-    justification = "Maven deployment, publication, and release automation through RTK is blocked.",
-    match = ["rtk mvn deploy", "rtk mvnw site-deploy", "rtk ./mvnw deploy:deploy-file", "rtk mvn release:prepare", "rtk mvn release:perform"],
-    not_match = ["rtk mvn test", "rtk mvn release:clean", "rtk gradle publish"],
-)
 
 prefix_rule(
     pattern = [MAVEN_EXECUTABLES, MAVEN_PRECEDING_PHASES, MAVEN_FORBIDDEN_GOALS],
@@ -1734,13 +955,6 @@ prefix_rule(
     not_match = ["mvn clean verify", "mvn install"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", MAVEN_EXECUTABLES, MAVEN_PRECEDING_PHASES, MAVEN_FORBIDDEN_GOALS],
-    decision = "forbidden",
-    justification = "A Maven deployment or release goal through RTK remains blocked when it follows one common lifecycle phase.",
-    match = ["rtk mvn clean deploy", "rtk mvn test deploy", "rtk mvn install deploy", "rtk ./mvnw verify release:perform"],
-    not_match = ["rtk mvn clean verify", "rtk mvn install"],
-)
 
 prefix_rule(
     pattern = ["gradle", ["deploy", "publish", "publishPlugins"]],
@@ -1750,13 +964,6 @@ prefix_rule(
     not_match = ["gradle test", "mvn test"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "gradle", ["deploy", "publish", "publishPlugins"]],
-    decision = "forbidden",
-    justification = "Deploying or publishing Gradle artifacts through RTK is blocked.",
-    match = ["rtk gradle deploy", "rtk gradle publish", "rtk gradle publishPlugins"],
-    not_match = ["rtk gradle test", "rtk mvn test"],
-)
 
 prefix_rule(
     pattern = ["docker", "push"],
@@ -1766,13 +973,6 @@ prefix_rule(
     not_match = ["docker pull image:tag", "docker build ."],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "docker", "push"],
-    decision = "forbidden",
-    justification = "Publishing container images through RTK is blocked for agents; inspect the image and push it manually.",
-    match = ["rtk docker push image:tag"],
-    not_match = ["rtk docker pull image:tag", "rtk docker build ."],
-)
 
 prefix_rule(
     pattern = ["docker", ["image", "compose"], "push"],
@@ -1782,13 +982,6 @@ prefix_rule(
     not_match = ["docker image ls", "docker compose build"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "docker", ["image", "compose"], "push"],
-    decision = "forbidden",
-    justification = "Publishing container images through RTK is blocked.",
-    match = ["rtk docker image push image:tag", "rtk docker compose push"],
-    not_match = ["rtk docker image ls", "rtk docker compose build"],
-)
 
 prefix_rule(
     pattern = [["podman", "oras"], "push"],
@@ -1798,13 +991,6 @@ prefix_rule(
     not_match = ["podman pull image:tag", "oras pull registry.example/artifact:tag"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["podman", "oras"], "push"],
-    decision = "forbidden",
-    justification = "Publishing container images or OCI artifacts through RTK is blocked.",
-    match = ["rtk podman push image:tag", "rtk oras push registry.example/artifact:tag file"],
-    not_match = ["rtk podman pull image:tag", "rtk oras pull registry.example/artifact:tag"],
-)
 
 prefix_rule(
     pattern = ["helm", "push"],
@@ -1814,13 +1000,6 @@ prefix_rule(
     not_match = ["helm show chart chart"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "helm", "push"],
-    decision = "forbidden",
-    justification = "Publishing Helm charts through RTK is blocked.",
-    match = ["rtk helm push chart.tgz oci://registry.example/charts"],
-    not_match = ["rtk helm show chart chart"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu"], "destroy"],
@@ -1830,13 +1009,6 @@ prefix_rule(
     not_match = ["terraform plan"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu"], "destroy"],
-    decision = "forbidden",
-    justification = "Infrastructure destruction through RTK is blocked for agents; create a reviewed plan for a human to apply.",
-    match = ["rtk terraform destroy", "rtk terraform destroy -auto-approve", "rtk tofu destroy"],
-    not_match = ["rtk terraform plan"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu"], "apply"],
@@ -1846,13 +1018,6 @@ prefix_rule(
     not_match = ["terraform plan", "tofu plan"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu"], "apply"],
-    decision = "forbidden",
-    justification = "Applying infrastructure changes through RTK is blocked for agents; prepare a reviewed plan for a human to apply.",
-    match = ["rtk terraform apply", "rtk terraform apply plan.tfplan", "rtk tofu apply"],
-    not_match = ["rtk terraform plan", "rtk tofu plan"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu"], "state", ["rm", "push"]],
@@ -1862,13 +1027,6 @@ prefix_rule(
     not_match = ["terraform state list", "tofu state show resource.name"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu"], "state", ["rm", "push"]],
-    decision = "forbidden",
-    justification = "Direct infrastructure-state deletion or replacement through RTK is blocked.",
-    match = ["rtk terraform state rm resource.name", "rtk terraform state push state.tfstate", "rtk tofu state rm resource.name"],
-    not_match = ["rtk terraform state list", "rtk tofu state show resource.name"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu"], ["force-unlock", "taint"]],
@@ -1878,13 +1036,6 @@ prefix_rule(
     not_match = ["terraform plan", "tofu plan"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu"], ["force-unlock", "taint"]],
-    decision = "forbidden",
-    justification = "Force-unlocking or tainting infrastructure state through RTK is blocked.",
-    match = ["rtk terraform force-unlock lock-id", "rtk terraform taint resource.name", "rtk tofu force-unlock lock-id"],
-    not_match = ["rtk terraform plan", "rtk tofu plan"],
-)
 
 prefix_rule(
     pattern = [["terraform", "tofu"], "workspace", "delete"],
@@ -1894,13 +1045,6 @@ prefix_rule(
     not_match = ["terraform workspace list"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["terraform", "tofu"], "workspace", "delete"],
-    decision = "forbidden",
-    justification = "Infrastructure workspace deletion through RTK is blocked.",
-    match = ["rtk terraform workspace delete old", "rtk tofu workspace delete old"],
-    not_match = ["rtk terraform workspace list"],
-)
 
 prefix_rule(
     pattern = ["pulumi", ["up", "destroy"]],
@@ -1910,13 +1054,6 @@ prefix_rule(
     not_match = ["pulumi preview", "pulumi stack ls"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "pulumi", ["up", "destroy"]],
-    decision = "forbidden",
-    justification = "Applying or destroying Pulumi infrastructure through RTK is blocked.",
-    match = ["rtk pulumi up", "rtk pulumi destroy"],
-    not_match = ["rtk pulumi preview", "rtk pulumi stack ls"],
-)
 
 prefix_rule(
     pattern = ["pulumi", ["state", "stack"], ["delete", "rm"]],
@@ -1926,13 +1063,6 @@ prefix_rule(
     not_match = ["pulumi stack ls"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "pulumi", ["state", "stack"], ["delete", "rm"]],
-    decision = "forbidden",
-    justification = "Pulumi state or stack deletion through RTK is blocked.",
-    match = ["rtk pulumi state delete urn", "rtk pulumi stack rm old"],
-    not_match = ["rtk pulumi stack ls"],
-)
 
 prefix_rule(
     pattern = ["kubectl", ["apply", "create", "replace", "patch", "edit", "delete", "drain", "scale", "set", "run", "expose", "autoscale", "annotate", "label", "taint", "cordon", "uncordon"]],
@@ -1942,13 +1072,6 @@ prefix_rule(
     not_match = ["kubectl get pods", "kubectl diff -f app.yaml"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "kubectl", ["apply", "create", "replace", "patch", "edit", "delete", "drain", "scale", "set", "run", "expose", "autoscale", "annotate", "label", "taint", "cordon", "uncordon"]],
-    decision = "forbidden",
-    justification = "Cluster mutations through RTK are blocked for agents.",
-    match = ["rtk kubectl apply -f app.yaml", "rtk kubectl create deployment app --image image", "rtk kubectl delete pod app", "rtk kubectl scale deployment app --replicas 3"],
-    not_match = ["rtk kubectl get pods", "rtk kubectl diff -f app.yaml"],
-)
 
 prefix_rule(
     pattern = ["kubectl", "rollout", ["restart", "undo", "pause", "resume"]],
@@ -1958,13 +1081,6 @@ prefix_rule(
     not_match = ["kubectl rollout status deployment/app", "kubectl rollout history deployment/app"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "kubectl", "rollout", ["restart", "undo", "pause", "resume"]],
-    decision = "forbidden",
-    justification = "Mutating Kubernetes rollout operations through RTK are blocked.",
-    match = ["rtk kubectl rollout restart deployment/app", "rtk kubectl rollout undo deployment/app"],
-    not_match = ["rtk kubectl rollout status deployment/app", "rtk kubectl rollout history deployment/app"],
-)
 
 prefix_rule(
     pattern = ["helm", ["install", "upgrade", "rollback", "uninstall"]],
@@ -1974,13 +1090,6 @@ prefix_rule(
     not_match = ["helm list", "helm template app chart"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "helm", ["install", "upgrade", "rollback", "uninstall"]],
-    decision = "forbidden",
-    justification = "Helm release mutations through RTK are blocked for agents.",
-    match = ["rtk helm install app chart", "rtk helm upgrade app chart", "rtk helm rollback app 1", "rtk helm uninstall app"],
-    not_match = ["rtk helm list", "rtk helm template app chart"],
-)
 
 prefix_rule(
     pattern = ["docker", ["system", "builder", "image", "container", "network", "volume"], "prune"],
@@ -1990,13 +1099,6 @@ prefix_rule(
     not_match = ["docker system df", "docker volume ls", "docker image ls"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "docker", ["system", "builder", "image", "container", "network", "volume"], "prune"],
-    decision = "forbidden",
-    justification = "Broad Docker pruning through RTK is blocked for agents.",
-    match = ["rtk docker system prune", "rtk docker builder prune", "rtk docker image prune", "rtk docker container prune", "rtk docker network prune", "rtk docker volume prune"],
-    not_match = ["rtk docker system df", "rtk docker volume ls", "rtk docker image ls"],
-)
 
 prefix_rule(
     pattern = [["docker", "podman"], "volume", ["rm", "remove"]],
@@ -2006,13 +1108,6 @@ prefix_rule(
     not_match = ["docker volume ls", "podman volume inspect data"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["docker", "podman"], "volume", ["rm", "remove"]],
-    decision = "forbidden",
-    justification = "Container volume deletion through RTK is blocked.",
-    match = ["rtk docker volume rm data", "rtk podman volume rm data"],
-    not_match = ["rtk docker volume ls", "rtk podman volume inspect data"],
-)
 
 prefix_rule(
     pattern = ["podman", ["system", "image", "container", "network", "volume"], "prune"],
@@ -2022,13 +1117,6 @@ prefix_rule(
     not_match = ["podman system df", "podman image ls"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "podman", ["system", "image", "container", "network", "volume"], "prune"],
-    decision = "forbidden",
-    justification = "Broad Podman pruning through RTK is blocked for agents.",
-    match = ["rtk podman system prune", "rtk podman image prune", "rtk podman volume prune"],
-    not_match = ["rtk podman system df", "rtk podman image ls"],
-)
 
 prefix_rule(
     pattern = [["docker", "podman"], "compose", "down", ["-v", "--volumes"]],
@@ -2038,13 +1126,6 @@ prefix_rule(
     not_match = ["docker compose down", "podman compose ps"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["docker", "podman"], "compose", "down", ["-v", "--volumes"]],
-    decision = "forbidden",
-    justification = "Compose teardown with volume deletion through RTK is blocked.",
-    match = ["rtk docker compose down -v", "rtk podman compose down --volumes"],
-    not_match = ["rtk docker compose down", "rtk podman compose ps"],
-)
 
 prefix_rule(
     pattern = [["shutdown", "reboot", "halt", "poweroff", "setenforce", "csrutil"]],
@@ -2054,13 +1135,6 @@ prefix_rule(
     not_match = ["uname -a"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["shutdown", "reboot", "halt", "poweroff", "setenforce", "csrutil"]],
-    decision = "forbidden",
-    justification = "Power and operating-system security-state changes through RTK are blocked for agents.",
-    match = ["rtk shutdown -h now", "rtk reboot", "rtk setenforce 0", "rtk csrutil disable"],
-    not_match = ["rtk uname -a"],
-)
 
 prefix_rule(
     pattern = [["eval", "yes", "stress", "stress-ng"]],
@@ -2070,13 +1144,6 @@ prefix_rule(
     not_match = ["echo yes"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", ["eval", "yes", "stress", "stress-ng"]],
-    decision = "forbidden",
-    justification = "Dynamic evaluation and unbounded resource-generation through RTK are blocked for agents.",
-    match = ["rtk eval command", "rtk yes", "rtk stress --cpu 8"],
-    not_match = ["rtk echo yes"],
-)
 
 prefix_rule(
     pattern = ["codex", ["exec", "resume", "fork", "review"]],
@@ -2086,13 +1153,6 @@ prefix_rule(
     not_match = ["codex --version", "codex execpolicy check --rules default.rules -- git status"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", ["exec", "resume", "fork", "review"]],
-    decision = "forbidden",
-    justification = "Nested Codex agent sessions through RTK are blocked; continue in the current reviewed session.",
-    match = ["rtk codex exec task", "rtk codex resume", "rtk codex fork", "rtk codex review"],
-    not_match = ["rtk codex --version", "rtk codex execpolicy check --rules default.rules -- git status"],
-)
 
 prefix_rule(
     pattern = ["codex", ["--dangerously-bypass-approvals-and-sandbox", "--yolo"]],
@@ -2102,13 +1162,6 @@ prefix_rule(
     not_match = ["codex --version"],
 )
 
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", ["--dangerously-bypass-approvals-and-sandbox", "--yolo"]],
-    decision = "forbidden",
-    justification = "Bypassing Codex approvals and sandboxing through RTK is blocked.",
-    match = ["rtk codex --dangerously-bypass-approvals-and-sandbox", "rtk codex --yolo"],
-    not_match = ["rtk codex --version"],
-)
 
 prefix_rule(
     pattern = ["codex", ["--sandbox", "-s"], "danger-full-access"],
@@ -2116,12 +1169,4 @@ prefix_rule(
     justification = "Starting Codex with unrestricted filesystem access is blocked.",
     match = ["codex --sandbox danger-full-access", "codex -s danger-full-access"],
     not_match = ["codex --sandbox workspace-write"],
-)
-
-rtk_prefix_rule(
-    pattern = ["rtk", "codex", ["--sandbox", "-s"], "danger-full-access"],
-    decision = "forbidden",
-    justification = "Starting Codex with unrestricted filesystem access through RTK is blocked.",
-    match = ["rtk codex --sandbox danger-full-access", "rtk codex -s danger-full-access"],
-    not_match = ["rtk codex --sandbox workspace-write"],
 )

@@ -31,8 +31,8 @@ Use the filename, integer byte size, stable source label, and lowercase extensio
 Use `scripts/import_ledger.py` for schema, classification, and transactional handoffs. It records and verifies state; it does not copy, move, overwrite, or delete notes.
 
 ```bash
-rtk python3 ~/.config/agents/skills/obsidian-import-notes/scripts/import_ledger.py init --db "<vault>/_Imports/imports.sqlite3"
-rtk python3 ~/.config/agents/skills/obsidian-import-notes/scripts/import_ledger.py classify --db "<vault>/_Imports/imports.sqlite3" --file "<source-file>" --source-key "<stable-source>" --relative-path "<source-relative-path>"
+python3 ~/.config/agents/skills/obsidian-import-notes/scripts/import_ledger.py init --db "<vault>/_Imports/imports.sqlite3"
+python3 ~/.config/agents/skills/obsidian-import-notes/scripts/import_ledger.py classify --db "<vault>/_Imports/imports.sqlite3" --file "<source-file>" --source-key "<stable-source>" --relative-path "<source-relative-path>"
 ```
 
 Run `init` once. Run read-only `classify` before creating a quarantine copy. Discover every mutating command with `.../import_ledger.py <command> --help`; do not guess arguments. Treat a nonzero exit or JSON containing `"ok": false` as failure.
@@ -87,7 +87,7 @@ Write and register `_Imports/Reports/<run-id>-cleanup.md`, then run read-only `c
 Confirm the Obsidian CLI can see the running app; launch Obsidian when authorized. Trash each listed working copy with:
 
 ```bash
-rtk obsidian delete path="<vault-relative-quarantine-file>"
+obsidian delete path="<vault-relative-quarantine-file>"
 ```
 
 Require `Moved to trash` and active-path absence, then run `cleanup`, which rechecks outputs and artifacts before completing the run. Never delete vault files through the raw filesystem. Preserve sources, outputs, ledger, and reports. If Obsidian cannot trash empty folders, leave and report them.

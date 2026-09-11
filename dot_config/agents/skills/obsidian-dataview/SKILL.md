@@ -16,8 +16,8 @@ Work from the vault root and identify the exact target note. Inspect the query a
 When Obsidian is running, confirm the plugin and discover its commands:
 
 ```bash
-rtk obsidian plugin id=dataview
-rtk obsidian commands filter=dataview
+obsidian plugin id=dataview
+obsidian commands filter=dataview
 ```
 
 Treat CLI output containing `Error:` as failure. If Obsidian is unavailable, inspect `.obsidian/community-plugins.json`, `.obsidian/plugins/dataview/manifest.json`, and relevant non-secret settings, but report that as configuration-file evidence rather than live state. Never install, enable, update, or replace the plugin without the owner's explicit approval.

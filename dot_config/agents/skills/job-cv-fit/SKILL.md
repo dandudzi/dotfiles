@@ -32,7 +32,7 @@ Apply the workflow's shared safe Markdown renderer to every external or untruste
 3. If neither marker exists, inspect the exact `## Interview Notes` marker. Insert `## CV fit` and the rendered analysis immediately before it. If that marker is absent, ambiguous, or duplicated, stop safely and report the structural mismatch rather than guessing a location.
 4. If both current and legacy markers exist, stop safely rather than merge or discard existing analysis without direction.
 5. Apply a focused Markdown patch. Do not rewrite the full note.
-6. Read the note through Obsidian CLI, for example `rtk obsidian read path="Personal/Job Search/Applications/<note>.md"`.
+6. Read the note through Obsidian CLI, for example `obsidian read path="Personal/Job Search/Applications/<note>.md"`.
 7. Confirm the CV-fit section follows the output template, has no unresolved placeholders, contains no H1 or H2 below `## CV fit`, and leaves adjacent sections unchanged. Treat CLI output containing `Error:` as a failed verification.
 
 Report the score, meaningful hard gaps, presentation gaps, and updated note path.

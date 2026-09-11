@@ -54,8 +54,8 @@ three Homebrew dependencies above.
 | `~/.config/tmux/README.md` | This operational overview. |
 
 These live files are persisted in chezmoi. Their managed source paths can be
-resolved with `rtk chezmoi source-path <live-path>`; after an approved live
-change, persist that exact file with `rtk chezmoi add <live-path>`.
+resolved with `chezmoi source-path <live-path>`; after an approved live
+change, persist that exact file with `chezmoi add <live-path>`.
 
 ## Operational notes
 

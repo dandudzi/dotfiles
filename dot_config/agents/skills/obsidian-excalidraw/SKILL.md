@@ -8,8 +8,8 @@ description: Work with drawings created by the Obsidian Excalidraw community plu
 Confirm the plugin and discover its current commands:
 
 ```bash
-rtk obsidian plugin id=obsidian-excalidraw-plugin
-rtk obsidian commands filter=obsidian-excalidraw-plugin
+obsidian plugin id=obsidian-excalidraw-plugin
+obsidian commands filter=obsidian-excalidraw-plugin
 ```
 
 Creation commands depend on the active workspace and plugin settings. Use them only when that UI context is intended, then locate and verify the created file.

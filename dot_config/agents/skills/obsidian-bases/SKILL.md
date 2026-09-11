@@ -10,13 +10,13 @@ A `.base` file defines YAML filters, formulas, properties, summaries, and views.
 ## Query and edit
 
 ```bash
-rtk obsidian base:query path="Projects.base" view="Active" format=json
+obsidian base:query path="Projects.base" view="Active" format=json
 ```
 
 Query one named view and return its current rows. Use this after editing the Base or its note properties.
 
 ```bash
-rtk obsidian base:create path="Projects.base" view="Active" name="New project"
+obsidian base:create path="Projects.base" view="Active" name="New project"
 ```
 
 Create a Markdown item in an existing Base view. This does not create a new `.base` file.
@@ -25,4 +25,4 @@ When editing `.base` directly, read the entire YAML document, preserve unknown k
 
 ## Discover more
 
-Run `rtk obsidian help base:query` or `rtk obsidian help base:create` for current CLI options. Consult the official Bases syntax when changing filters, formulas, or view schemas rather than guessing field names.
+Run `obsidian help base:query` or `obsidian help base:create` for current CLI options. Consult the official Bases syntax when changing filters, formulas, or view schemas rather than guessing field names.

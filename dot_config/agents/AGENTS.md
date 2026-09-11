@@ -29,7 +29,7 @@ Keep note migrations repeatable and the destination vault organized.
 - Never merge, overwrite, delete, or permanently place an imported note based only on a filename or fuzzy duplicate match.
 - After conversion, check each note for exact and probable duplicates. Review with the owner topic by topic or file by file: summarize the actual content, assess its value, and recommend keep, organize, uncertain, or garbage with a reason and destination when applicable. Never ask for blanket approval of all recommendations. Important, sensitive, lossy, ambiguous, merge, replacement, and garbage decisions require individual approval; record decisions incrementally.
 - Keep the ledger, review reports, and quarantine out of permanent content folders. Integrate notes only after independent review and owner approval.
-- Never remove vault files with raw filesystem deletion. Use `rtk obsidian delete path="<vault-relative-path>"` so Obsidian applies its configured trash behavior; verify `Moved to trash` and active-path absence.
+- Never remove vault files with raw filesystem deletion. Use `obsidian delete path="<vault-relative-path>"` so Obsidian applies its configured trash behavior; verify `Moved to trash` and active-path absence.
 - After a run is fully resolved and verified, move its quarantined working copies through Obsidian trash. Verify their active-path absence before recording cleanup in SQLite. Preserve original sources, the ledger, reports, and integrated notes.
 
 ## Shared Surfaces
@@ -55,4 +55,4 @@ For MCP specifically, `mcp.md` is only the canonical shared intent file. Active 
 ## Chezmoi
 This directory lives under the rendered `~/.config` tree, so new files added here must also be captured in the upstream `chezmoi` source. Use `chezmoi add ~/.config/agents/<path>` after live edits, or edit the corresponding source path directly when the mapping is clear.
 
-Do not capture native installer output outside `~/.config` from this shared-agent workflow unless the user explicitly requests that exact path. Tool-owned files such as `~/.codex/RTK.md`, `~/.claude/RTK.md`, `~/.claude/settings.json`, and `~/Library/Application Support/rtk/filters.toml` can exist live for the tools without being managed from this directory.
+Do not capture native installer output outside `~/.config` from this shared-agent workflow unless the user explicitly requests that exact path. Tool-owned files such as `~/.claude/settings.json` can exist live without being managed from this directory.

@@ -39,7 +39,7 @@ Use `Not found in reviewed sources` or `Limited public information` for gaps. Ne
 
 1. Inspect the application note immediately before writing. Replace only the generated-only range after `### Generated research` and before `### Owner notes`. Preserve both boundary headings, all owner notes, and every other section. If either boundary is missing, ambiguous, duplicated, or reversed, stop instead of rewriting the broader Company & role research section.
 2. Make a focused Markdown patch; do not rewrite the note or use a broad search-and-replace.
-3. Read the exact note through Obsidian CLI, for example `rtk obsidian read path="Personal/Job Search/Applications/<note>.md"`.
+3. Read the exact note through Obsidian CLI, for example `obsidian read path="Personal/Job Search/Applications/<note>.md"`.
 4. Confirm the generated range contains the cited findings, legitimacy and privacy-risk assessment, posting-derived role fields when the posting is complete, and explicit gaps, while the owner notes and adjacent sections are unchanged. Treat CLI output containing `Error:` as a failed verification.
 
 Report the note path, source links, major unknowns, and whether the section was created or refreshed.

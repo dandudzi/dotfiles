@@ -13,11 +13,7 @@ CASES: tuple[tuple[str | None, tuple[str, ...]], ...] = (
     # Installed Maven metadata is safe; Maven Wrapper metadata can bootstrap code.
     ("allow", ("mvn", "--version")),
     ("allow", ("mvn", "--help")),
-    ("allow", ("rtk", "mvn", "--version")),
-    ("allow", ("rtk", "--verbose", "mvn", "--version")),
-    ("allow", ("rtk", "proxy", "mvn", "--version")),
     (None, ("./mvnw", "--version")),
-    (None, ("rtk", "./mvnw", "--version")),
     # Routine project work remains sandbox-governed rather than unconditionally allowed.
     (None, ("mvn", "validate")),
     (None, ("mvn", "test")),
@@ -25,7 +21,6 @@ CASES: tuple[tuple[str | None, tuple[str, ...]], ...] = (
     (None, ("mvn", "dependency:resolve")),
     (None, ("mvn", "help:effective-pom")),
     (None, ("mvn", "release:clean")),
-    (None, ("rtk", "mvn", "test")),
     # Local repository, dependency-cache, project-generation, and execution mutations prompt.
     ("prompt", ("mvn", "install")),
     ("prompt", ("mvnw", "install")),
@@ -45,9 +40,6 @@ CASES: tuple[tuple[str | None, tuple[str, ...]], ...] = (
     ("prompt", ("mvn", "exec:java")),
     ("prompt", ("mvn", "--encrypt-password", "secret")),
     ("prompt", ("mvn", "-emp", "secret")),
-    ("prompt", ("rtk", "mvn", "clean", "install")),
-    ("prompt", ("rtk", "test", "mvn", "dependency:purge-local-repository")),
-    ("prompt", ("rtk", "--verbose", "proxy", "mvn", "wrapper:wrapper")),
     # Publication and release automation are blocked for all wrapper spellings.
     ("forbidden", ("mvn", "deploy")),
     ("forbidden", ("mvnw", "deploy")),
@@ -63,10 +55,6 @@ CASES: tuple[tuple[str | None, tuple[str, ...]], ...] = (
     ("forbidden", ("mvn", "release:perform")),
     ("forbidden", ("mvn", "release:stage")),
     ("forbidden", ("mvn", "release:rollback")),
-    ("forbidden", ("rtk", "mvn", "deploy:deploy-file")),
-    ("forbidden", ("rtk", "./mvnw", "clean", "deploy")),
-    ("forbidden", ("rtk", "--verbose", "proxy", "mvn", "release:perform")),
-    ("forbidden", ("rtk", "proxy", "--skip-env", "mvn", "site-deploy")),
 )
 
 # Native prefix rules cannot inspect arbitrary goal positions or versioned plugin tokens.
@@ -83,7 +71,6 @@ KNOWN_NATIVE_LIMITATIONS: tuple[tuple[str, ...], ...] = (
 def decision(command: tuple[str, ...]) -> str | None:
     completed = subprocess.run(
         (
-            "rtk",
             "codex",
             "execpolicy",
             "check",

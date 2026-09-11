@@ -14,8 +14,8 @@ Work from the vault root and identify the exact target note before editing. Insp
 Confirm the installed plugin and discover its current commands when Obsidian is running:
 
 ```bash
-rtk obsidian plugin id=obsidian-charts
-rtk obsidian commands filter=obsidian-charts
+obsidian plugin id=obsidian-charts
+obsidian commands filter=obsidian-charts
 ```
 
 Treat CLI output containing `Error:` as failure. If Obsidian is unavailable, inspect `.obsidian/community-plugins.json` and `.obsidian/plugins/obsidian-charts/manifest.json`, but describe that as configuration-file evidence rather than live state. Never install, enable, update, or replace the plugin without the owner's explicit approval.
