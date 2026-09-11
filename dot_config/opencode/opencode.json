@@ -14,7 +14,10 @@
     "gitnexus": {
       "type": "local",
       "command": [
-        "/Users/daniel/.local/share/mise/installs/node/26/bin/gitnexus",
+        "/opt/homebrew/bin/mise",
+        "exec",
+        "--",
+        "gitnexus",
         "mcp"
       ]
     }

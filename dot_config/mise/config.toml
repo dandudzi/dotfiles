@@ -13,6 +13,8 @@ uv = "latest"
 "pipx:serena-agent" = { version = "latest", uvx_args = "--python 3.13" }
 "npm:@playwright/mcp" = "latest"
 "npm:mcp-mermaid" = { version = "latest", allow_builds = ["mcp-mermaid"] }
+# Keep GitNexus independent of Node upgrades; activate its database binary and vendored grammars.
+"npm:gitnexus" = { version = "latest", allow_builds = ["@ladybugdb/core", "gitnexus"] }
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"

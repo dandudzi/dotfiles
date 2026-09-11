@@ -12,6 +12,16 @@ Keep server names, commands, URLs, and non-secret setup notes here. Keep tokens,
 
 ## Servers
 
+### gitnexus
+
+- Purpose: Code graph search, symbol context, and change impact analysis.
+- Transport: Local stdio MCP.
+- Installation: Global mise tool `npm:gitnexus`, separate from Node's global package directory so Node upgrades do not remove it.
+- Command: `/opt/homebrew/bin/mise exec -- gitnexus mcp`
+- Build setup: Scope `allow_builds` to `@ladybugdb/core` and `gitnexus` for the database binary and vendored grammars.
+- Authentication: None.
+- Updates: `mise upgrade npm:gitnexus`. Restart the MCP client after changing its launcher.
+
 ### exa
 
 - Purpose: Web search and webpage fetch tools.
