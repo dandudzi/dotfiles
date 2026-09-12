@@ -60,7 +60,6 @@ Own the outcome as the main agent. Scale coordination to the task; use subagents
    - Parallelize only independent files or components; sequence overlapping work.
    - Give each coding agent the worktree root, plan path, exact scope, owned files, acceptance criteria, relevant commands, and the prohibition on Git-state operations.
    - Keep acceptance-test ownership with the test agent. Implementers may add focused coverage but may not weaken the acceptance tests.
-   - Require each agent to report changed files, decisions, tests, and blockers.
 6. **Integrate and verify.** Inspect the combined diff against the approved plan. Spawn `verifier` to run check-only formatting, linting, type checking, focused tests, integration or end-to-end tests, the relevant full suite, and builds. Delegate any required edits back to the owning `implementer`.
 7. **Review by risk.** Always spawn `correctness-reviewer`. Add `security-reviewer`, `performance-reviewer`, and `architecture-reviewer` only when their roster triggers apply. Reviewers report evidence, severity, location, and reproduction steps without editing files.
 8. **Resolve and finish.** Evaluate findings against evidence and acceptance criteria. Record accepted, rejected, and scope-expanding findings in the plan; obtain approval before expanding scope. Delegate accepted fixes to the owning `implementer`, rerun focused checks, and repeat relevant verification and review until all criteria pass and no blocking finding remains.
