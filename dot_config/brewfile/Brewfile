@@ -130,8 +130,6 @@ cask "codex"
 cask "discord"
 # App to build and share containerised applications and microservices
 cask "docker-desktop"
-# Screenshot software with built-in annotation tools
-cask "flameshot"
 cask "font-jetbrains-mono"
 cask "font-symbols-only-nerd-font"
 # Keyboard shortcuts for every button on your screen
