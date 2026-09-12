@@ -103,6 +103,11 @@ alias tl="tmux list-sessions"                   # Displays a list of running tmu
 alias tmuxconf='${EDITOR:-nvim} ~/.config/tmux/tmux.conf' # Open tmux config with an editor
 alias ts="tmux new-session -s"                  # Create a new named tmux session
 
+# Reach the configured Zakupki sessions without typing their full names.
+alias zk='sesh connect "Zakupki"'
+alias all='sesh connect "Zakupki All"'
+alias bc='sesh connect "Zakupki Backend"'
+
 #🐍 Keep unversioned Python commands on Python 3.
 alias python=python3
 alias pip=pip3
