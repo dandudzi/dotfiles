@@ -11,7 +11,8 @@ kotlin = "latest"
 rust = { version = "latest", components = "rust-analyzer" }
 uv = "latest"
 "pipx:serena-agent" = { version = "latest", uvx_args = "--python 3.13" }
-"npm:@playwright/mcp" = "latest"
+# Use Playwright's bundled MCP server; Mise blocks future trust-evidence downgrades.
+"npm:playwright" = "latest"
 "npm:mcp-mermaid" = { version = "latest", allow_builds = ["mcp-mermaid"] }
 # Keep GitNexus independent of Node upgrades; activate its database binary and vendored grammars.
 "npm:gitnexus" = { version = "latest", allow_builds = ["@ladybugdb/core", "gitnexus"] }
