@@ -50,8 +50,8 @@ Keep server names, commands, URLs, and non-secret setup notes here. Keep tokens,
 
 - Purpose: Browser automation and web application inspection through Playwright accessibility snapshots.
 - Transport: Local stdio MCP.
-- Installation: Global mise tool `npm:@playwright/mcp`.
-- Command: `/opt/homebrew/bin/mise exec -- playwright-mcp`
+- Installation: Global mise tool `npm:playwright`; Mise blocks releases whose trust evidence regresses.
+- Command: `/opt/homebrew/bin/mise exec -- playwright mcp`
 - Authentication: None. Website authentication stays in the browser profile selected for a Playwright session.
 - Setup note: Browser binaries are downloaded automatically on first use when needed.
 
