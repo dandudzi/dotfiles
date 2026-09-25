@@ -37,24 +37,6 @@ Keep server names, commands, URLs, and non-secret setup notes here. Keep tokens,
 - URL: `https://mcp.context7.com/mcp`
 - Authentication: Optional for basic usage. When used, keep the `CONTEXT7_API_KEY` value only in private tool-specific configuration; never record it here.
 
-### serena
-
-- Purpose: Language-server-backed semantic code navigation, reference lookup, diagnostics, and symbol-level editing.
-- Transport: Local stdio MCP.
-- Installation: Global mise tool `pipx:serena-agent`, installed through mise's uv-backed pipx backend with Python 3.13.
-- Command: `/opt/homebrew/bin/mise exec -- serena start-mcp-server --project-from-cwd --context=codex`
-- Authentication: None.
-- Setup note: Initialize once with `mise exec -- serena init`. Codex sessions may need to activate the current directory as a Serena project.
-
-### playwright
-
-- Purpose: Browser automation and web application inspection through Playwright accessibility snapshots.
-- Transport: Local stdio MCP.
-- Installation: Global mise tool `npm:playwright`; Mise blocks releases whose trust evidence regresses.
-- Command: `/opt/homebrew/bin/mise exec -- playwright mcp`
-- Authentication: None. Website authentication stays in the browser profile selected for a Playwright session.
-- Setup note: Browser binaries are downloaded automatically on first use when needed.
-
 ### linear
 
 - Purpose: Read and manage Linear issues, projects, comments, cycles, and related workspace data.
