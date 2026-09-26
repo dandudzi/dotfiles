@@ -61,6 +61,8 @@
 	rebase = true
 [merge]
 	conflictStyle = zdiff3
+	# Use the configured nvimdiff layout for unresolved conflicts.
+	tool = nvimdiff
 	# make nvim diff as tool for merging conflicts
 [mergetool "nvimdiff"]
 	layout = "LOCAL,BASE,REMOTE / MERGED"
