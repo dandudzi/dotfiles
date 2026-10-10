@@ -17,7 +17,7 @@ local codex = sbar.add("item", "codex", {
 		padding_right = settings.paddings,
 		align = "left",
 		y_offset = 0,
-		background = { color = colors.background, height = 40, corner_radius = 15 },
+		background = { drawing = false },
 	},
 	label = {
 		string = "0",
@@ -26,11 +26,10 @@ local codex = sbar.add("item", "codex", {
 		padding_right = 10,
 		-- Use the bar's label font and size, with bold weight for the attention count.
 		font = { family = settings.font.text, style = settings.font.style_map["Bold"], size = 18.0 },
-		background = { color = colors.background, height = 40, corner_radius = 15, drawing = true },
+		background = { drawing = false },
 	},
-	-- Match the app pill's height, rounding, and spacing.
-	-- Remove the inherited border so the number's fill matches the icon's height.
-	background = { color = colors.background, height = 40, corner_radius = 15, border_width = 0 },
+	-- Use one background with the same border and rounding as the right-side pills.
+	background = { color = colors.background, height = 40, corner_radius = 15, border_width = 2 },
 })
 
 local function refresh()
