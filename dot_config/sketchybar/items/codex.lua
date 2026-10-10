@@ -14,7 +14,8 @@ local codex = sbar.add("item", "codex", {
 		-- Put the accent on the glyph while keeping one dark pill background.
 		color = colors.mauve,
 		padding_left = 5,
-		padding_right = settings.paddings,
+		padding_right = 5, -- Balance the space on both sides of the icon.
+		align = "center",
 		background = { color = colors.background, height = 40, corner_radius = 15 },
 	},
 	label = {
