@@ -17,7 +17,7 @@ local codex = sbar.add("item", "codex", {
 	},
 	label = {
 		string = "0",
-		color = colors.white,
+		color = colors.lavender, -- Match the active app label.
 		padding_left = 5,
 		padding_right = 7,
 		-- Use the bar's label font and size, with bold weight for the attention count.
