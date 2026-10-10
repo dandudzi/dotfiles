@@ -3,8 +3,8 @@
 UPDATE_FILE="${UPDATE_FILE:-$HOME/.last_update}"
 UPDATE_TIMEOUT="${UPDATE_TIMEOUT:-5m}"
 TMUX_CATPPUCCIN_PLUGIN_PATH="$HOME/.config/tmux/plugins/tmux"
-# Space-separated Homebrew cask names to leave to their own updater, if desired.
-CASK_UPGRADE_IGNORE="${CASK_UPGRADE_IGNORE:-}"
+# Leave Docker Desktop to its own updater; append other cask names via the environment.
+CASK_UPGRADE_IGNORE="docker-desktop ${CASK_UPGRADE_IGNORE:-}"
 
 run_step() {
   label="$1"

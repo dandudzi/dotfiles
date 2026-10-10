@@ -183,12 +183,12 @@ unset FAKE_OUTDATED_CASKS CASK_UPGRADE_IGNORE
 
 new_fixture cask-selection-default
 echo 0 >"$HOME/.last_update"
-FAKE_OUTDATED_CASKS='codex kitty'
+FAKE_OUTDATED_CASKS='codex docker-desktop kitty'
 if run_update 'y\n'; then
   if grep -q '^brew upgrade --cask codex kitty$' "$LOG"; then
-    pass "empty ignore list upgrades all outdated casks"
+    pass "default ignore list skips Docker Desktop"
   else
-    fail "empty ignore list upgrades all outdated casks"
+    fail "default ignore list skips Docker Desktop"
   fi
 else
   fail "default cask selection exits successfully"
