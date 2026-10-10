@@ -1,18 +1,18 @@
 ---
 name: linear-progress-issue
-description: Coordinate the named `linear-operator` custom agent to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on the repository's authoritative integration branch. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
+description: Use the `linear-operator` skill to progress a linked Linear issue or subissue, manage evidenced scoped relations, and mark work Done only after its commits and verification land on the repository's authoritative integration branch. Use after `linear-link-work` when planning, starting, relating, completing, or canceling repository work.
 ---
 
 # Linear Progress Issue
 
-Keep Linear state and relations aligned with actual work. The primary agent decides when an event has occurred and delegates Linear writes to the named `linear-operator` custom agent, whose Codex adapter pins `gpt-5.6-terra` with medium reasoning effort.
+Keep Linear state and relations aligned with actual work. The current agent decides when an event has occurred and performs authorized Linear writes through the `linear-operator` skill.
 
 ## Setup
 
 1. Read `## Linear scope` from the applicable `AGENTS.md`; require the allowed team and stable project ID/slug.
 2. Accept one verified key plus the parent/child and relation snapshots from `linear-link-work`. If the user supplies an unverified key, run `linear-link-work` first; never discover, select, or create an issue here.
-3. Delegate state and relation management to exactly one custom agent named `linear-operator`. Give it the key, repository path, exact scope, snapshots, intended writes, evidence, and the IDs of relations the agent created during this active work. Reuse that agent thread for later writes during the same active work when possible. Stop if the named agent is unavailable or cannot be selected.
-4. Require the subagent to verify the issue, parent, children, and every relation target against the allowed team and project before reading further or writing. Stop and request an exact scope override for an external target.
+3. Load `linear-operator` and execute authorized state and relation management in the current agent. Supply the key, repository path, exact scope, snapshots, intended writes, evidence, and the IDs of relations created during this active work. Preserve those IDs for later writes. Stop if the skill or its operator MCP connection is unavailable.
+4. Verify the issue, parent, children, and every relation target against the allowed team and project before reading further or writing. Stop and request an exact scope override for an external target.
 5. Retrieve the team's workflow states and require exact `Backlog`, `Todo`, `In Progress`, `Done`, and `Canceled` names or IDs. Re-fetch affected issues and relations after every write to detect automation.
 
 ## State Progression
@@ -26,7 +26,7 @@ Keep Linear state and relations aligned with actual work. The primary agent deci
 
 ## Completion Contract
 
-Before requesting `Done`, require the primary agent and delegate to verify all of the following:
+Before performing `Done` through `linear-operator`, verify all of the following:
 
 1. Use the authoritative integration branch recorded by `coding-workflow`; if none was recorded, determine it from applicable repository instructions or configuration, otherwise from `origin`'s advertised default branch. Do not assume `main` or `master`, and stop for clarification if the evidence conflicts or remains ambiguous. Refresh it with `git fetch origin <authoritative-branch>`. Stop if `origin/<authoritative-branch>` is unavailable or cannot be refreshed; keep the issue `In Progress`.
 2. Identify every commit belonging to the active issue from its required Linear key and recorded work context. Account for direct commits, merge commits, and squash results; do not rely on message search alone when the recorded branch, PR, or worktree shows additional commits.
@@ -50,14 +50,13 @@ For a parent issue, additionally require every implementation outcome to belong 
 - Automatically remove only a relation whose ID was recorded as agent-created during the same active work and is subsequently proven incorrect. Require user approval before removing any pre-existing or user-created relation.
 - Change no relation that points outside the allowed team or project without an exact user scope override.
 
-## Delegated Write Contract
+## Operator Write Contract
 
-Require the subagent to retrieve and verify the current issue and relevant relations, validate the requested transition or relation change and its evidence, perform only the authorized writes, retrieve the result, and return confirmed keys, team, project, states, relation direction, and relation IDs. The primary agent verifies the returned result against local scope and reports it with the work evidence.
+Use `linear-operator` to retrieve and verify the current issue and relevant relations, validate the requested transition or relation change and its evidence, perform only the authorized writes, and retrieve the result. Verify confirmed keys, team, project, states, relation direction, and relation IDs against local scope and report them with the work evidence.
 
 ## Rules
 
-- The primary agent must not perform Linear writes itself; stop if the required delegation is unavailable.
-- Use only the named `linear-operator` custom agent for this workflow; do not attempt to configure an anonymous subagent at spawn time.
+- Perform writes through the `linear-operator` skill in the current agent; stop if the skill or its operator connection is unavailable. No custom agent is required.
 - Treat a request to plan or start a verified issue as authorization only for its evidenced forward lifecycle transitions; issue creation and relation writes require explicit approval.
 - Do not move an issue for proposed work alone. Read-only issue selection and an unpersisted decomposition proposal are permitted before the claim gate. Once the user asks to plan or start a verified issue and its dedicated worktree exists, move it to `In Progress` before any implementation plan or work artifact is created; make no further state change merely because proposed work, failed landing or verification, or an already-correct state exists.
 - Require every commit message to link the active issue or child with one of these exact phrases: `Fixes <KEY>`, `Closes <KEY>`, `Resolves <KEY>`, `Completes <KEY>`, or `Implements <KEY>` (for example, `Fixes TEL-16`). A bare issue key does not satisfy this contract. For a squash merge, preserve one of these phrases in the resulting commit or linked merged PR.

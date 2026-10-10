@@ -6,10 +6,9 @@ This folder is the canonical managed configuration area for Codex on this machin
 ## Organization
 - `global.md`: global instructions, linked from `~/.codex/AGENTS.md`.
 - `skills/<name>/SKILL.md`: skills, exposed through `~/.agents/skills`.
-- `agents/<role>.toml`: native Codex custom agents, exposed through `~/.codex/agents`.
 - `codex/rules/default.rules`: execution policy, linked from `~/.codex/rules/default.rules`.
 
-Keep role-specific models, reasoning effort, sandbox settings, and agent instructions in each TOML definition. Edit the canonical definition rather than maintaining a second Markdown copy. Keep credentials, OAuth state, caches, logs, histories, and runtime state outside this folder.
+No custom agent definitions are maintained here. Keep reusable workflows in skills, including `linear-operator` for authorized Linear writes. Keep credentials, OAuth state, caches, logs, histories, and runtime state outside this folder.
 
 ## Skill Design
 Keep each skill concise and focused on one tool, format, or workflow. Put durable safety rules and general operating practices in the applicable `AGENTS.md`, not in every skill.

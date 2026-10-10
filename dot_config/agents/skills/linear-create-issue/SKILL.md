@@ -1,11 +1,11 @@
 ---
 name: linear-create-issue
-description: Create one scoped Linear backlog issue or an approved parent/subissue batch, plus approved initial relations, through the named `linear-operator` custom agent. Use when `linear-link-work` finds no matching issue, the user requests a new repository issue, or the user approves a proposed issue decomposition.
+description: Create one scoped Linear backlog issue or an approved parent/subissue batch, plus approved initial relations, through the `linear-operator` skill. Use when `linear-link-work` finds no matching issue, the user requests a new repository issue, or the user approves a proposed issue decomposition.
 ---
 
 # Linear Create Issue
 
-Delegate the Linear writes. The primary agent must not create issues or relations itself.
+Perform authorized Linear writes through the `linear-operator` skill in the current agent.
 
 ## Workflow
 
@@ -14,9 +14,9 @@ Delegate the Linear writes. The primary agent must not create issues or relation
    - create one issue when the user explicitly requests it or explicitly approves the single-issue proposal returned by `linear-link-work` after no match;
    - create a parent/subissue batch only after the user approves the complete decomposition proposal from `linear-link-work`.
 3. For a decomposition, require the approved proposal to list every child's title, outcome, acceptance criteria, one existing classification label, explicit priority, dependency order, and expected Git deliverable. Include a new parent only if the approved proposal explicitly contains it. Require another proposal and approval before creating grandchildren.
-4. Delegate the entire authorized create operation to exactly one custom agent named `linear-operator`. Its Codex adapter pins `gpt-5.6-terra` with medium reasoning effort. Give it the request, repository path, exact Linear scope, approval record, and proposed structure and relations. Stop if that named agent is unavailable or cannot be selected.
-5. Require the subagent to inspect only the allowed project for project context, its current lead, current duplicates, the proposed parent, and proposed relation targets. Resolve the assignee from an explicit applicable repository `AGENTS.md` instruction when present; otherwise default to the project lead. Stop if the resolved assignee is unavailable or outside the allowed team, if no project lead exists when no repository override is present, or if any target is out of scope.
-6. Require the subagent to inspect relevant repository code, docs, tests, and diff. Return an existing matching key instead of creating a duplicate. A newly discovered duplicate relation still requires user approval before it is written.
+4. Load `linear-operator` and execute the authorized create operation in the current agent. Supply the request, repository path, exact Linear scope, approval record, and proposed structure and relations. Stop if the skill or its operator MCP connection is unavailable.
+5. Inspect only the allowed project for project context, its current lead, current duplicates, the proposed parent, and proposed relation targets. Resolve the assignee from an explicit applicable repository `AGENTS.md` instruction when present; otherwise default to the project lead. Stop if the resolved assignee is unavailable or outside the allowed team, if no project lead exists when no repository override is present, or if any target is out of scope.
+6. Inspect relevant repository code, docs, tests, and diff. Return an existing matching key instead of creating a duplicate. A newly discovered duplicate relation still requires user approval before it is written.
 7. For every created issue or child:
    - use the allowed team and project, set `parentId` for a child, set state to `Backlog`, and assign the resolved assignee;
    - set the proposal's explicit priority;
@@ -34,8 +34,8 @@ Delegate the Linear writes. The primary agent must not create issues or relation
 ## Rules
 
 - Never read or write outside the allowed team and project. Stop and request an exact scope override when a parent, child, duplicate, or relation target falls outside it.
-- Use only the named `linear-operator` custom agent for the delegated workflow; do not attempt to configure an anonymous subagent at spawn time.
+- Use the `linear-operator` skill and its operator connection for writes; no custom agent is required.
 - Treat approval of a decomposition as authorization only for the exact proposed batch and its listed initial relations. Rejected or partially approved proposals create nothing until a complete replacement proposal is approved.
 - After splitting, put all implementation work on children. Create another approved child for any remaining parent-level implementation.
 - Stop on missing scope, an unavailable or out-of-team resolved assignee, a missing project lead when no repository assignee override exists, an unavailable classification label, mismatched verification, or a result without a project.
-- Permit no writes beyond the authorized issues and initial relations. Delegate later state and relation changes to `linear-progress-issue`; comments and other field changes need separate authorization.
+- Permit no writes beyond the authorized issues and initial relations. Route later state and relation changes through `linear-progress-issue`; comments and other field changes need separate authorization.

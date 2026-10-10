@@ -1,4 +1,4 @@
 interface:
   display_name: "Create Linear Issue"
   short_description: "Create scoped issues, subissues, and relations"
-  default_prompt: "Use $linear-create-issue with the named linear-operator custom agent to create the authorized issue or approved subissue batch."
+  default_prompt: "Use $linear-create-issue with $linear-operator to create the authorized issue or approved subissue batch."

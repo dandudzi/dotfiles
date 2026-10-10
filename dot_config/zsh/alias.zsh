@@ -41,16 +41,13 @@ alias go="git-open"
 alias g="git"
 alias gavv="git branch -avv"
 alias gvv="git branch -vv"
-alias cbc="git branch --show-current | pbcopy"
-alias ga="git add -p" # add only parts of the files to be staged
+alias gcb="git branch --show-current | pbcopy"
+alias gparts="git add -p" # add only parts of the files to be staged
 alias gadd="git add"
 
 alias glog="git log --oneline --decorate --graph --all"
-alias glall='git log --graph --pretty="%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" --all'
-alias glpa="git log --stat --patch"
-alias glg="git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all"
-alias gsh="git show --pretty=short --show-signature"
-alias gshort="git shortlog"
+alias gcd="git log --stat --patch"
+alias gfzf="git shortlog | fzf"
 
 alias gpf="git push --force-with-lease --force-if-includes"
 alias gcon="git mergetool --no-prompt" #resolve conflict with git
@@ -73,8 +70,6 @@ alias gbl="git blame --ignore-rev"  #ingore noisy commits
 
 alias gs="git switch"
 alias gsc="git switch -c" #create new branch
-alias gb="git branch"
-alias gba="git branch -a" #list all branches even remote
 
 # Destructive: discard tracked changes and delete untracked files and directories.
 alias gwipe="git reset --hard && git clean --force -df"
@@ -103,11 +98,6 @@ alias tl="tmux list-sessions"                   # Displays a list of running tmu
 alias tmuxconf='${EDITOR:-nvim} ~/.config/tmux/tmux.conf' # Open tmux config with an editor
 alias ts="tmux new-session -s"                  # Create a new named tmux session
 
-# Reach the configured Zakupki sessions without typing their full names.
-alias zk='sesh connect "Zakupki"'
-alias all='sesh connect "Zakupki All"'
-alias bc='sesh connect "Zakupki Backend"'
-
 #🐍 Keep unversioned Python commands on Python 3.
 alias python=python3
 alias pip=pip3
@@ -133,12 +123,6 @@ alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
 
-# 🤖 Claude
-alias uClaude="brew upgrade claude-code@latest claude"
-# Treat the first argument as the shared task-list ID and pass the rest to Claude Opus Plan.
-function cc() {
-  CLAUDE_CODE_TASK_LIST_ID="$1" claude --model opusplan "${@:2}"
-}
 
 # Give Codex the Linear app token without keeping the credential in dotfiles.
 function codex() {
