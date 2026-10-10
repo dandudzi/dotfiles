@@ -8,7 +8,6 @@ This folder is the canonical managed configuration area for Codex on this machin
 - `skills/<name>/SKILL.md`: skills, exposed through `~/.agents/skills`.
 - `agents/<role>.toml`: native Codex custom agents, exposed through `~/.codex/agents`.
 - `codex/rules/default.rules`: execution policy, linked from `~/.codex/rules/default.rules`.
-- `mcp.md`: non-secret setup notes; active MCP configuration remains in Codex's native config.
 
 Keep role-specific models, reasoning effort, sandbox settings, and agent instructions in each TOML definition. Edit the canonical definition rather than maintaining a second Markdown copy. Keep credentials, OAuth state, caches, logs, histories, and runtime state outside this folder.
 
