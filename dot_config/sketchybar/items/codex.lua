@@ -10,10 +10,11 @@ local codex = sbar.add("item", "codex", {
 		string = "󰚩",
 		-- This glyph looks oversized at the bar's default 24-point icon size.
 		font = { size = 18.0 },
-		color = colors.black,
-		padding_left = settings.paddings,
+		-- Put the accent on the glyph while keeping one dark pill background.
+		color = colors.mauve,
+		padding_left = 5,
 		padding_right = settings.paddings,
-		background = { color = colors.mauve, height = 40, corner_radius = 15 },
+		background = { color = colors.background, height = 40, corner_radius = 15 },
 	},
 	label = {
 		string = "0",
