@@ -11,18 +11,19 @@ local codex = sbar.add("item", "codex", {
 		-- This glyph looks oversized at the bar's default 24-point icon size.
 		font = { size = 18.0 },
 		color = colors.black,
-		padding_left = 10,
-		padding_right = 8,
-		background = { color = colors.mauve, corner_radius = 15 },
+		padding_left = 7,
+		padding_right = 5,
+		background = { color = colors.mauve, height = 32, corner_radius = 6 },
 	},
 	label = {
 		string = "0",
 		color = colors.white,
-		padding_left = 8,
-		padding_right = 10,
-		font = { family = settings.font.numbers },
+		padding_left = 5,
+		padding_right = 7,
+		font = { family = settings.font.numbers, size = 16.0 },
 	},
-	background = { color = colors.background, corner_radius = 15 },
+	-- Keep the counter compact with lightly rounded, square-shaped corners.
+	background = { color = colors.background, height = 32, corner_radius = 6 },
 })
 
 local function refresh()
