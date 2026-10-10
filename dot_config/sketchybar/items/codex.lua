@@ -20,8 +20,8 @@ local codex = sbar.add("item", "codex", {
 		color = colors.white,
 		padding_left = 5,
 		padding_right = 7,
-		-- Match the bar's standard label typography despite the smaller background.
-		font = { family = settings.font.text, style = settings.font.style_map["Regular"], size = 18.0 },
+		-- Use the bar's label font and size, with bold weight for the attention count.
+		font = { family = settings.font.text, style = settings.font.style_map["Bold"], size = 18.0 },
 		background = { color = colors.background, height = 32, corner_radius = 6, drawing = true },
 	},
 	-- Keep the counter compact with lightly rounded, square-shaped corners.
