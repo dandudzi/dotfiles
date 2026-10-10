@@ -21,9 +21,11 @@ local codex = sbar.add("item", "codex", {
 		padding_left = 5,
 		padding_right = 7,
 		font = { family = settings.font.numbers, size = 16.0 },
+		background = { color = colors.background, height = 32, corner_radius = 6, drawing = true },
 	},
 	-- Keep the counter compact with lightly rounded, square-shaped corners.
-	background = { color = colors.background, height = 32, corner_radius = 6 },
+	-- Remove the inherited border so the number's fill matches the icon's height.
+	background = { color = colors.background, height = 32, corner_radius = 6, border_width = 0 },
 })
 
 local function refresh()
