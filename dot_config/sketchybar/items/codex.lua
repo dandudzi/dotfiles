@@ -8,6 +8,8 @@ local codex = sbar.add("item", "codex", {
 	update_freq = 2,
 	icon = {
 		string = "󰚩",
+		-- This glyph looks oversized at the bar's default 24-point icon size.
+		font = { size = 18.0 },
 		color = colors.black,
 		padding_left = 10,
 		padding_right = 8,
