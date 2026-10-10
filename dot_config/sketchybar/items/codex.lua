@@ -12,7 +12,7 @@ local codex = sbar.add("item", "codex", {
 		font = { size = 18.0 },
 		-- Put the accent on the glyph while keeping one dark pill background.
 		color = colors.mauve,
-		padding_left = 5,
+		padding_left = 3,
 		padding_right = settings.paddings,
 		background = { color = colors.background, height = 40, corner_radius = 15 },
 	},
