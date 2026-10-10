@@ -67,6 +67,9 @@ if [ "${PROMPT_COMMAND:-}" = "$(basename "$0")" ]; then
   IFS= read -r prompt_answer || exit 24
   [ "$prompt_answer" = "continue" ] || exit 25
 fi
+if [ "$(basename "$0")" = brew ] && [ "$*" = "outdated --cask --greedy --quiet" ]; then
+  printf '%s\n' "${FAKE_OUTDATED_CASKS:-}"
+fi
 exit 0
 EOF
   chmod +x "$BIN/fake-command"
@@ -109,6 +112,8 @@ run_update() {
     UPDATE_TIMEOUT="${UPDATE_TIMEOUT:-5m}" \
     FAIL_COMMAND="${FAIL_COMMAND:-}" \
     HANG_COMMAND="${HANG_COMMAND:-}" \
+    FAKE_OUTDATED_CASKS="${FAKE_OUTDATED_CASKS:-}" \
+    CASK_UPGRADE_IGNORE="${CASK_UPGRADE_IGNORE:-}" \
     sh -c 'printf "%b" "$1" | "$2"' sh "$input" "$UPDATE_SCRIPT" >"$OUTPUT" 2>&1
 }
 
@@ -141,6 +146,11 @@ new_fixture accept
 echo 0 >"$HOME/.last_update"
 if run_update 'y\n'; then
   assert_nonempty "$(cat "$LOG")" "accepting runs update commands"
+  if grep -q '^brew outdated --cask --greedy --quiet$' "$LOG"; then
+    pass "accepted updates check outdated casks"
+  else
+    fail "accepted updates check outdated casks"
+  fi
   accepted_timestamp=$(cat "$HOME/.last_update")
   if [ "$accepted_timestamp" -gt 0 ] 2>/dev/null; then
     pass "successful updates refresh the timer"
@@ -150,6 +160,55 @@ if run_update 'y\n'; then
 else
   fail "successful updates exit successfully"
 fi
+
+new_fixture cask-selection
+echo 0 >"$HOME/.last_update"
+FAKE_OUTDATED_CASKS='codex kitty spotify'
+CASK_UPGRADE_IGNORE='kitty'
+if run_update 'y\n'; then
+  if grep -q '^brew upgrade --cask codex spotify$' "$LOG"; then
+    pass "upgrades every outdated cask except exact ignored names"
+  else
+    fail "upgrades every outdated cask except exact ignored names"
+  fi
+  if grep -q '^brew upgrade --cask kitty$' "$LOG"; then
+    fail "ignored cask is not upgraded"
+  else
+    pass "ignored cask is not upgraded"
+  fi
+else
+  fail "cask selection exits successfully"
+fi
+unset FAKE_OUTDATED_CASKS CASK_UPGRADE_IGNORE
+
+new_fixture cask-selection-default
+echo 0 >"$HOME/.last_update"
+FAKE_OUTDATED_CASKS='codex kitty'
+if run_update 'y\n'; then
+  if grep -q '^brew upgrade --cask codex kitty$' "$LOG"; then
+    pass "empty ignore list upgrades all outdated casks"
+  else
+    fail "empty ignore list upgrades all outdated casks"
+  fi
+else
+  fail "default cask selection exits successfully"
+fi
+unset FAKE_OUTDATED_CASKS
+
+new_fixture all-casks-ignored
+echo 0 >"$HOME/.last_update"
+FAKE_OUTDATED_CASKS='codex kitty'
+CASK_UPGRADE_IGNORE='codex kitty'
+if run_update 'y\n'; then
+  if grep -q '^brew upgrade --cask' "$LOG"; then
+    fail "no cask upgrade runs when all outdated casks are ignored"
+  else
+    pass "no cask upgrade runs when all outdated casks are ignored"
+  fi
+else
+  fail "all-ignored selection exits successfully"
+fi
+unset FAKE_OUTDATED_CASKS CASK_UPGRADE_IGNORE
 
 new_fixture default-decline
 echo 0 >"$HOME/.last_update"

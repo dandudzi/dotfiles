@@ -3,6 +3,8 @@
 UPDATE_FILE="${UPDATE_FILE:-$HOME/.last_update}"
 UPDATE_TIMEOUT="${UPDATE_TIMEOUT:-5m}"
 TMUX_CATPPUCCIN_PLUGIN_PATH="$HOME/.config/tmux/plugins/tmux"
+# Space-separated Homebrew cask names to leave to their own updater, if desired.
+CASK_UPGRADE_IGNORE="${CASK_UPGRADE_IGNORE:-}"
 
 run_step() {
   label="$1"
@@ -28,6 +30,20 @@ cleanup_tmux_plugin_tags() {
   done
 }
 
+upgrade_casks() {
+  outdated_casks=$(brew outdated --cask --greedy --quiet) || return 1
+  set --
+
+  for cask in $outdated_casks; do
+    for ignored_cask in $CASK_UPGRADE_IGNORE; do
+      [ "$cask" = "$ignored_cask" ] && continue 2
+    done
+    set -- "$@" "$cask"
+  done
+
+  [ "$#" -eq 0 ] || brew upgrade --cask "$@"
+}
+
 perform_updates() {
   failed=0
 
@@ -40,6 +56,7 @@ perform_updates() {
 
   run_step "Updating Homebrew... 🍺" brew update || failed=1
   run_step "Upgrading Homebrew formulae" brew upgrade --formula || failed=1
+  run_step "Upgrading Homebrew casks" upgrade_casks || failed=1
   run_step "Cleaning up Homebrew" brew cleanup || failed=1
   run_step "Updating Mise... 🐁" mise upgrade || failed=1
   run_step "Cleaning mutable catppuccin/tmux tags" cleanup_tmux_plugin_tags "$TMUX_CATPPUCCIN_PLUGIN_PATH" latest v2 || failed=1
