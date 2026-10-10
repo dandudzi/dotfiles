@@ -3,12 +3,12 @@
 ## Project Structure & Module Organization
 This repository is a config placement for one machine, managed as part of a broader dotfiles setup through `chezmoi`. It is organized by tool rather than by application: `nvim` contains editor config, `sketchybar` contains bar items and helpers, `tmux` contains terminal multiplexer config plus bundled plugins, and `scripts` contains standalone utilities with their own local docs or build files. Treat bundled plugin and dependency directories as vendored unless you are intentionally syncing upstream code.
 
-## Shared AI Agent Configuration
-The `agents` directory is the canonical shared configuration area for Codex, Claude Code, and OpenCode. Use it for portable global instructions, Agent Skills, Claude/OpenCode-compatible agent prompts, shared hook scripts, and MCP intent notes. The live global instruction files and shared skill or agent directories may be symlinks into this folder.
+## Codex Configuration
+The `agents` directory is the canonical configuration area for Codex on this machine. Keep global instructions in `agents/global.md`, skills in `agents/skills`, native TOML agent definitions in `agents/agents`, execution-policy rules in `agents/codex/rules`, and non-secret MCP setup notes in `agents/mcp.md`.
 
-Do not assume tool-specific active settings are shared just because the shared folder exists. Before changing MCP servers, hooks, permissions, models, or provider settings, inspect the current tool-specific config files and preserve existing entries. Keep secrets, OAuth state, credentials, caches, logs, histories, and machine-local runtime state out of `agents`.
+Keep these links so Codex reads the managed files without duplicate copies: `~/.codex/AGENTS.md` links to `agents/global.md`, `~/.agents/skills` links to `agents/skills`, `~/.codex/agents` links to `agents/agents`, and `~/.codex/rules/default.rules` links to `agents/codex/rules/default.rules`.
 
-MCP configs are not one universal file across these tools. Keep reusable MCP names, commands, URLs, and non-secret notes in `agents/mcp.md`, then update each active tool wrapper in its native schema when requested. Do not claim MCP servers are shared unless Codex, Claude Code, and OpenCode have each been checked or configured explicitly.
+Active MCP servers, hooks, permissions, models, and provider settings belong in Codex's native configuration. Inspect existing entries before editing and preserve unrelated settings. Keep secrets, OAuth state, credentials, caches, logs, histories, and runtime state out of `agents`. Do not recreate Claude Code or OpenCode configuration unless explicitly requested.
 
 ## Chezmoi Aliases & Sync Workflow
 The interactive zsh aliases in `zsh/alias.zsh` are:

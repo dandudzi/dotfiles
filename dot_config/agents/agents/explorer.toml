@@ -1,5 +1,4 @@
-# Codex adapter for the portable explorer role; keep behavior aligned with
-# ~/.config/agents/agents/explorer.md when updating this file.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "explorer"
 description = "Read-only investigator for code, Git, LSP, documentation, web, and MCP evidence."
 model = "gpt-5.6-terra"

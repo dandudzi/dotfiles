@@ -1,5 +1,4 @@
-# Codex adapter for the portable implementer role; keep behavior aligned with
-# ~/.config/agents/agents/implementer.md when updating this file.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "implementer"
 description = "Bounded coding agent for implementing one approved assignment within explicit file ownership."
 model = "gpt-5.6-terra"

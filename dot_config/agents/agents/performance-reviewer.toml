@@ -1,5 +1,4 @@
-# Codex adapter for the portable performance-reviewer role; keep behavior
-# aligned with ~/.config/agents/agents/performance-reviewer.md.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "performance-reviewer"
 description = "Read-only performance reviewer for hot paths, complexity, queries, I/O, concurrency, memory, and resource use."
 model = "gpt-5.6-terra"

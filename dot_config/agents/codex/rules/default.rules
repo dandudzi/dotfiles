@@ -1,9 +1,8 @@
 # Codex execution policy — active user policy.
 #
 # Audited against Codex CLI 0.144.6 on 2026-07-21. The live
-# ~/.codex/rules/default.rules path is intentionally a symlink to this shared
-# file so Codex, Claude Code, and OpenCode policy work can retain one reviewed
-# source of intent where their native rule formats permit it.
+# ~/.codex/rules/default.rules path is intentionally a symlink to this
+# managed file so Codex has one reviewed source of execution policy.
 #
 # The installed CLI exposes the official `codex execpolicy check` tester, so
 # every policy change must pass inline `match`/`not_match` validation and

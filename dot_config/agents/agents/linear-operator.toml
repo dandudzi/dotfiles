@@ -1,5 +1,4 @@
-# Codex adapter for the portable Linear operator role; keep behavior aligned
-# with ~/.config/agents/agents/linear-operator.md when updating this file.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "linear-operator"
 description = "Scoped Linear mutation and verification agent for approved issue creation, workflow transitions, and relation management."
 model = "gpt-5.6-terra"

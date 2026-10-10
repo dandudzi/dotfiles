@@ -1,5 +1,4 @@
-# Codex adapter for the portable correctness-reviewer role; keep behavior
-# aligned with ~/.config/agents/agents/correctness-reviewer.md.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "correctness-reviewer"
 description = "Read-only reviewer for correctness, regressions, edge cases, test quality, and maintainability risks."
 model = "gpt-5.6-terra"

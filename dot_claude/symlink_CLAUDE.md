@@ -1,1 +1,0 @@
-../.config/agents/global.md

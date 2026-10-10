@@ -1,5 +1,4 @@
-# Codex adapter for the portable security-reviewer role; keep behavior aligned
-# with ~/.config/agents/agents/security-reviewer.md.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "security-reviewer"
 description = "Read-only security reviewer for trust boundaries, authorization, validation, secrets, data exposure, and dependencies."
 model = "gpt-5.6-terra"

@@ -1,5 +1,4 @@
-# Codex adapter for the portable test-writer role; keep behavior aligned with
-# ~/.config/agents/agents/test-writer.md when updating this file.
+# Canonical Codex role; ~/.codex/agents links to this directory to avoid duplicate definitions.
 name = "test-writer"
 description = "Test-first acceptance-test author for proving requested behavior before production implementation."
 model = "gpt-5.6-terra"

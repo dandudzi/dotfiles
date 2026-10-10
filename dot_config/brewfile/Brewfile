@@ -1,6 +1,3 @@
-tap "anomalyco/tap", trusted: {
-  formula: "opencode"
-}
 tap "felixkratz/formulae", trusted: {
   formula: "sketchybar"
 }
@@ -76,8 +73,6 @@ brew "nmap"
 brew "nowplaying-cli"
 # Command-line Git information tool
 brew "onefetch"
-# AI coding agent built for the terminal
-brew "anomalyco/tap/opencode"
 # Swiss-army knife of markup format conversion
 brew "pandoc"
 # Pinentry for GPG on Mac
@@ -122,8 +117,6 @@ brew "zsh-syntax-highlighting"
 cask "bitwarden"
 # Anthropic's official Claude AI desktop app
 cask "claude"
-# Anthropic's terminal coding agent; track latest to match the uClaude update alias
-cask "claude-code@latest"
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
 # Voice and text chat software
