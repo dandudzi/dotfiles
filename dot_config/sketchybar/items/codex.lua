@@ -5,7 +5,7 @@ local helper = '/bin/sh "$HOME/.config/sketchybar/helpers/codex.sh"'
 -- Share tmux's attention queue so both pills describe the same waiting panes.
 local codex = sbar.add("item", "codex", {
 	position = "left",
-	padding_left = 3, -- Tighten the gap before the whole pill.
+	padding_left = 2, -- Tighten the gap before the whole pill.
 	update_freq = 2,
 	icon = {
 		string = "󰚩",
