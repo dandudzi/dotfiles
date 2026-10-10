@@ -7,6 +7,8 @@ description: Perform approved, scoped Linear issue creation, workflow transition
 
 Execute the authorized Linear operation directly in the current agent using this skill. No custom agent or delegation is required. Keep the authorization and verification boundaries of the former operator.
 
+- When the user asks to start planning or work on a specific issue from an issue tracker such as Linear or Jira, claim it before planning: create or reuse its dedicated worktree, move and verify the issue in `In Progress`, then verify the agent's current directory is that worktree. Only after this claim gate may an agent create a plan, state file, test, source file, or other work artifact. Read-only issue and repository discovery may occur before the gate. Ask for approval of the implementation plan before implementation begins.
+
 ## Connection
 
 Use the `linear_operator` MCP server for operator reads and writes. It uses `LINEAR_OPERATOR_ACCESS_TOKEN` to attribute actions to the Linear app identity. The Codex shell launcher loads that variable from the existing macOS Keychain item; never print, copy, or commit the token. A skill cannot inject per-agent MCP settings, so this connection is configured in `~/.codex/config.toml`.
