@@ -9,13 +9,14 @@ local codex = sbar.add("item", "codex", {
 	update_freq = 2,
 	icon = {
 		string = "󰚩",
-		-- This glyph looks oversized at the bar's default 24-point icon size.
-		font = { size = 18.0 },
+		-- Match the standard right-side icons' size, padding, and positioning.
+		font = { size = 24.0 },
 		-- Put the accent on the glyph while keeping one dark pill background.
 		color = colors.mauve,
-		padding_left = 5,
-		padding_right = 5, -- Balance the space on both sides of the icon.
-		align = "center",
+		padding_left = settings.paddings,
+		padding_right = settings.paddings,
+		align = "left",
+		y_offset = 0,
 		background = { color = colors.background, height = 40, corner_radius = 15 },
 	},
 	label = {
