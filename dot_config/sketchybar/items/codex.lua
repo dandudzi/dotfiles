@@ -11,22 +11,22 @@ local codex = sbar.add("item", "codex", {
 		-- This glyph looks oversized at the bar's default 24-point icon size.
 		font = { size = 18.0 },
 		color = colors.black,
-		padding_left = 7,
-		padding_right = 5,
-		background = { color = colors.mauve, height = 32, corner_radius = 6 },
+		padding_left = settings.paddings,
+		padding_right = settings.paddings,
+		background = { color = colors.mauve, height = 40, corner_radius = 15 },
 	},
 	label = {
 		string = "0",
 		color = colors.lavender, -- Match the active app label.
 		padding_left = 5,
-		padding_right = 7,
+		padding_right = 10,
 		-- Use the bar's label font and size, with bold weight for the attention count.
 		font = { family = settings.font.text, style = settings.font.style_map["Bold"], size = 18.0 },
-		background = { color = colors.background, height = 32, corner_radius = 6, drawing = true },
+		background = { color = colors.background, height = 40, corner_radius = 15, drawing = true },
 	},
-	-- Keep the counter compact with lightly rounded, square-shaped corners.
+	-- Match the app pill's height, rounding, and spacing.
 	-- Remove the inherited border so the number's fill matches the icon's height.
-	background = { color = colors.background, height = 32, corner_radius = 6, border_width = 0 },
+	background = { color = colors.background, height = 40, corner_radius = 15, border_width = 0 },
 })
 
 local function refresh()
