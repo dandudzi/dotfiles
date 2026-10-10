@@ -1,0 +1,1171 @@
+# Codex execution policy — active user policy.
+#
+# Audited against Codex CLI 0.144.6 on 2026-07-21. The live
+# ~/.codex/rules/default.rules path is intentionally a symlink to this
+# managed file so Codex has one reviewed source of execution policy.
+#
+# The installed CLI exposes the official `codex execpolicy check` tester, so
+# every policy change must pass inline `match`/`not_match` validation and
+# explicit direct and nearby non-match checks.
+# Codex uses the strictest decision across all matching prefixes:
+# forbidden > prompt > allow.
+#
+# Native execpolicy rules match token prefixes, not arbitrary flags or
+# canonicalized paths. Commands that require path-aware or flag-order-aware
+# checks remain prompt/forbidden instead of receiving broad allow rules.
+#
+# Restrict basename fallback for unconditionally allowed executables. Without
+# these declarations, an arbitrary absolute executable such as /tmp/ls could
+# inherit the `ls` allow rule when host-executable resolution is enabled.
+host_executable(name = "ls", paths = ["/bin/ls"])
+host_executable(name = "pwd", paths = ["/bin/pwd"])
+host_executable(name = "id", paths = ["/usr/bin/id"])
+host_executable(name = "whoami", paths = ["/usr/bin/whoami"])
+host_executable(name = "uname", paths = ["/usr/bin/uname"])
+host_executable(name = "which", paths = ["/usr/bin/which"])
+host_executable(name = "true", paths = ["/usr/bin/true"])
+host_executable(name = "false", paths = ["/usr/bin/false"])
+host_executable(name = "basename", paths = ["/usr/bin/basename"])
+host_executable(name = "dirname", paths = ["/usr/bin/dirname"])
+host_executable(name = "codex", paths = ["/opt/homebrew/bin/codex"])
+host_executable(name = "obsidian", paths = ["/opt/homebrew/bin/obsidian"])
+
+# Maven Wrapper is project-owned code, so only installed-Maven metadata is
+# unconditionally allowed.
+MAVEN_EXECUTABLES = ["mvn", "mvnw", "./mvnw"]
+MAVEN_PRECEDING_PHASES = [
+    "clean",
+    "validate",
+    "compile",
+    "test",
+    "package",
+    "verify",
+    "install",
+]
+MAVEN_FORBIDDEN_GOALS = [
+    "deploy",
+    "site-deploy",
+    "deploy:deploy",
+    "deploy:deploy-file",
+    "release:prepare",
+    "release:prepare-with-pom",
+    "release:perform",
+    "release:stage",
+    "release:rollback",
+]
+
+# -----------------------------------------------------------------------------
+# ALLOW — commands explicitly authorized to run outside the sandbox without a
+# prompt. Most are narrow and read-only. Obsidian is application-scoped and has
+# stricter prompt overrides below for destructive, executable, plugin, theme,
+# recovery, and administrative operations.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = ["pwd"],
+    decision = "allow",
+    justification = "Print the current working directory.",
+    match = ["pwd", "pwd -L"],
+)
+
+
+prefix_rule(
+    pattern = ["ls"],
+    decision = "allow",
+    justification = "List directory entries without modifying them.",
+    match = ["ls", "ls -la"],
+    not_match = ["lsof"],
+)
+
+
+prefix_rule(
+    pattern = [["id", "whoami", "uname", "which"]],
+    decision = "allow",
+    justification = "Inspect local identity, platform, or executable resolution.",
+    match = ["id", "whoami", "uname -a", "which git"],
+    not_match = ["who"],
+)
+
+
+prefix_rule(
+    pattern = [["true", "false", "basename", "dirname"]],
+    decision = "allow",
+    justification = "Run an inert result command or perform lexical path formatting.",
+    match = ["true", "false", "basename path/file", "dirname path/file"],
+    not_match = ["date", "arch"],
+)
+
+
+prefix_rule(
+    pattern = ["codex", ["--version", "-V", "--help", "-h"]],
+    decision = "allow",
+    justification = "Inspect the installed Codex CLI without starting an agent.",
+    match = ["codex --version", "codex --help"],
+    not_match = ["codex exec task", "codex resume"],
+)
+
+prefix_rule(
+    pattern = ["codex", "help"],
+    decision = "allow",
+    justification = "Inspect Codex CLI help without starting an agent.",
+    match = ["codex help", "codex help execpolicy"],
+    not_match = ["codex exec task"],
+)
+
+prefix_rule(
+    pattern = ["codex", "execpolicy", "check"],
+    decision = "allow",
+    justification = "Run the official preview execution-policy tester when the installed Codex binary provides it.",
+    match = ["codex execpolicy check --rules default.rules -- git status"],
+    not_match = ["codex exec task"],
+)
+
+
+
+
+prefix_rule(
+    pattern = ["mvn", ["-v", "--version", "-h", "--help"]],
+    decision = "allow",
+    justification = "Inspect the installed Maven CLI without running a project build or Maven Wrapper bootstrap.",
+    match = ["mvn --version", "mvn --help"],
+    not_match = ["mvn -V deploy", "mvn test", "./mvnw --version"],
+)
+
+
+# The Obsidian desktop CLI requires access to the app process and its IPC socket,
+# which live outside the workspace sandbox. The user explicitly authorizes the
+# complete CLI surface; safety-sensitive subcommands retain prompt overrides.
+prefix_rule(
+    pattern = ["obsidian"],
+    decision = "allow",
+    justification = "Run the explicitly authorized Obsidian desktop CLI outside the workspace sandbox.",
+    match = [
+        "obsidian read path=Notes/Example.md",
+        "obsidian create path=Inbox/Example.md content=Example",
+        "obsidian move path=Inbox/Example.md to=Notes/Example.md",
+    ],
+    not_match = ["obsidian-export vault"],
+)
+
+
+# -----------------------------------------------------------------------------
+# PROMPT — potentially modifying, networked, executable, sensitive, or external
+# operations. Approval should be granted for the exact invocation only.
+#
+# Commands outside the explicit classes below remain governed by Codex's
+# sandbox and only require escalation when they cross its boundaries. Broad
+# allows are avoided because tools such as find, sed, awk, and rg have
+# executable or mutating modes.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = [["mkdir", "touch", "cp", "mv", "ln", "rm", "rmdir", "truncate", "install", "chmod", "chown", "chgrp", "tee", "patch"]],
+    decision = "prompt",
+    justification = "Filesystem mutation requires approval for the exact paths.",
+    match = ["mkdir build", "cp source target", "rm file.txt", "chmod 600 file"],
+    not_match = ["pwd"],
+)
+
+
+# Chezmoi uses `add` both to update existing managed targets and to begin
+# managing new targets. Before invoking this command, verify every exact target
+# If any target is not managed, stop and obtain explicit human authorization.
+prefix_rule(
+    pattern = ["chezmoi", "add"],
+    decision = "prompt",
+    justification = "Chezmoi add may auto-commit and auto-push. Approve a managed re-add after every exact target has been verified with chezmoi source-path. Reject new or unmanaged targets unless the user explicitly authorized those exact paths.",
+    match = [
+        "chezmoi add /Users/daniel/.config/agents/rules/default.rules",
+    ],
+    not_match = [
+        "chezmoi status /Users/daniel/.config/agents/rules/default.rules",
+        "chezmoi diff /Users/daniel/.config/agents/rules/default.rules",
+        "chezmoi apply /Users/daniel/.config/agents/rules/default.rules",
+    ],
+)
+
+
+prefix_rule(
+    pattern = ["git", ["status", "rev-parse", "ls-files", "add", "commit", "restore", "checkout", "switch", "stash", "merge", "rebase", "cherry-pick", "revert", "branch", "tag", "worktree", "submodule", "config", "remote", "fetch", "pull", "clone", "push", "reset", "clean", "gc", "reflog", "update-ref"]],
+    decision = "prompt",
+    justification = "Git mutations, network operations, configurable helpers, and content inspection require approval.",
+    match = ["git status", "git add file", "git commit -m change", "git push origin main", "git reset HEAD file", "git clean -n"],
+    not_match = ["git diff"],
+)
+
+
+prefix_rule(
+    pattern = [["bash", "sh", "zsh", "python", "python3", "node", "ruby", "perl", "osascript", "pwsh", "powershell", "tclsh", "lua", "php", "java", "jshell", "R", "Rscript", "deno", "swift"]],
+    decision = "prompt",
+    justification = "Shells and interpreters can execute arbitrary code.",
+    match = ["bash -c 'echo ok'", "python3 script.py", "node -e 'console.log(1)'", "deno run script.ts", "java Main"],
+    not_match = ["uname -a"],
+)
+
+
+prefix_rule(
+    pattern = [["env", "command", "xargs", "parallel", "timeout", "nohup", "nice", "watch", "script", "expect"]],
+    decision = "prompt",
+    justification = "Execution wrappers can hide or transform a nested command and require exact approval.",
+    match = ["env command", "xargs rm", "parallel command", "timeout 10 command", "expect script.exp"],
+    not_match = ["pwd"],
+)
+
+
+# Headless Neovim loads the full editor configuration and plugins unless the
+# approved invocation explicitly limits them, so review each run before launch.
+prefix_rule(
+    pattern = ["nvim", "--headless"],
+    decision = "prompt",
+    justification = "Headless Neovim can load plugins or leave runaway background processes; approve the exact invocation.",
+    match = ["nvim --headless", "nvim --headless -u NONE +qa"],
+    not_match = ["nvim file.lua", "nvim --clean", "nvim file.lua --headless"],
+)
+
+
+prefix_rule(
+    pattern = [["cmake", "ninja", "meson"]],
+    decision = "prompt",
+    justification = "Build-system frontends can execute project or third-party code.",
+    match = ["cmake --build build", "ninja test", "meson compile -C build"],
+    not_match = ["git status"],
+)
+
+
+# Package and toolchain installation operations are explicit even when they
+# would otherwise fit inside the sandbox. Upgrade/update and routine list,
+# info, build, and test operations are intentionally excluded. Existing
+# forbidden publish/deploy rules remain stricter than these prompts.
+prefix_rule(
+    pattern = ["brew", ["install", "reinstall", "bundle"]],
+    decision = "prompt",
+    justification = "Homebrew installation operations can download executable code and change machine-level state.",
+    match = ["brew install ripgrep", "brew reinstall python", "brew bundle"],
+    not_match = ["brew upgrade", "brew list", "brew info ripgrep"],
+)
+
+
+prefix_rule(
+    pattern = ["mise", "install"],
+    decision = "prompt",
+    justification = "Mise installation can download executable toolchains.",
+    match = ["mise install node@lts"],
+    not_match = ["mise use --global python@3.14", "mise upgrade", "mise ls"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["install", "install:install", "install:install-file"]],
+    decision = "prompt",
+    justification = "Maven installation goals write project or external artifacts to the local package repository.",
+    match = ["mvn install", "mvnw install", "./mvnw install", "mvn install:install-file -Dfile=library.jar"],
+    not_match = ["mvn test", "./mvnw package"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, "clean", "install"],
+    decision = "prompt",
+    justification = "Maven clean install deletes project output and writes the rebuilt artifacts to the local package repository.",
+    match = ["mvn clean install", "mvnw clean install", "./mvnw clean install"],
+    not_match = ["mvn clean verify", "mvn install"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["dependency:purge-local-repository", "dependency:get", "dependency:go-offline"]],
+    decision = "prompt",
+    justification = "Explicit Maven dependency-cache operations can download, install, or delete artifacts in the local repository.",
+    match = ["mvn dependency:purge-local-repository", "mvn dependency:get -Dartifact=g:a:1", "mvn dependency:go-offline"],
+    not_match = ["mvn dependency:resolve", "mvn dependency:tree"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["archetype:generate", "wrapper:wrapper", "versions:set", "dependency:add", "dependency:remove"]],
+    decision = "prompt",
+    justification = "These Maven goals generate projects or modify wrapper and POM files; approve the exact project mutation.",
+    match = ["mvn archetype:generate", "mvn wrapper:wrapper", "mvn versions:set -DnewVersion=2", "mvn dependency:add -Dartifact=g:a:1", "mvn dependency:remove -Dartifact=g:a"],
+    not_match = ["mvn help:effective-pom", "mvn dependency:analyze"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["spring-boot:run", "quarkus:dev", "exec:java"]],
+    decision = "prompt",
+    justification = "Maven application-run goals execute project code and may start long-lived local services.",
+    match = ["mvn spring-boot:run", "mvn quarkus:dev", "mvn exec:java"],
+    not_match = ["mvn test", "mvn package"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, ["-ep", "--encrypt-password", "-emp", "--encrypt-master-password"]],
+    decision = "prompt",
+    justification = "Maven credential encryption handles sensitive password material and requires exact approval.",
+    match = ["mvn --encrypt-password secret", "mvn -emp secret"],
+    not_match = ["mvn --version", "mvn test"],
+)
+
+
+prefix_rule(
+    pattern = [["gradle", "gradlew", "./gradlew"], ["install", "installDist"]],
+    decision = "prompt",
+    justification = "Gradle installation tasks can install distributions or artifacts outside the project build directory.",
+    match = ["gradle install", "gradlew installDist"],
+    not_match = ["gradle test", "./gradlew build", "./gradlew publishToMavenLocal"],
+)
+
+
+prefix_rule(
+    pattern = ["cargo", "install"],
+    decision = "prompt",
+    justification = "Cargo package installation can download and install executable code.",
+    match = ["cargo install cargo-nextest"],
+    not_match = ["cargo add serde", "cargo update", "cargo test"],
+)
+
+
+prefix_rule(
+    pattern = ["rustup", "install"],
+    decision = "prompt",
+    justification = "Rustup installation changes installed Rust toolchains.",
+    match = ["rustup install stable"],
+    not_match = ["rustup update", "rustup show", "rustup --version"],
+)
+
+
+prefix_rule(
+    pattern = [["npm", "pnpm", "yarn", "bun"], ["install", "i", "add", "ci"]],
+    decision = "prompt",
+    justification = "JavaScript package installation operations can download and execute third-party code.",
+    match = ["npm install", "npm ci", "pnpm add react", "yarn install"],
+    not_match = ["npm update", "pnpm up", "yarn upgrade", "bun test"],
+)
+
+
+prefix_rule(
+    pattern = ["corepack", "install"],
+    decision = "prompt",
+    justification = "Corepack package-manager installation can download executable tool versions.",
+    match = ["corepack install --global pnpm"],
+    not_match = ["corepack enable", "corepack use yarn@stable", "corepack up"],
+)
+
+
+prefix_rule(
+    pattern = [["pip", "pip3"], "install"],
+    decision = "prompt",
+    justification = "Python package installation can download and install executable third-party code.",
+    match = ["pip install pyyaml", "pip3 install pytest"],
+    not_match = ["pip show pyyaml", "pip3 list"],
+)
+
+
+prefix_rule(
+    pattern = [["python", "python3"], "-m", "pip", "install"],
+    decision = "prompt",
+    justification = "Python module-based pip installation can download and install executable third-party code.",
+    match = ["python -m pip install pyyaml", "python3 -m pip install pytest"],
+    not_match = ["python -m pip show pyyaml", "python3 script.py"],
+)
+
+
+prefix_rule(
+    pattern = ["uv", ["add", "sync"]],
+    decision = "prompt",
+    justification = "Uv dependency installation operations can download packages and modify project dependency state.",
+    match = ["uv add pyyaml", "uv sync"],
+    not_match = ["uv run pytest", "uv --version"],
+)
+
+
+prefix_rule(
+    pattern = ["uv", ["pip", "tool", "python"], "install"],
+    decision = "prompt",
+    justification = "Uv package, tool, and Python installation operations can download executable code or runtimes.",
+    match = ["uv pip install pyyaml", "uv tool install ruff", "uv python install 3.14"],
+    not_match = ["uv pip list", "uv tool list", "uv python list"],
+)
+
+
+prefix_rule(
+    pattern = ["uv", "run", "--with"],
+    decision = "prompt",
+    justification = "Uv run with temporary dependencies installs packages into its managed cache before execution.",
+    match = ["uv run --with pyyaml python script.py"],
+    not_match = ["uv run pytest"],
+)
+
+
+prefix_rule(
+    pattern = ["poetry", ["install", "add"]],
+    decision = "prompt",
+    justification = "Poetry package installation operations can download and install third-party code.",
+    match = ["poetry install", "poetry add pyyaml"],
+    not_match = ["poetry update", "poetry show", "poetry build"],
+)
+
+
+prefix_rule(
+    pattern = ["pipx", ["install", "inject"]],
+    decision = "prompt",
+    justification = "Pipx installation operations install executable Python tools outside the project.",
+    match = ["pipx install ruff", "pipx inject tool dependency"],
+    not_match = ["pipx upgrade-all", "pipx list", "pipx --version"],
+)
+
+
+prefix_rule(
+    pattern = [["printenv", "set", "export", "declare"]],
+    decision = "prompt",
+    justification = "Environment inspection can expose credentials; approve only narrowly scoped variable access.",
+    match = ["printenv PATH", "printenv", "set", "export -p", "declare -x"],
+    not_match = ["env NO_COLOR=1 command"],
+)
+
+
+
+prefix_rule(
+    pattern = [["curl", "wget", "ssh", "scp", "sftp", "rsync", "nc", "ncat", "socat", "gh", "glab"]],
+    decision = "prompt",
+    justification = "Network access, remote execution, and external state changes require approval.",
+    match = ["curl https://example.com", "ssh host", "gh pr create"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = [["kill", "pkill", "killall", "systemctl", "service", "launchctl", "crontab", "at", "open", "xdg-open"]],
+    decision = "prompt",
+    justification = "Process, service, persistence, scheduling, and GUI changes require approval.",
+    match = ["kill 123", "systemctl restart app", "crontab -e", "open file.pdf"],
+    not_match = ["ps aux"],
+)
+
+
+prefix_rule(
+    pattern = [["docker", "podman", "colima", "limactl", "vagrant"]],
+    decision = "prompt",
+    justification = "Container and virtual-machine commands can execute code, mutate state, or access host resources.",
+    match = ["docker build .", "podman run image", "colima start"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu", "pulumi", "kubectl", "helm", "ansible", "ansible-playbook", "packer", "aws", "gcloud", "az", "psql", "mysql", "sqlite3", "redis-cli", "mongosh"]],
+    decision = "prompt",
+    justification = "Infrastructure, cloud, cluster, and database commands can affect external systems or sensitive data.",
+    match = ["terraform plan", "kubectl get pods", "aws sts get-caller-identity", "psql database"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = [["fdisk", "parted", "diskutil", "zpool", "zfs", "btrfs", "cryptsetup", "lvm", "lvs", "vgs", "pvs"]],
+    decision = "prompt",
+    justification = "Disk, pool, encryption, and volume tools include both diagnostics and destructive operations; approve exact diagnostic commands only.",
+    match = ["diskutil list", "zpool status", "zfs list", "cryptsetup status volume", "lvs"],
+    not_match = ["du -sh ."],
+)
+
+
+# Obsidian safety-sensitive operations remain available but require exact
+# approval. Prompting all delete invocations also covers the positional
+# `permanent` flag, which native prefix rules cannot match reliably.
+prefix_rule(
+    pattern = [
+        "obsidian",
+        [
+            "command",
+            "delete",
+            "dev:cdp",
+            "dev:debug",
+            "dev:mobile",
+            "dev:screenshot",
+            "devtools",
+            "eval",
+            "history:restore",
+            "plugin:disable",
+            "plugin:enable",
+            "plugin:install",
+            "plugin:reload",
+            "plugin:uninstall",
+            "plugins:restrict",
+            "reload",
+            "restart",
+            "snippet:disable",
+            "snippet:enable",
+            "theme:install",
+            "theme:set",
+            "theme:uninstall",
+        ],
+    ],
+    decision = "prompt",
+    justification = "Destructive, executable, recovery, plugin, theme, or administrative Obsidian operations require exact approval.",
+    match = [
+        "obsidian delete path=Notes/Example.md",
+        "obsidian history:restore path=Notes/Example.md version=1",
+        "obsidian plugin:install id=example-plugin",
+        "obsidian eval code=app.vault.getName()",
+        "obsidian restart",
+    ],
+    not_match = [
+        "obsidian read path=Notes/Example.md",
+        "obsidian search query=example",
+        "obsidian create path=Inbox/Example.md",
+        "obsidian move path=Inbox/Example.md to=Notes/Example.md",
+        "obsidian property:set name=status value=active path=Notes/Example.md",
+        "obsidian task path=Notes/Example.md line=1 done",
+        "obsidian plugin id=dataview",
+        "obsidian plugins",
+    ],
+)
+
+
+# -----------------------------------------------------------------------------
+# FORBIDDEN — agents must not execute these. A human may run them manually.
+# -----------------------------------------------------------------------------
+
+prefix_rule(
+    pattern = [["sudo", "su", "doas", "pkexec", "visudo"]],
+    decision = "forbidden",
+    justification = "Privilege escalation is blocked; perform the operation manually with a reviewed command.",
+    match = ["sudo rm file", "su root", "doas command", "visudo"],
+    not_match = ["whoami"],
+)
+
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr", "-Rf", "-fR"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -rf path", "rm -fr path", "rm -Rf path", "rm -fR path"],
+    not_match = ["rm file.txt", "rm -r directory"],
+)
+
+
+prefix_rule(
+    pattern = ["rm", ["-r", "-R", "--recursive"], ["-f", "--force"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -r -f path", "rm -R --force path", "rm --recursive --force path"],
+    not_match = ["rm -r directory", "rm --force file.txt"],
+)
+
+
+prefix_rule(
+    pattern = ["rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
+    decision = "forbidden",
+    justification = "Forced recursive deletion is blocked; remove reviewed paths individually or perform the operation manually.",
+    match = ["rm -f -r path", "rm --force -R path", "rm --force --recursive path"],
+    not_match = ["rm --force file.txt", "rm --recursive directory"],
+)
+
+
+prefix_rule(
+    pattern = ["chmod", ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "World-writable permissions are blocked; choose the minimum required permission bits.",
+    match = ["chmod 777 file", "chmod 0777 file", "chmod a+rwx file"],
+    not_match = ["chmod 600 file", "chmod 755 script"],
+)
+
+
+prefix_rule(
+    pattern = ["chmod", ["-R", "--recursive"], ["777", "0777", "a+rwx"]],
+    decision = "forbidden",
+    justification = "Recursive world-writable permissions are blocked; choose scoped paths and minimum permission bits.",
+    match = ["chmod -R 777 directory", "chmod --recursive 0777 directory"],
+    not_match = ["chmod -R 755 directory"],
+)
+
+
+prefix_rule(
+    pattern = [["dd", "mkfs", "mkfs.ext2", "mkfs.ext3", "mkfs.ext4", "mkfs.xfs", "mkfs.btrfs", "wipefs", "blkdiscard", "sfdisk", "sgdisk", "newfs", "newfs_apfs", "newfs_hfs", "newfs_msdos", "newfs_exfat", "newfs_udf", "mdadm", "lvremove", "vgremove", "pvremove"]],
+    decision = "forbidden",
+    justification = "Raw disk, filesystem creation, block discard, RAID, and volume removal are blocked for agents.",
+    match = ["dd if=input of=output", "mkfs.ext4 /dev/disk", "blkdiscard /dev/disk", "newfs_apfs /dev/disk", "lvremove volume"],
+    not_match = ["diskutil list", "zpool status", "du -sh ."],
+)
+
+
+prefix_rule(
+    pattern = ["diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "secureErase", "deleteVolume"]],
+    decision = "forbidden",
+    justification = "Destructive diskutil operations are blocked; use list or info diagnostics only.",
+    match = ["diskutil eraseDisk APFS name disk0", "diskutil eraseVolume APFS disk1s1", "diskutil partitionDisk disk0 GPT APFS name 0b"],
+    not_match = ["diskutil list", "diskutil info disk0"],
+)
+
+
+prefix_rule(
+    pattern = ["diskutil", "apfs", ["deleteVolume", "deleteContainer", "eraseVolume", "resizeContainer"]],
+    decision = "forbidden",
+    justification = "Destructive APFS container and volume operations are blocked for agents.",
+    match = ["diskutil apfs deleteVolume disk1s1", "diskutil apfs deleteContainer disk1"],
+    not_match = ["diskutil apfs list"],
+)
+
+
+prefix_rule(
+    pattern = [["zpool", "zfs"], ["destroy", "remove"]],
+    decision = "forbidden",
+    justification = "Pool and dataset destruction or removal is blocked; use status/list diagnostics only.",
+    match = ["zpool destroy pool", "zpool remove pool device", "zfs destroy pool/dataset"],
+    not_match = ["zpool status", "zfs list"],
+)
+
+
+prefix_rule(
+    pattern = ["zfs", "rollback"],
+    decision = "forbidden",
+    justification = "Dataset rollback can discard changes and is blocked for agents.",
+    match = ["zfs rollback pool/dataset@snapshot"],
+    not_match = ["zfs list"],
+)
+
+
+prefix_rule(
+    pattern = ["cryptsetup", ["luksFormat", "erase", "luksErase", "reencrypt"]],
+    decision = "forbidden",
+    justification = "Destructive encryption-container operations are blocked; use status diagnostics only.",
+    match = ["cryptsetup luksFormat /dev/disk", "cryptsetup erase /dev/disk"],
+    not_match = ["cryptsetup status volume"],
+)
+
+
+prefix_rule(
+    pattern = ["parted", ["mklabel", "mkpart", "rm", "resizepart"]],
+    decision = "forbidden",
+    justification = "Partition-table mutation is blocked; use print diagnostics only.",
+    match = ["parted mklabel gpt", "parted rm 1"],
+    not_match = ["parted print"],
+)
+
+
+prefix_rule(
+    pattern = ["btrfs", "subvolume", "delete"],
+    decision = "forbidden",
+    justification = "Btrfs subvolume deletion is blocked for agents.",
+    match = ["btrfs subvolume delete path"],
+    not_match = ["btrfs subvolume list path"],
+)
+
+
+prefix_rule(
+    pattern = ["git", ["prune", "filter-branch", "filter-repo"]],
+    decision = "forbidden",
+    justification = "Irreversible Git pruning and history rewriting are blocked; use non-destructive inspection or a reviewed manual workflow.",
+    match = ["git prune", "git filter-branch -- --all", "git filter-repo --force"],
+    not_match = ["git clean -n", "git reset HEAD file", "git gc"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Hard reset discards working-tree and index changes; use a scoped restore or perform it manually.",
+    match = ["git reset --hard", "git reset --hard HEAD~1"],
+    not_match = ["git reset HEAD file", "git reset --soft HEAD~1"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "clean", ["-f", "--force", "-fd", "-df", "-fdx", "-fxd", "-dfx", "-xdf", "-xfd", "-dxf", "-fX", "-fdX"]],
+    decision = "forbidden",
+    justification = "Forced Git clean permanently deletes untracked files; use dry-run or interactive mode.",
+    match = ["git clean -f", "git clean -fdx", "git clean --force"],
+    not_match = ["git clean -n", "git clean -i"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "gc", "--prune=now"],
+    decision = "forbidden",
+    justification = "Immediate Git object pruning can remove recovery data; use normal maintenance or run it manually.",
+    match = ["git gc --prune=now"],
+    not_match = ["git gc", "git gc --auto"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "stash", ["clear", "drop"]],
+    decision = "forbidden",
+    justification = "Deleting stashes removes recovery state and is blocked for agents.",
+    match = ["git stash clear", "git stash drop stash@{0}"],
+    not_match = ["git stash list", "git stash push"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "branch", "-D"],
+    decision = "forbidden",
+    justification = "Forced branch deletion is blocked; use a reviewed normal deletion or perform it manually.",
+    match = ["git branch -D feature"],
+    not_match = ["git branch -d feature", "git branch --list"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "tag", "-d"],
+    decision = "forbidden",
+    justification = "Tag deletion is blocked for agents; perform it manually after review.",
+    match = ["git tag -d release"],
+    not_match = ["git tag --list"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "update-ref", "-d"],
+    decision = "forbidden",
+    justification = "Direct reference deletion is blocked for agents.",
+    match = ["git update-ref -d refs/heads/feature"],
+    not_match = ["git update-ref refs/heads/feature commit"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "commit", ["--no-verify", "--no-gpg-sign"]],
+    decision = "forbidden",
+    justification = "Bypassing commit hooks or signature policy is blocked; use a normal reviewed commit.",
+    match = ["git commit --no-verify -m change", "git commit --no-gpg-sign -m change"],
+    not_match = ["git commit -m change"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "reflog", ["drop", "expire", "delete"]],
+    decision = "forbidden",
+    justification = "Deleting recovery history is blocked for agents.",
+    match = ["git reflog drop --all", "git reflog expire --expire=all --all", "git reflog delete HEAD@{1}"],
+    not_match = ["git reflog show"],
+)
+
+
+prefix_rule(
+    pattern = ["git", "push", ["--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror", "--delete", "--prune"]],
+    decision = "forbidden",
+    justification = "Direct forced, mirrored, or deleting pushes are blocked; use a normal reviewed push or perform it manually.",
+    match = ["git push --force origin main", "git push --force-with-lease origin main", "git push --force-if-includes origin main", "git push --mirror", "git push --delete origin branch", "git push --prune origin"],
+    not_match = ["git push origin main"],
+)
+
+# Codex prefix rules cannot match a dangerous flag in every possible argument
+# position. Reordered push flags still match the general `git push` prompt rule.
+# A full-command hook is required if those forms must be unconditionally denied.
+
+
+prefix_rule(
+    pattern = [["bw", "bitwarden", "pass", "op", "vault", "security"]],
+    decision = "forbidden",
+    justification = "Direct credential-store and keychain access is blocked for agents; inject only scoped credentials through the environment.",
+    match = ["bw get item example", "bitwarden get item example", "pass show service", "op read item", "vault kv get secret", "security find-generic-password -w"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = ["git", ["credential", "credential-store", "credential-cache"]],
+    decision = "forbidden",
+    justification = "Direct Git credential-helper access is blocked; provide only a scoped credential through an approved mechanism.",
+    match = ["git credential fill", "git credential-store get", "git credential-cache get"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = [["git-credential-osxkeychain", "git-credential-manager", "git-credential-manager-core", "git-credential-store", "git-credential-cache", "docker-credential-osxkeychain", "docker-credential-desktop", "docker-credential-pass", "docker-credential-secretservice", "docker-credential-wincred"]],
+    decision = "forbidden",
+    justification = "Direct credential-helper execution is blocked for agents.",
+    match = ["git-credential-osxkeychain get", "git-credential-manager get", "docker-credential-osxkeychain get"],
+    not_match = ["git status"],
+)
+
+
+prefix_rule(
+    pattern = ["gh", "auth", "token"],
+    decision = "forbidden",
+    justification = "Printing a GitHub authentication token is blocked; use authenticated commands without exposing the token.",
+    match = ["gh auth token"],
+    not_match = ["gh auth status"],
+)
+
+
+prefix_rule(
+    pattern = ["aws", "configure", "export-credentials"],
+    decision = "forbidden",
+    justification = "Exporting cloud credentials is blocked; use scoped authenticated commands without printing credentials.",
+    match = ["aws configure export-credentials"],
+    not_match = ["aws sts get-caller-identity"],
+)
+
+
+prefix_rule(
+    pattern = ["gcloud", "auth", ["print-access-token", "print-identity-token"]],
+    decision = "forbidden",
+    justification = "Printing Google Cloud authentication tokens is blocked.",
+    match = ["gcloud auth print-access-token", "gcloud auth print-identity-token"],
+    not_match = ["gcloud auth list"],
+)
+
+
+prefix_rule(
+    pattern = ["az", "account", "get-access-token"],
+    decision = "forbidden",
+    justification = "Printing an Azure access token is blocked.",
+    match = ["az account get-access-token"],
+    not_match = ["az account show"],
+)
+
+
+prefix_rule(
+    pattern = ["kubectl", "config", "view", "--raw"],
+    decision = "forbidden",
+    justification = "Raw kubeconfig output can expose client credentials and is blocked.",
+    match = ["kubectl config view --raw"],
+    not_match = ["kubectl config current-context"],
+)
+
+
+prefix_rule(
+    pattern = ["aws", "secretsmanager", ["get-secret-value", "batch-get-secret-value"]],
+    decision = "forbidden",
+    justification = "Direct cloud secret retrieval is blocked for agents.",
+    match = ["aws secretsmanager get-secret-value --secret-id example"],
+    not_match = ["aws secretsmanager list-secrets"],
+)
+
+
+prefix_rule(
+    pattern = ["gcloud", "secrets", "versions", "access"],
+    decision = "forbidden",
+    justification = "Direct Google Cloud secret retrieval is blocked for agents.",
+    match = ["gcloud secrets versions access latest --secret example"],
+    not_match = ["gcloud secrets list"],
+)
+
+
+prefix_rule(
+    pattern = ["az", "keyvault", "secret", ["show", "download"]],
+    decision = "forbidden",
+    justification = "Direct Azure Key Vault secret retrieval is blocked for agents.",
+    match = ["az keyvault secret show --vault-name vault --name secret"],
+    not_match = ["az keyvault secret list --vault-name vault"],
+)
+
+
+prefix_rule(
+    pattern = ["kubectl", "get", ["secret", "secrets"]],
+    decision = "forbidden",
+    justification = "Direct Kubernetes Secret retrieval is blocked; inspect non-secret metadata instead.",
+    match = ["kubectl get secret app", "kubectl get secrets"],
+    not_match = ["kubectl get pods"],
+)
+
+
+prefix_rule(
+    pattern = ["npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Publishing or unpublishing packages is blocked for agents; prepare and inspect locally, then perform registry changes manually.",
+    match = ["npm publish", "npm publish --access public", "npm unpublish package@version"],
+    not_match = ["npm pack", "npm test"],
+)
+
+
+prefix_rule(
+    pattern = [["pnpm", "bun"], ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Package registry publishing and removal are blocked for agents.",
+    match = ["pnpm publish", "pnpm unpublish package", "bun publish"],
+    not_match = ["pnpm pack", "bun test"],
+)
+
+
+prefix_rule(
+    pattern = ["yarn", "npm", ["publish", "unpublish"]],
+    decision = "forbidden",
+    justification = "Yarn registry publishing and removal are blocked for agents.",
+    match = ["yarn npm publish", "yarn npm unpublish package"],
+    not_match = ["yarn npm info package"],
+)
+
+
+prefix_rule(
+    pattern = ["cargo", ["publish", "yank"]],
+    decision = "forbidden",
+    justification = "Publishing or yanking Rust crates is blocked for agents.",
+    match = ["cargo publish", "cargo yank crate@1.0.0"],
+    not_match = ["cargo package", "cargo test"],
+)
+
+
+prefix_rule(
+    pattern = [["poetry", "uv"], "publish"],
+    decision = "forbidden",
+    justification = "Publishing Python packages is blocked for agents.",
+    match = ["poetry publish", "uv publish"],
+    not_match = ["poetry build", "uv build"],
+)
+
+
+prefix_rule(
+    pattern = ["twine", "upload"],
+    decision = "forbidden",
+    justification = "Uploading Python distributions is blocked for agents.",
+    match = ["twine upload dist/*"],
+    not_match = ["twine check dist/*"],
+)
+
+
+prefix_rule(
+    pattern = ["gem", "push"],
+    decision = "forbidden",
+    justification = "Publishing Ruby gems is blocked for agents.",
+    match = ["gem push package.gem"],
+    not_match = ["gem build package.gemspec"],
+)
+
+
+prefix_rule(
+    pattern = ["dotnet", "nuget", ["push", "delete"]],
+    decision = "forbidden",
+    justification = "Publishing or deleting NuGet packages is blocked for agents.",
+    match = ["dotnet nuget push package.nupkg", "dotnet nuget delete package 1.0.0"],
+    not_match = ["dotnet test"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, MAVEN_FORBIDDEN_GOALS],
+    decision = "forbidden",
+    justification = "Maven deployment, publication, and release automation is blocked for agents.",
+    match = ["mvn deploy", "mvnw site-deploy", "./mvnw deploy:deploy-file", "mvn release:prepare", "mvn release:perform"],
+    not_match = ["mvn test", "mvn release:clean", "gradle publish"],
+)
+
+
+prefix_rule(
+    pattern = [MAVEN_EXECUTABLES, MAVEN_PRECEDING_PHASES, MAVEN_FORBIDDEN_GOALS],
+    decision = "forbidden",
+    justification = "A Maven deployment or release goal remains blocked when it follows one common lifecycle phase.",
+    match = ["mvn clean deploy", "mvn test deploy", "mvn install deploy", "./mvnw verify release:perform"],
+    not_match = ["mvn clean verify", "mvn install"],
+)
+
+
+prefix_rule(
+    pattern = ["gradle", ["deploy", "publish", "publishPlugins"]],
+    decision = "forbidden",
+    justification = "Deploying or publishing Gradle artifacts is blocked for agents.",
+    match = ["gradle deploy", "gradle publish", "gradle publishPlugins"],
+    not_match = ["gradle test", "mvn test"],
+)
+
+
+prefix_rule(
+    pattern = ["docker", "push"],
+    decision = "forbidden",
+    justification = "Publishing container images is blocked for agents; inspect the image and push it manually.",
+    match = ["docker push image:tag"],
+    not_match = ["docker pull image:tag", "docker build ."],
+)
+
+
+prefix_rule(
+    pattern = ["docker", ["image", "compose"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images is blocked for agents.",
+    match = ["docker image push image:tag", "docker compose push"],
+    not_match = ["docker image ls", "docker compose build"],
+)
+
+
+prefix_rule(
+    pattern = [["podman", "oras"], "push"],
+    decision = "forbidden",
+    justification = "Publishing container images or OCI artifacts is blocked for agents.",
+    match = ["podman push image:tag", "oras push registry.example/artifact:tag file"],
+    not_match = ["podman pull image:tag", "oras pull registry.example/artifact:tag"],
+)
+
+
+prefix_rule(
+    pattern = ["helm", "push"],
+    decision = "forbidden",
+    justification = "Publishing Helm charts is blocked for agents.",
+    match = ["helm push chart.tgz oci://registry.example/charts"],
+    not_match = ["helm show chart chart"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "destroy"],
+    decision = "forbidden",
+    justification = "Infrastructure destruction is blocked for agents; create a reviewed destroy plan for a human to apply.",
+    match = ["terraform destroy", "terraform destroy -auto-approve", "tofu destroy"],
+    not_match = ["terraform plan"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "apply"],
+    decision = "forbidden",
+    justification = "Applying infrastructure changes is blocked for agents; prepare a reviewed plan for a human to apply.",
+    match = ["terraform apply", "terraform apply plan.tfplan", "tofu apply"],
+    not_match = ["terraform plan", "tofu plan"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "state", ["rm", "push"]],
+    decision = "forbidden",
+    justification = "Direct infrastructure-state deletion or replacement is blocked for agents.",
+    match = ["terraform state rm resource.name", "terraform state push state.tfstate", "tofu state rm resource.name"],
+    not_match = ["terraform state list", "tofu state show resource.name"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], ["force-unlock", "taint"]],
+    decision = "forbidden",
+    justification = "Force-unlocking or tainting infrastructure state is blocked for agents.",
+    match = ["terraform force-unlock lock-id", "terraform taint resource.name", "tofu force-unlock lock-id"],
+    not_match = ["terraform plan", "tofu plan"],
+)
+
+
+prefix_rule(
+    pattern = [["terraform", "tofu"], "workspace", "delete"],
+    decision = "forbidden",
+    justification = "Infrastructure workspace deletion is blocked for agents.",
+    match = ["terraform workspace delete old", "tofu workspace delete old"],
+    not_match = ["terraform workspace list"],
+)
+
+
+prefix_rule(
+    pattern = ["pulumi", ["up", "destroy"]],
+    decision = "forbidden",
+    justification = "Applying or destroying Pulumi infrastructure is blocked; prepare a reviewed preview for a human.",
+    match = ["pulumi up", "pulumi destroy"],
+    not_match = ["pulumi preview", "pulumi stack ls"],
+)
+
+
+prefix_rule(
+    pattern = ["pulumi", ["state", "stack"], ["delete", "rm"]],
+    decision = "forbidden",
+    justification = "Pulumi state or stack deletion is blocked for agents.",
+    match = ["pulumi state delete urn", "pulumi stack rm old"],
+    not_match = ["pulumi stack ls"],
+)
+
+
+prefix_rule(
+    pattern = ["kubectl", ["apply", "create", "replace", "patch", "edit", "delete", "drain", "scale", "set", "run", "expose", "autoscale", "annotate", "label", "taint", "cordon", "uncordon"]],
+    decision = "forbidden",
+    justification = "Cluster mutations are blocked for agents; prepare manifests, diffs, or reviewed commands for a human to apply.",
+    match = ["kubectl apply -f app.yaml", "kubectl create deployment app --image image", "kubectl patch deployment app -p patch", "kubectl delete pod app", "kubectl scale deployment app --replicas 3"],
+    not_match = ["kubectl get pods", "kubectl diff -f app.yaml"],
+)
+
+
+prefix_rule(
+    pattern = ["kubectl", "rollout", ["restart", "undo", "pause", "resume"]],
+    decision = "forbidden",
+    justification = "Mutating Kubernetes rollout operations are blocked; status and history inspection remain available with approval.",
+    match = ["kubectl rollout restart deployment/app", "kubectl rollout undo deployment/app"],
+    not_match = ["kubectl rollout status deployment/app", "kubectl rollout history deployment/app"],
+)
+
+
+prefix_rule(
+    pattern = ["helm", ["install", "upgrade", "rollback", "uninstall"]],
+    decision = "forbidden",
+    justification = "Helm release mutations are blocked for agents; prepare reviewed values and commands for a human.",
+    match = ["helm install app chart", "helm upgrade app chart", "helm rollback app 1", "helm uninstall app"],
+    not_match = ["helm list", "helm template app chart"],
+)
+
+
+prefix_rule(
+    pattern = ["docker", ["system", "builder", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Docker pruning is blocked for agents.",
+    match = ["docker system prune", "docker builder prune", "docker image prune", "docker container prune", "docker network prune", "docker volume prune"],
+    not_match = ["docker system df", "docker volume ls", "docker image ls"],
+)
+
+
+prefix_rule(
+    pattern = [["docker", "podman"], "volume", ["rm", "remove"]],
+    decision = "forbidden",
+    justification = "Container volume deletion can destroy persistent data and is blocked.",
+    match = ["docker volume rm data", "podman volume rm data"],
+    not_match = ["docker volume ls", "podman volume inspect data"],
+)
+
+
+prefix_rule(
+    pattern = ["podman", ["system", "image", "container", "network", "volume"], "prune"],
+    decision = "forbidden",
+    justification = "Broad Podman pruning is blocked for agents.",
+    match = ["podman system prune", "podman image prune", "podman volume prune"],
+    not_match = ["podman system df", "podman image ls"],
+)
+
+
+prefix_rule(
+    pattern = [["docker", "podman"], "compose", "down", ["-v", "--volumes"]],
+    decision = "forbidden",
+    justification = "Compose teardown with volume deletion is blocked because it can destroy persistent data.",
+    match = ["docker compose down -v", "podman compose down --volumes"],
+    not_match = ["docker compose down", "podman compose ps"],
+)
+
+
+prefix_rule(
+    pattern = [["shutdown", "reboot", "halt", "poweroff", "setenforce", "csrutil"]],
+    decision = "forbidden",
+    justification = "Power and operating-system security-state changes are blocked for agents.",
+    match = ["shutdown -h now", "reboot", "setenforce 0", "csrutil disable"],
+    not_match = ["uname -a"],
+)
+
+
+prefix_rule(
+    pattern = [["eval", "yes", "stress", "stress-ng"]],
+    decision = "forbidden",
+    justification = "Dynamic evaluation and unbounded resource-generation commands are blocked for agents.",
+    match = ["eval command", "yes", "stress --cpu 8"],
+    not_match = ["echo yes"],
+)
+
+
+prefix_rule(
+    pattern = ["codex", ["exec", "resume", "fork", "review"]],
+    decision = "forbidden",
+    justification = "Nested Codex agent sessions are blocked; continue in the current reviewed session.",
+    match = ["codex exec task", "codex resume", "codex fork", "codex review"],
+    not_match = ["codex --version", "codex execpolicy check --rules default.rules -- git status"],
+)
+
+
+prefix_rule(
+    pattern = ["codex", ["--dangerously-bypass-approvals-and-sandbox", "--yolo"]],
+    decision = "forbidden",
+    justification = "Bypassing Codex approvals and sandboxing is blocked.",
+    match = ["codex --dangerously-bypass-approvals-and-sandbox", "codex --yolo"],
+    not_match = ["codex --version"],
+)
+
+
+prefix_rule(
+    pattern = ["codex", ["--sandbox", "-s"], "danger-full-access"],
+    decision = "forbidden",
+    justification = "Starting Codex with unrestricted filesystem access is blocked.",
+    match = ["codex --sandbox danger-full-access", "codex -s danger-full-access"],
+    not_match = ["codex --sandbox workspace-write"],
+)

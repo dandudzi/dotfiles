@@ -6,7 +6,7 @@ This folder is the canonical managed configuration area for Codex on this machin
 ## Organization
 - `global.md`: global instructions, linked from `~/.codex/AGENTS.md`.
 - `skills/<name>/SKILL.md`: skills, exposed through `~/.agents/skills`.
-- `codex/rules/default.rules`: execution policy, linked from `~/.codex/rules/default.rules`.
+- `rules/default.rules`: execution policy, linked from `~/.codex/rules/default.rules`.
 
 No custom agent definitions are maintained here. Keep reusable workflows in skills, including `linear-operator` for authorized Linear writes. Keep credentials, OAuth state, caches, logs, histories, and runtime state outside this folder.
 

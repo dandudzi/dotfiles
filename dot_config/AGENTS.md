@@ -4,9 +4,9 @@
 This repository is a config placement for one machine, managed as part of a broader dotfiles setup through `chezmoi`. It is organized by tool rather than by application: `nvim` contains editor config, `sketchybar` contains bar items and helpers, `tmux` contains terminal multiplexer config plus bundled plugins, and `scripts` contains standalone utilities with their own local docs or build files. Treat bundled plugin and dependency directories as vendored unless you are intentionally syncing upstream code.
 
 ## Codex Configuration
-The `agents` directory is the canonical configuration area for Codex on this machine. Keep global instructions in `agents/global.md`, skills in `agents/skills`, and execution-policy rules in `agents/codex/rules`.
+The `agents` directory is the canonical configuration area for Codex on this machine. Keep global instructions in `agents/global.md`, skills in `agents/skills`, and execution-policy rules in `agents/rules`.
 
-Keep these links so Codex reads the managed files without duplicate copies: `~/.codex/AGENTS.md` links to `agents/global.md`, `~/.agents/skills` links to `agents/skills`, and `~/.codex/rules/default.rules` links to `agents/codex/rules/default.rules`.
+Keep these links so Codex reads the managed files without duplicate copies: `~/.codex/AGENTS.md` links to `agents/global.md`, `~/.agents/skills` links to `agents/skills`, and `~/.codex/rules/default.rules` links to `agents/rules/default.rules`.
 
 Active MCP servers, hooks, permissions, models, and provider settings belong in Codex's native configuration. Inspect existing entries before editing and preserve unrelated settings. Keep secrets, OAuth state, credentials, caches, logs, histories, and runtime state out of `agents`. Do not recreate Claude Code or OpenCode configuration unless explicitly requested.
 
