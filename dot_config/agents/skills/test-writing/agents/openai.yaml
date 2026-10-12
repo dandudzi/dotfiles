@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Writing"
+  short_description: "Write behavior-focused tests and regression coverage"
+  default_prompt: "Use $test-writing to add meaningful tests for the requested behavior using this repository's existing test tools."
