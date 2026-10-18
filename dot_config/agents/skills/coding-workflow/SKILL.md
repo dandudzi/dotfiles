@@ -1,86 +1,41 @@
 ---
 name: coding-workflow
-description: Orchestrate repository code changes through an adaptive, test-first workflow from implementation through an explicitly user-approved pull request merge and ticket closure. Use when implementing features, fixing bugs, refactoring, or otherwise changing executable behavior; scale from a compact single-agent loop for small changes to an isolated, plan-approved multi-agent workflow for substantive, risky, cross-cutting, long-running, or explicitly delegated work. Do not use for read-only explanation, diagnosis, research, or review.
+description: Orchestrate code changes through an adaptive, test-first workflow. Use when implementing features, fixing bugs, refactoring.
 ---
 
 # Coding Workflow
 
-Own the outcome as the main agent. Scale coordination to the task; use subagents only when bounded delegation materially improves confidence or speed.
+Own the outcome as the main orchestration agent. Use subagents for work delegation:
 
-## Select a Path
+- Assign read-only discovery and context exploration,
+- Acceptance-test writing,
+- Implementation,
+- Review like security, performance, or architecture.
 
-- Use the compact path for small, low-risk changes within one ownership area that can be verified directly.
-- Use the orchestrated path for substantive, risky, cross-cutting, long-running, or explicitly delegated work.
-- If uncertain, explore read-only and choose before editing.
-
-## Delegated Responsibilities
-
-- Custom agents are not configured. When the selected workflow calls for delegation, use generic subagents and include their responsibility, file ownership, read/write limits, expected evidence, and prohibition on Git-state operations in the assignment.
-- On Codex, use `gpt-5.6-terra` for generic subagents unless explicitly overridden. Use medium effort for discovery and verification, and high effort for test design, implementation, and review.
-- Assign read-only discovery, acceptance-test writing, bounded implementation, and read-only verification separately when the task warrants it. Every implementation assignment must state that other agents may be editing the codebase and that their changes must be preserved.
-- Review an orchestrated result independently for correctness. Add security, performance, or architecture review only when those risks apply; reviewers return actionable findings and do not edit files.
-- Route Linear writes through the `linear-operator` skill as required by the tracker skills; do not spawn a custom Linear agent.
-
-## Invariants
-
-- **Tracker routing.** Before choosing the compact or orchestrated path, when the applicable repository `AGENTS.md` contains `## Linear scope`, use `linear-link-work` to select and verify the active issue. Read-only selection and a decomposition proposal may happen before the tracked-work claim gate; obtain explicit approval before creating a new issue or relation.
-- **Tracked-work claim gate.** When a specific issue is in scope and the agent is asked to plan or start it, create or reuse the dedicated worktree first, have the configured issue workflow move and verify the issue in `In Progress`, and verify the agent is operating from that worktree. Do not create a plan, state file, test, source file, or other work artifact before all three conditions hold; read-only discovery is allowed beforehand.
-- Write tests before implementing any code change or new functionality, and ensure the tests cover the changed behavior.
-- Treat missing or inadequate automated coverage for the acceptance criteria as in-scope work: add or extend the highest-practical coverage without asking for separate approval.
-- Prioritize functional and end-to-end tests over unit tests.
-- Use unit tests primarily for edge cases that are impractical to cover at a higher level.
-- Minimize mocks; test real behavior and integration boundaries whenever practical.
-- Never weaken, delete, or bypass a test merely to make an implementation pass unless the requested behavior intentionally supersedes it.
-- Seek an explicit waiver only when meaningful automated coverage remains genuinely impractical after reasonable effort. Missing coverage, the effort required to add it, or test inconvenience are not grounds to skip it.
-- Treat merging as a separate user-controlled action. Never merge a pull request until the user explicitly approves merging that specific PR after receiving its final scope, review findings, and CI results.
-
-## Compact Path
-
-1. Read applicable repository instructions and inspect the implementation, tests, dependencies, runtime path, and verification commands.
-2. Define observable acceptance criteria.
-3. Add or update the highest practical test first and confirm the expected failure. For a behavior-preserving refactor, add or update characterization coverage and establish a passing baseline; do not manufacture a failure.
-4. Implement the smallest change that satisfies the criteria.
-5. Run focused tests, then relevant broader tests and applicable lint, type-check, build, and formatting checks.
-6. Inspect the diff and report pre-change evidence, final verification, and unrelated failures separately.
+Read `CONTEXT.md` file if exist to communicate with DDD domain language.
 
 ## Orchestrated Path
 
-1. **Isolate and claim.** Inspect repository status, base branch, and existing worktrees. Create or reuse one dedicated branch and worktree for the entire task before spawning subagents. For tracked work, then use the configured issue workflow to move and verify the active issue in `In Progress`, enter the dedicated worktree, and verify the current directory before creating the plan or any other work artifact. Record its path, branch, HEAD, and initial status.
+1. **Isolate and claim.** Create or reuse one dedicated branch and worktree for the entire task before spawning subagents. Use for that `create-git-worktree` and `create-git-branch` skills. Enter the dedicated worktree, and verify the current directory before creating the plan or any other work artifact.
    - Give every subagent the same worktree root.
    - Keep branch switching, worktree management, staging, committing, stashing, resetting, and cleanup under main-agent ownership.
-   - Recheck branch, HEAD, and status at phase boundaries. Stop on unexpected drift rather than overwriting it.
-   - If required uncommitted work cannot be transferred safely, or Git isolation is unavailable, ask the user before using another arrangement.
-2. **Explore.** Assign a generic subagent read-only repository and runtime investigation. Request concise evidence with file or symbol references, relevant commands, risks, and unresolved questions. Add explorers only for genuinely independent surfaces.
-3. **Plan and approve.** Convert the evidence into observable acceptance criteria, scope boundaries, design decisions, and the smallest useful agent set.
-   - Follow the repository's planning convention when present; otherwise use `.agents/plans/<task-slug>.md`.
-   - Record scope, decisions, assignments, non-overlapping file ownership, dependency order, testing strategy, verification commands, progress, discoveries, and unresolved findings.
-   - Keep the main agent as the plan's sole writer.
-   - When requesting explicit human approval, show the complete, self-contained plan in the approval message. A persisted plan path may be included for reference only; it must never replace the plan the human is asked to review. Before approval, allow only workspace setup, exploration, and plan updates.
-4. **Test first.** Assign a generic subagent ownership of the planned acceptance tests. Have it write them and prove they fail for the expected behavioral reason. Reject setup failures or tests that encode the wrong contract. For behavior-preserving refactors, require characterization coverage and a recorded passing baseline.
-5. **Implement.** Assign generic implementation subagents only approved, bounded work.
-   - Parallelize only independent files or components; sequence overlapping work.
-   - Give each coding agent the worktree root, plan path, exact scope, owned files, acceptance criteria, relevant commands, and the prohibition on Git-state operations.
-   - Keep acceptance-test ownership with the test agent. Implementers may add focused coverage but may not weaken the acceptance tests.
-6. **Integrate and verify.** Inspect the combined diff against the approved plan. Assign a generic read-only verification subagent to run check-only formatting, linting, type checking, focused tests, integration or end-to-end tests, the relevant full suite, and builds. Delegate any required edits back to the owning implementation subagent.
-7. **Review by risk.** Always assign independent correctness review. Add security, performance, or architecture review only when those risks apply. Reviewers report evidence, severity, location, and reproduction steps without editing files.
-8. **Resolve and finish.** Evaluate findings against evidence and acceptance criteria. Record accepted, rejected, and scope-expanding findings in the plan; obtain approval before expanding scope. Delegate accepted fixes to the owning implementation subagent, rerun focused checks, and repeat relevant verification and review until all criteria pass and no blocking finding remains.
-   - Inspect the final diff and repository status.
-   - Remove the transient plan unless repository policy requires it to remain.
-   - Commit only the completed task files on the dedicated branch.
-   - Present the commit, diff summary, acceptance evidence, test results, reviewer findings, and remaining risks.
-
-## Deliver and Complete
-
-After the compact or orchestrated path produces a verified commit:
-
-1. Determine and record the repository's authoritative integration branch from applicable repository instructions or configuration; otherwise use `origin`'s advertised default branch. Do not assume `main` or `master`, and stop for clarification if the evidence conflicts or remains ambiguous.
-2. Recheck the task branch, commit, and clean status, then push the task branch to `origin`.
-3. Create a pull request against the recorded authoritative branch. Include the verified scope and test evidence, and link the tracked ticket when one is in scope.
-4. Monitor required CI checks until they pass. If a check fails, inspect its evidence, fix only an in-scope product or test defect through the same test-first workflow, commit and push the fix, and monitor the new run. Report unrelated infrastructure failures separately rather than weakening validation.
-5. After CI passes, present the pull request URL, final scope, review findings, CI results, and remaining risks, then explicitly ask the user whether to merge that PR.
-6. Wait for the user's explicit approval to merge the specific pull request. Plan or implementation approval, permission to push or open a PR, an earlier request such as "push the target branch," general instructions to finish or deliver, repository conventions, and silence do not authorize merging. Do not infer or reuse merge approval from an earlier workflow stage.
-7. After the user approves the merge, merge using the authorized repository method and confirm the result landed on the recorded authoritative branch on `origin`.
-8. In the repository's primary worktree, fast-forward the local authoritative branch to its verified remote tracking branch and confirm both refs match. Use a fast-forward-only update; never reset, stash, overwrite, or otherwise disturb dirty, ahead, or diverged user work. If the local update cannot be completed safely, report the exact state instead of claiming the local branch is current.
-9. Only after the remote merge is confirmed, close the linked ticket using its configured issue-tracking workflow. Do not close it for a local merge, an open pull request, or green CI alone; if no ticket is linked, skip ticket closure.
-
-Use the environment's recurring monitoring or wait mechanism for CI and merge state. If pushing, pull-request creation, monitoring, or ticket mutation is unavailable or requires new authority, report the exact blocker and leave the workflow at the last verified state.
+2. **Explore.** Use subagent that should use `read-task-context` skill to understand work scope. Then make local review by assigning a generic subagent that will make read-only repository and runtime investigation. Request concise evidence with file or symbol references, relevant commands, risks, and unresolved questions.
+3. **Plan and approve.** Convert the evidence into observable acceptance criteria plan.
+   1. Create plan in `.agents/plans/<task-slug>.md`.
+   2. Record plan in form of two sections:
+      2.1. High level, short overview of what should be delivered.
+      2.2. Scope of changes in form of tests that plays the role of requirements. Those tests are required to be implemented in next steps. Use `plan-test` skill to create this list. 
+   3. Then request an explicit human approval by showing complete plan.
+   4. Iterate with human until plan is approved.
+4. **Test first implementation.** Assign subagent to implement the plan. Explicitly pass to it created plan in step 3. Request it to utilise `implementing-code` and `test-writing` skills.
+5. **Verify.** Spawn dedicated subagents that will make read-only verifications:
+  - Generic code style reviewer.
+  - Consistency checker - that compares list of implemented and edited tests. In case of difference between plan vs current implemented state, it need to flag the differences. Those difference needs to me reviewed with user in next step.
+  - Domain reviewer - spawn if repository using DDD approach. That checks if changes follows DDD practices. In case `CONTEXT.md` should be updated it should be reviewed with user in next step.
+  - Security reviewer that will make static review.
+  - Other subagents if context requires.
+6. **Review with user** any review suggestions that was found in verify step and they are not duplication of dropped suggestions, from previous iterations, defined in plan. Ask for approval, dropping or moving separate task for each suggestions. Before moving forward make sure all decisions are resolved, then in this order:
+  6.1. Dropped review findings write to section in the plan so they can be de duplicated in next iterations.
+  6.2. Next task findings should be delegated to new subagent that will use `create-task-in-backlog` skill.
+  6.3. For changes approved. First commit current state using `create-git-commit` skill and back to step 3 to start and plan new the iteration.
+7. **Resolve and finish.** Evaluate that all changes are committed and newly added tests passing. Then use `create-git-pr` skill to create pull request.
