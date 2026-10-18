@@ -1,4 +1,0 @@
-interface:
-  display_name: "Obsidian Note Import"
-  short_description: "Review and track quarantined note imports"
-  default_prompt: "Use $obsidian-import-notes to import notes through quarantine, privacy-safe owner review, and SQLite-tracked integration."

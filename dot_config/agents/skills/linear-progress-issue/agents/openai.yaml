@@ -1,4 +1,0 @@
-interface:
-  display_name: "Progress Linear Issue"
-  short_description: "Progress relations and prove remote completion"
-  default_prompt: "Use $linear-progress-issue with $linear-operator after $linear-link-work to manage scoped relations and prove remote completion."
