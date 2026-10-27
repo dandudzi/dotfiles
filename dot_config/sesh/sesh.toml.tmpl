@@ -17,49 +17,50 @@ name = "Vim Kata"
 path = "~/Repos/practice-neovim/Vim-Katas/exercises/"
 startup_command = "nvim -c \"lua require('persistence').load()\""
 
+# Zakupki sessions follow the repositories grouped under ~/Repos/zakupki-cross.
 # Keep interactive Codex work separate from the frontend development server.
 [[session]]
 name = "Zakupki"
-path = "~/Repos/zakupki"
+path = "~/Repos/zakupki-cross/zakupki"
 startup_command = 'tmux rename-window codex; codex resume'
 windows = ["zakupki-integration", "zakupki-gitnexus-watch"]
 
 [[window]]
 name = "zakupki-integration"
-path = "~/Repos/zakupki"
+path = "~/Repos/zakupki-cross/zakupki"
 startup_script = "pnpm dev:integration"
 
 # Keep interactive Codex work separate from the backend development server.
 [[session]]
 name = "Zakupki Backend"
-path = "~/Repos/backend_zakupki"
+path = "~/Repos/zakupki-cross/backend_zakupki"
 startup_command = 'tmux rename-window codex; codex resume'
 windows = ["backend-dev", "backend-gitnexus-watch"]
 
 [[window]]
 name = "backend-dev"
-path = "~/Repos/backend_zakupki"
+path = "~/Repos/zakupki-cross/backend_zakupki"
 startup_script = "./mvnw spring-boot:run -Dspring-boot.run.profiles=dev"
 
 # Keep every Zakupki repository index current until GitNexus watch mode is released.
 [[session]]
 name = "Zakupki All"
-path = "~/Repos/zakupki-all"
+path = "~/Repos/zakupki-cross/zakupki-all"
 windows = ["zakupki-all-gitnexus-watch"]
 
 [[window]]
 name = "zakupki-gitnexus-watch"
-path = "~/Repos/zakupki"
+path = "~/Repos/zakupki-cross/zakupki"
 startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
 
 [[window]]
 name = "zakupki-all-gitnexus-watch"
-path = "~/Repos/zakupki-all"
+path = "~/Repos/zakupki-cross/zakupki-all"
 startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
 
 [[window]]
 name = "backend-gitnexus-watch"
-path = "~/Repos/backend_zakupki"
+path = "~/Repos/zakupki-cross/backend_zakupki"
 startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
 
 # Resume the most relevant Codex session for the personal Obsidian workspace.
@@ -76,3 +77,9 @@ name = "Monolith"
 path = "{{ .chezmoi.homeDir }}/jira"
 
 {{ end }}
+
+# Resume collaboration work from the shared parent of all three repositories.
+[[session]]
+name = "Zakupki Collaboration"
+path = "~/Repos/zakupki-cross"
+startup_command = 'tmux rename-window codex; codex resume'
