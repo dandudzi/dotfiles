@@ -23,7 +23,7 @@ startup_command = "nvim -c \"lua require('persistence').load()\""
 name = "Zakupki"
 path = "~/Repos/zakupki-cross/zakupki"
 startup_command = 'tmux rename-window codex; codex resume'
-windows = ["zakupki-integration", "zakupki-gitnexus-watch"]
+windows = ["zakupki-integration"]
 
 [[window]]
 name = "zakupki-integration"
@@ -35,33 +35,17 @@ startup_script = "pnpm dev:integration"
 name = "Zakupki Backend"
 path = "~/Repos/zakupki-cross/backend_zakupki"
 startup_command = 'tmux rename-window codex; codex resume'
-windows = ["backend-dev", "backend-gitnexus-watch"]
+windows = ["backend-dev"]
 
 [[window]]
 name = "backend-dev"
 path = "~/Repos/zakupki-cross/backend_zakupki"
 startup_script = "./mvnw spring-boot:run -Dspring-boot.run.profiles=dev"
 
-# Keep every Zakupki repository index current until GitNexus watch mode is released.
+# Keep the deployment repository available as its own session.
 [[session]]
 name = "Zakupki All"
 path = "~/Repos/zakupki-cross/zakupki-all"
-windows = ["zakupki-all-gitnexus-watch"]
-
-[[window]]
-name = "zakupki-gitnexus-watch"
-path = "~/Repos/zakupki-cross/zakupki"
-startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
-
-[[window]]
-name = "zakupki-all-gitnexus-watch"
-path = "~/Repos/zakupki-cross/zakupki-all"
-startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
-
-[[window]]
-name = "backend-gitnexus-watch"
-path = "~/Repos/zakupki-cross/backend_zakupki"
-startup_script = "while true; do git -c core.fsmonitor=false ls-files -co --exclude-standard | entr -nd gitnexus analyze --skip-agents-md --skip-skills; done"
 
 # Resume the most relevant Codex session for the personal Obsidian workspace.
 [[session]]
