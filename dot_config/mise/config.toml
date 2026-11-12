@@ -16,7 +16,6 @@ uv = "latest"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"
-always_keep_download = false
 always_keep_install = false
 jobs = 8
 http_timeout = "30s"
