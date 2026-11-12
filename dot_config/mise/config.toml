@@ -11,8 +11,6 @@ kotlin = "latest"
 rust = { version = "latest", components = "rust-analyzer" }
 uv = "latest"
 "npm:mcp-mermaid" = { version = "latest", allow_builds = ["mcp-mermaid"] }
-# Keep GitNexus independent of Node upgrades; activate its database binary and vendored grammars.
-"npm:gitnexus" = { version = "latest", allow_builds = ["@ladybugdb/core", "gitnexus"] }
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 minimum_release_age = "7d"
