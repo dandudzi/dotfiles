@@ -1,14 +1,12 @@
 local markdownlint_args = { "--config", vim.fn.stdpath("config") .. "/.markdownlint-cli2.yaml" }
 
 return {
-    -- Use the same line-length policy for diagnostics and automatic fixes.
+    -- Disable Markdown linting without changing linters for other file types.
     {
         "mfussenegger/nvim-lint",
-        opts = {
-            linters = {
-                ["markdownlint-cli2"] = { prepend_args = markdownlint_args },
-            },
-        },
+        opts = function(_, opts)
+            opts.linters_by_ft.markdown = {}
+        end,
     },
     {
         "stevearc/conform.nvim",
