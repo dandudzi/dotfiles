@@ -1,0 +1,3 @@
+# Keep long Markdown lines valid without disabling other Markdown checks.
+config:
+  MD013: false
