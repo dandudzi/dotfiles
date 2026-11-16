@@ -6,3 +6,12 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
+-- Keep Markdown prose unchanged on save; format it only on request.
+vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("markdown_no_autoformat", { clear = true }),
+    pattern = "markdown",
+    callback = function(event)
+        vim.b[event.buf].autoformat = false
+    end,
+})
