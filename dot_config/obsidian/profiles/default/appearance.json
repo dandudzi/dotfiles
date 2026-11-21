@@ -3,5 +3,6 @@
   "interfaceFontFamily": "JetBrains Mono",
   "textFontFamily": "JetBrains Mono",
   "monospaceFontFamily": "JetBrains Mono",
-  "translucency": true
+  "translucency": true,
+  "showRibbon": true
 }

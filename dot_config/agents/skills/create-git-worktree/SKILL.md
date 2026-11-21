@@ -12,7 +12,7 @@ Create or reuse one isolated worktree for the task.
    Reuse an existing task worktree when its repository and branch match.
    Report unexpected changes without resetting, stashing, or overwriting them.
    Do not assume main or master, or silently use a stale local branch.
-3. Create worktree in `.worktrees/<issue-key>`.
+3. Create worktree in `./.worktrees/<issue-key>`.
 4. Enter the worktree and verify its absolute path, branch, HEAD, and status
    before creating plans, tests, or implementation files.
 5. Return that verified state to the coordinating agent. Give all delegated

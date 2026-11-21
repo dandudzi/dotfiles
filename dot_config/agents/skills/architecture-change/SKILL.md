@@ -1,36 +1,42 @@
 ---
 name: architecture-change
-description: Plan architectural changes for a requested implementation, including component boundaries, dependencies, contracts, and migration. Use for the architectural changes section of coding-workflow plans or a standalone architecture-change plan.
+description: Use when plan requires bigger changes than small changes like new DDD components, changes to model, domain, scheme or API.
 ---
 
-# Architecture Change
+- This skill only produce output if one of the listed changes are required to accomplish plan. Print only proposed change, no narrative.
 
-Describe the structural decisions needed to implement the requested behavior. This skill produces a plan; it does not implement changes or authorize additional work.
+List for new or changed:
 
-## Establish context
+1. API - print new version of the API.
+2. Model - print new state variables.
+3. Scheme - print table/document scheme.
+4. Events - print scheme.
 
-- Use the task requirements and existing discovery evidence. Inspect relevant source, architecture decisions, and `CONTEXT.md` when present; distinguish observed structure from assumptions.
-- Identify the affected components, their responsibilities, dependency direction, and external contracts. Follow existing domain language and repository conventions.
-- Obtain the destination plan or section from the caller. When called by `coding-workflow`, populate its architectural changes section without replacing the acceptance tests or other sections.
+List only if new:
 
-## Choose the change
-
-- Describe the current structure and the proposed structure, citing relevant files or symbols. Explain which requirement makes the structural change necessary.
-- Prefer the smallest change that satisfies the requirements. Reuse established boundaries and abstractions unless there is evidence that they prevent the requested behavior.
-- State who owns each changed responsibility, which components may depend on which others, and how data or control crosses the affected boundaries.
-- Record changes to public APIs, events, persistence schemas, or integration contracts when applicable. Explain compatibility, migration order, and rollback constraints for changes that affect existing consumers or stored data.
-- Consider alternatives only when there is a meaningful tradeoff. Record the chosen option and why it fits the constraints; keep speculative redesign outside the proposed scope.
-- If no structural change is needed, explicitly say so and identify the existing boundary that supports the implementation. Do not invent an architectural change to fill the section.
-
-## Write the plan section
-
-Keep the section proportional to the change. Include:
-
-1. **Current structure and constraint:** affected components and the limitation relevant to the request.
-2. **Proposed structure:** responsibility, dependency, and contract changes, with a brief rationale.
-3. **Compatibility and rollout:** migration, deployment ordering, and recovery considerations when applicable; otherwise state that none are required.
-4. **Verification:** reference the acceptance tests or checks that demonstrate the new boundaries and preserve affected contracts. Keep detailed test requirements in the caller's test section.
-
-Use a small Mermaid diagram only when it clarifies boundaries or interactions better than prose. Mark unresolved decisions and explain whether they block implementation. Do not present an unverified assumption as a settled decision.
-
-Return the section to the caller or update the requested plan file when writing it is authorized. Follow the caller's approval process; creating this section does not approve implementation.
+1. New DDD files like. For them prints simplified tree. Do not print test files. New:
+   1.1. Model
+   1.2. Entity
+   1.3. Aggregate
+   1.4. Repository
+   1.5. Service
+   1.6. Bounded Context
+   1.7. Policy/Specification
+   1.8. Action, Consumer, Command, Query
+   1.9. Module
+   1.10. Auth roles or Permissions
+   1.11. Configuration
+   1.12. Contracts
+2. Create diagram for new life cycle with triggers.
+  - Use plain-text diagrams in a fenced text block.
+  - Use Unicode arrows and branches: →, ▼, ├──, └──, │.
+  - Keep each line within 80 characters.
+  - Prefer top-to-bottom flow with short labels.
+  - Show the main flow first.
+  - Put recovery, reset, and shared transitions in separate sections.
+  - Split large diagrams into small, related blocks.
+  - Preserve every state, condition, transition, and side effect.
+  - Define any grouped state, such as “Any open state.”
+  - Do not use Mermaid unless the user requests it or the renderer supports it.
+  - Print the diagram directly. Do not provide only rendering instructions.
+3. When extending already existing API, interfaces or services. Print new function names.

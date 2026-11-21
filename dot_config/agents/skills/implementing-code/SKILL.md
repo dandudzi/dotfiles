@@ -22,4 +22,4 @@ While coding find if repository use Domain Driven Design. Hence read `CONTEXT.md
 - **Specification**
 - **Policy**
 - **Module / Domain Package** — groups model code by domain capability, not technical layer.
-- **CQRS**
+- **CQRS** - Action, Event Listener, Consumer
