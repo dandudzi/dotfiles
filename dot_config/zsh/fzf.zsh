@@ -19,8 +19,8 @@ export FZF_DEFAULT_OPTS=" --ansi \
 	--color=selected-bg:#494d64 \
 	--color=border:#363a4f,label:#cad3f5"
 
-# make sure that fzf-preview for completion uses less
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [ -d ${(Q)realpath} ]; then eza -1 --all --color=always --icons ${(Q)realpath}; else bat -n --color=always ${(Q)realpath} 2>/dev/null || less ${(Q)realpath}; fi'
+# Set the icon mode explicitly so eza reads the next argument as a directory path.
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [ -d ${(Q)realpath} ]; then eza -1 --all --color=always --icons=always -- ${(Q)realpath}; else bat -n --color=always ${(Q)realpath} 2>/dev/null || less ${(Q)realpath}; fi'
 # brew installing lesspipe in strange place so this is why it is here
 # ** in case version will change
 export LESSOPEN="|${HOMEBREW_PREFIX:-/opt/homebrew}/Cellar/lesspipe/**/bin/lesspipe.sh %s"
@@ -37,7 +37,7 @@ zstyle ':fzf-tab:*' switch-group ',' '.'
 # force zsh not to show completion menu, which allows fzf-tab to capture the unambiguous prefix
 zstyle ':completion:*' menu no
 # preview directory's content with eza when completing cd
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons $realpath'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --all --color=always --icons=always -- $realpath'
 
 # minimal bottom padding fot tmux
 zstyle ':fzf-tab:complete:*:*' popup-pad 70 70
