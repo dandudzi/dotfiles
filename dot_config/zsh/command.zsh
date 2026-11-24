@@ -24,17 +24,31 @@ fls() { cd "$(eval $(dd_fd_command_directory) | fzf)" && l; }
 fp() { echo "$(eval $(dd_fd_command_files) | fzf)" | pbcopy }
 fv() { nvim "$(eval $(dd_fd_command_files) | fzf)" }
 
-# List the names of skills in the shared directory used by agents.
+# List shared skills with the descriptions from their SKILL.md files.
 function skills() {
-    local skills_dir="$HOME/.agents/skills" manifest
+    local skills_dir="$HOME/.agents/skills"
     if [[ ! -d "$skills_dir" ]]; then
         print -ru2 -- "skills: directory not found: $skills_dir"
         return 1
     fi
 
-    for manifest in "$skills_dir"/*/SKILL.md(N-.); do
-        print -r -- "${manifest:h:t}"
-    done
+    local manifests=("$skills_dir"/*/SKILL.md(N-.))
+    (( ${#manifests} )) || return 0
+
+    # Use YAML parsing so quotes and multiline descriptions display as text.
+    command ruby -ryaml -e '
+        ARGV.each do |manifest|
+            name = File.basename(File.dirname(manifest))
+            content = File.read(manifest, encoding: "UTF-8")
+            frontmatter = content[/\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$/m, 1]
+            metadata = YAML.safe_load(frontmatter || "")
+            description = metadata.is_a?(Hash) ? metadata["description"] : nil
+            description = description.is_a?(String) ? description.split.join(" ") : ""
+            puts description.empty? ? name : "#{name} - #{description}"
+        rescue Psych::Exception, SystemCallError
+            puts name
+        end
+    ' -- "${manifests[@]}"
 }
 
 # Preserve Yazi's final directory in the calling shell when it exits.
