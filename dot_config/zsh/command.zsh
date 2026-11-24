@@ -36,15 +36,30 @@ function skills() {
     (( ${#manifests} )) || return 0
 
     # Use YAML parsing so quotes and multiline descriptions display as text.
-    command ruby -ryaml -e '
-        ARGV.each do |manifest|
+    command ruby -ryaml -rio/console -e '
+        terminal = $stdout.tty?
+        width = terminal ? $stdout.winsize[1] : 0
+        width = 80 if terminal && width.zero?
+
+        ARGV.each_with_index do |manifest, index|
             name = File.basename(File.dirname(manifest))
+            puts if terminal && index.positive?
             content = File.read(manifest, encoding: "UTF-8")
             frontmatter = content[/\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$/m, 1]
             metadata = YAML.safe_load(frontmatter || "")
             description = metadata.is_a?(Hash) ? metadata["description"] : nil
-            description = description.is_a?(String) ? description.split.join(" ") : ""
-            puts description.empty? ? name : "#{name} - #{description}"
+            words = description.is_a?(String) ? description.split : []
+            lines = [words.empty? ? name : "#{name} -"]
+
+            # Indent wrapped lines so the skill names stay easy to scan.
+            words.each do |word|
+                if terminal && lines.last.length + word.length + 1 > width
+                    lines << "    #{word}"
+                else
+                    lines.last << " #{word}"
+                end
+            end
+            puts lines
         rescue Psych::Exception, SystemCallError
             puts name
         end
