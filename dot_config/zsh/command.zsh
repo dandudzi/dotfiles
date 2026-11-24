@@ -41,27 +41,32 @@ function skills() {
         width = terminal ? $stdout.winsize[1] : 0
         width = 80 if terminal && width.zero?
 
-        ARGV.each_with_index do |manifest, index|
+        entries = ARGV.map do |manifest|
             name = File.basename(File.dirname(manifest))
-            puts if terminal && index.positive?
             content = File.read(manifest, encoding: "UTF-8")
             frontmatter = content[/\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?$/m, 1]
             metadata = YAML.safe_load(frontmatter || "")
             description = metadata.is_a?(Hash) ? metadata["description"] : nil
-            words = description.is_a?(String) ? description.split : []
-            lines = [words.empty? ? name : "#{name} -"]
-
-            # Indent wrapped lines so the skill names stay easy to scan.
-            words.each do |word|
-                if terminal && lines.last.length + word.length + 1 > width
-                    lines << "    #{word}"
-                else
-                    lines.last << " #{word}"
-                end
-            end
-            puts lines
+            [name, description.is_a?(String) ? description.split.join(" ") : ""]
         rescue Psych::Exception, SystemCallError
-            puts name
+            [name, ""]
+        end
+
+        # Let the longest name set the divider column and use the rest for descriptions.
+        name_width = entries.map { |name, _| name.length }.max
+        separator = "  -  "
+        available = width - name_width - separator.length
+        entries.each do |name, description|
+            if !terminal
+                puts description.empty? ? name : "#{name} - #{description}"
+            elsif description.empty? || available <= 3
+                puts name[0, width]
+            else
+                if description.length > available
+                    description = "#{description[0, available - 3].rstrip}..."
+                end
+                puts "#{name.ljust(name_width)}#{separator}#{description}"
+            end
         end
     ' -- "${manifests[@]}"
 }
