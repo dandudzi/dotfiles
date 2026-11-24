@@ -56,16 +56,19 @@ function skills() {
         name_width = entries.map { |name, _| name.length }.max
         separator = "  -  "
         available = width - name_width - separator.length
+
+        # Apply color only in the terminal so pipes receive plain text.
         entries.each do |name, description|
             if !terminal
                 puts description.empty? ? name : "#{name} - #{description}"
             elsif description.empty? || available <= 3
-                puts name[0, width]
+                puts "\e[32m#{name[0, width]}\e[39m"
             else
                 if description.length > available
                     description = "#{description[0, available - 3].rstrip}..."
                 end
-                puts "#{name.ljust(name_width)}#{separator}#{description}"
+                padding = " " * (name_width - name.length)
+                puts "\e[32m#{name}\e[39m#{padding}#{separator}#{description}"
             end
         end
     ' -- "${manifests[@]}"
