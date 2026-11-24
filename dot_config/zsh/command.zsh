@@ -24,6 +24,19 @@ fls() { cd "$(eval $(dd_fd_command_directory) | fzf)" && l; }
 fp() { echo "$(eval $(dd_fd_command_files) | fzf)" | pbcopy }
 fv() { nvim "$(eval $(dd_fd_command_files) | fzf)" }
 
+# List the names of skills in the shared directory used by agents.
+function skills() {
+    local skills_dir="$HOME/.agents/skills" manifest
+    if [[ ! -d "$skills_dir" ]]; then
+        print -ru2 -- "skills: directory not found: $skills_dir"
+        return 1
+    fi
+
+    for manifest in "$skills_dir"/*/SKILL.md(N-.); do
+        print -r -- "${manifest:h:t}"
+    done
+}
+
 # Preserve Yazi's final directory in the calling shell when it exits.
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
